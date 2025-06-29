@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="C:\Users\xcwal\source\repos\CrossPlatformGameEngine\Vendor\glfw3\build\CMakeFiles\2b37e46d6f670baaf6f902155c9f1b9f\update_mappings.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+    <CustomBuild Include="C:\Users\xcwal\source\repos\CrossPlatformGameEngine\Vendor\glfw3\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="C:\Users\xcwal\source\repos\CrossPlatformGameEngine\Vendor\glfw3\src\mappings.h.in">
+      <Filter>Header Files</Filter>
+    </None>
+    <None Include="C:\Users\xcwal\source\repos\CrossPlatformGameEngine\Vendor\glfw3\CMake\GenerateMappings.cmake" />
+    <None Include="C:\Users\xcwal\source\repos\CrossPlatformGameEngine\Vendor\glfw3\build\src\CMakeFiles\update_mappings" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{5390F36F-E361-3070-8646-3CDAA7B5CC46}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{2D553F35-5BC1-3023-A298-3FA6FC383EB9}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
