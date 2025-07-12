@@ -45,4 +45,36 @@ namespace ascen {
 
 	void destroyBuffer(LogicalDevice& logicalDevice, Buffer& buffer);
 
+	template<typename T>
+	void copyStorageBuffer(
+		PhysicalDevice& physicalDevice,
+		LogicalDevice& logicalDevice,
+		VkQueue graphicsQueue,
+		CommandPool& commandPool,
+		std::vector<T>& data,
+		Buffer& buffer,
+		bool insertBarrier)
+	{
+		size_t totalSize = sizeof(T) * data.size();
+
+		Buffer stagingBuffer;
+
+		createBuffer(
+			physicalDevice.mDevice,
+			logicalDevice.mDevice,
+			totalSize,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			&stagingBuffer);
+
+		void* mem;
+		vkMapMemory(logicalDevice.mDevice, stagingBuffer.mMemory, 0, totalSize, 0, &mem);
+		std::memcpy(mem, data.data(), totalSize);
+		vkUnmapMemory(logicalDevice.mDevice, stagingBuffer.mMemory);
+
+		copyBuffer(logicalDevice, graphicsQueue, commandPool, stagingBuffer, buffer, totalSize, insertBarrier);
+
+		destroyBuffer(logicalDevice, stagingBuffer);
+	}
+
 }

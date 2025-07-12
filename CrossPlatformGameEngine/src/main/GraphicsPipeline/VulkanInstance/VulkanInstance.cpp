@@ -4,7 +4,7 @@
 
 namespace ascen {
 
-    void createVulkanInstance(Instance* instance) {
+    void createVulkanInstance(VulkanInstance* instance) {
         // Enable Validation Layers
         if (instance->mValidationLayers.isEnabled()) {
             instance->mValidationLayers.validate();
@@ -65,7 +65,7 @@ namespace ascen {
         instance->mDebugMessenger.create(instance->mInstance);
     }
 
-    void destroyVulkanInstance(Instance& instance) {
+    void destroyVulkanInstance(VulkanInstance& instance) {
         instance.mDebugMessenger.destroy(instance.mInstance);
         vkDestroyInstance(instance.mInstance, nullptr);
     }

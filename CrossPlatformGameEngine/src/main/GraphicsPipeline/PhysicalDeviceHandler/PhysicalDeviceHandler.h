@@ -12,6 +12,6 @@ namespace ascen {
 		VkPhysicalDevice mDevice;
 	};
 	
-	void pickPhysicalDevice(Instance& instance, Surface& surface, PhysicalDevice* physicalDevice);
+	void pickPhysicalDevice(VulkanInstance& instance, Surface& surface, PhysicalDevice* physicalDevice);
 
 }

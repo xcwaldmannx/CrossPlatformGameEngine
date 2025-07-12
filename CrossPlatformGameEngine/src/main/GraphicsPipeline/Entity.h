@@ -12,5 +12,6 @@ struct ascen::Texture;
 
 struct Entity {
 	Model mModel;
-	size_t mTextureIndex;
+	glm::mat4 mTransform;
+	int mTextureIndex;
 };

@@ -28,6 +28,7 @@ namespace ascen {
         std::vector<Entity>* mEntities;
         ascen::Buffer* mVertexBuffer;
         ascen::Buffer* mIndexBuffer;
+        //ascen::Buffer* mInstanceBuffer;
 	    DescriptorGroup* mDescriptorGroup;
     };
 

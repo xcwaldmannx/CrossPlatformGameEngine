@@ -8,7 +8,7 @@ set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.h")
 
 # Add source to this project's executable.
-add_executable (CrossPlatformGameEngine ${SRC_FILES})
+add_executable (CrossPlatformGameEngine ${SRC_FILES} "src/main/Components.h")
 
 if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CrossPlatformGameEngine PROPERTY CXX_STANDARD 20)

@@ -1,7 +1,12 @@
-#include "GraphicsPipeline/GraphicsPipeline.h"
+﻿#include "GraphicsPipeline/GraphicsPipeline.h"
 #include "ModelManager/ModelManager.h"
 
 #include "EcsSystem/EcsSystem.h"
+
+#include"Systems.h"
+#include "Components.h"
+
+#include <chrono>
 
 #include <string>
 
@@ -56,8 +61,8 @@ void testEcs() {
 	ecs.registerSystem<SystemD>(readSignatureSystemD, writeSignatureSystemD);
 
 
-	ecs.updateSystem<SystemA>();
-	ecs.updateSystem<SystemB>();
+	ecs.updateSystem<SystemA>(0);
+	ecs.updateSystem<SystemB>(0);
 
 	auto e1 = ecs.addEntity();
 	ecs.addComponent<ComponentA>(e1, {});
@@ -77,14 +82,89 @@ void testEcs() {
 	ecs.addComponent<ComponentC>(e4, {});
 	ecs.addComponent<ComponentD>(e4, {});
 
-	ecs.updateAllSystems();
+	ecs.updateAllSystems(0);
 
 }
 
 void testGraphics() {
+	ModelManager modelManager;
+	modelManager.createModel("model_00", "C:\\Users\\xcwal\\Documents\\Models\\testmodel0.fbx");
+	modelManager.createModel("model_01", "C:\\Users\\xcwal\\Documents\\Models\\testmodel.fbx");
+	modelManager.createModel("model_02", "C:\\Users\\xcwal\\Documents\\Models\\testmodel_1.fbx");
+	modelManager.createModel("model_03", "C:\\Users\\xcwal\\Documents\\Models\\testmodel_2.fbx");
+	modelManager.createModel("snail", "C:\\Users\\xcwal\\Documents\\Models\\snail.fbx");
+
+	// TODO: Still need a TextureManager to map texture names to ids for shader texture arrays
+	std::vector<const char*> textureFilepaths =
+	{
+		"C:\\Users\\xcwal\\OneDrive\\Desktop\\testimg1.png",
+		"C:\\Users\\xcwal\\OneDrive\\Desktop\\testimg2.png",
+		//"C:\\Users\\xcwal\\Documents\\Models\\Ernest_body_base color.png",
+	};
+
+	EcsSystem ecs;
+
+	ecs.registerComponent<BasicRenderComponent>();
+	ecs.registerComponent<TransformComponent>();
+	ecs.registerComponent<ModelComponent>();
+
+	Signature rSigTransform = ecs.getSignature<TransformComponent>();
+	Signature wSigTransform = ecs.getSignature<TransformComponent>();
+	ecs.registerSystem<TransformSystem>(rSigTransform, wSigTransform);
+
+	Signature rSigRender = ecs.getSignature<TransformComponent, ModelComponent>();
+	Signature wSigRender = ecs.getSignature<BasicRenderComponent>();
+	ecs.registerSystem<RenderSystem>(rSigRender, wSigRender);
+
+	for (int x = 0; x < 20; x++)
+	{
+		for (int y = 0; y < 20; y++)
+		{
+			auto entity = ecs.addEntity();
+			ecs.addComponent<BasicRenderComponent>(entity);
+			ecs.addComponent<TransformComponent>(
+				entity,
+				{  {(-x * 1.001f) - 5.0f, -y + 8.5f, (x * 1.01f) - 8.0f}, {x * 0.25f, x * 0.5f, 0}, {1, 1, 1}});
+			ecs.addComponent<ModelComponent>(entity, { modelManager.getModel("model_00"), x % 2 });
+		}
+	}
+
 	GraphicsPipeline gp;
+	gp.setModels(modelManager);
+	gp.setTextures(textureFilepaths);
+
 	gp.create();
-	gp.renderLoop();
+
+	std::chrono::time_point startTime = std::chrono::high_resolution_clock::now();
+	std::chrono::time_point lastFrameTime = startTime;
+
+	while (gp.isRunning())
+	{
+		std::chrono::time_point currentTime = std::chrono::high_resolution_clock::now();
+		std::chrono::duration<double, std::milli> delta = currentTime - lastFrameTime;
+		float deltaTime = delta.count(); // in seconds
+		lastFrameTime = currentTime;
+
+		ecs.updateSystem<TransformSystem>(deltaTime);
+		ecs.updateSystem<RenderSystem>(deltaTime);
+
+		auto renderComponents = ecs.getComponentList<BasicRenderComponent>();
+
+		gp.submit(renderComponents->toList());
+
+		gp.render();
+
+		static float frameSum = 0.0f;
+		static int frameCount = 0;
+		frameSum += deltaTime;
+		frameCount++;
+		if (frameSum >= 1000.0f) {
+			std::cout << "FPS: " << frameCount << " (" << (frameSum / frameCount) << " ms)\n";
+			frameSum = 0.0f;
+			frameCount = 0;
+		}
+	}
+
 	gp.destroy();
 }
 

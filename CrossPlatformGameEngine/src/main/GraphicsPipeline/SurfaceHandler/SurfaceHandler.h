@@ -21,7 +21,7 @@ namespace ascen {
 	RTRN: void
 	DESC: Handles Surface creation.
 	*/
-	void createSurface(Instance& instance, GLFWwindow* window, Surface* sSurface);
+	void createSurface(VulkanInstance& instance, GLFWwindow* window, Surface* sSurface);
 
 	/*
 	FILE: SurfaceHandler.h
@@ -29,6 +29,6 @@ namespace ascen {
 	RTRN: void
 	DESC: Handles Surface destruction.
 	*/
-	void destroySurface(Instance& instance, Surface& surface);
+	void destroySurface(VulkanInstance& instance, Surface& surface);
 
 };

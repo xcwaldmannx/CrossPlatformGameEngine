@@ -64,6 +64,11 @@ public:
 		return mEntityToComponentIdx.find(entity) != mEntityToComponentIdx.end();
 	}
 
+	std::vector<T> toList()
+	{
+		return mComponents;
+	}
+
 	std::string toString() override {
 		std::stringstream ss;
 

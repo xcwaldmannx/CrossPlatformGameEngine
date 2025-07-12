@@ -89,7 +89,7 @@ namespace ascen {
         return hasQueueFamilySupport && hasSurfaceSupport && hasExtensionSupport && anisotropicSupport;
     }
 
-    void pickPhysicalDevice(Instance& instance, Surface& surface, PhysicalDevice* physicalDevice) {
+    void pickPhysicalDevice(VulkanInstance& instance, Surface& surface, PhysicalDevice* physicalDevice) {
 
         uint32_t deviceCount = 0;
         vkEnumeratePhysicalDevices(instance.mInstance, &deviceCount, nullptr);

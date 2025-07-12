@@ -4,7 +4,7 @@
 #include "Components.h"
 
 struct SystemA : public System_I {
-	void update() {
+	void update(float deltaTime) {
 		for (EntityId e : mEntities) {
 			auto& a = mComponentManager->getComponent<ComponentA>(e);
 			auto& b = mComponentManager->getComponent<ComponentB>(e);
@@ -15,7 +15,7 @@ struct SystemA : public System_I {
 };
 
 struct SystemB : public System_I {
-	void update() {
+	void update(float deltaTime) {
 		for (EntityId e : mEntities) {
 			const auto& b = mComponentManager->getComponent<ComponentB>(e);
 			const auto& c = mComponentManager->getComponent<ComponentC>(e);
@@ -29,7 +29,7 @@ struct SystemB : public System_I {
 };
 
 struct SystemC : public System_I {
-	void update() {
+	void update(float deltaTime) {
 		for (EntityId e : mEntities) {
 			auto& b = mComponentManager->getComponent<ComponentB>(e);
 			auto& c = mComponentManager->getComponent<ComponentC>(e);
@@ -40,7 +40,7 @@ struct SystemC : public System_I {
 };
 
 struct SystemD : public System_I {
-	void update() {
+	void update(float deltaTime) {
 		for (EntityId e : mEntities) {
 			auto& c = mComponentManager->getComponent<ComponentC>(e);
 			auto& d = mComponentManager->getComponent<ComponentD>(e);

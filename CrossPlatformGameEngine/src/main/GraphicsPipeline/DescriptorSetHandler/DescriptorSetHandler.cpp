@@ -104,7 +104,7 @@ namespace ascen {
 		VkDescriptorBufferInfo storageBufferInfo{};
 		storageBufferInfo.buffer = storageBuffer.mBuffer;
 		storageBufferInfo.offset = 0;
-		storageBufferInfo.range = storageBuffer.mSizeBytes;
+		storageBufferInfo.range = storageBuffer.mBufferSizeBytes;
 
 		std::vector<VkWriteDescriptorSet> descriptorWrites(3);
 
@@ -222,7 +222,7 @@ namespace ascen {
 	void createDescriptorSetLayoutBinding(
 		uint32_t slot,
 		DescriptorType type,
-		DescriptorStageFlags flags,
+		unsigned int flags,
 		VkDescriptorSetLayoutBinding* binding) {
 
 		binding->binding = slot;

@@ -103,12 +103,13 @@ namespace ascen {
          dynamicOffsets.size(),
          dynamicOffsets.data());
 
+        VkBuffer vertexBuffers[] = { drawInfo.mVertexBuffer->mBuffer };
         VkDeviceSize vertexOffsets[] = { 0 };
         vkCmdBindVertexBuffers(
             commandpool.mCommandBuffers[frameIndex],
             0,
             1,
-            &drawInfo.mVertexBuffer->mBuffer,
+            vertexBuffers,
             vertexOffsets);
 
         vkCmdBindIndexBuffer(
@@ -117,19 +118,21 @@ namespace ascen {
             0,
             VK_INDEX_TYPE_UINT32);
 
-        uint32_t vertexOffset = static_cast<uint32_t>((*drawInfo.mEntities)[0].mModel.mVertexOffset);
-        uint32_t indexOffset = static_cast<uint32_t>((*drawInfo.mEntities)[0].mModel.mIndexOffset);
-        uint32_t indexCount = static_cast<uint32_t>((*drawInfo.mEntities)[0].mModel.mIndexCount);
+        for (size_t i = 0; i < (*drawInfo.mEntities).size(); i++)
+        {
+            uint32_t vertexOffset = static_cast<uint32_t>((*drawInfo.mEntities)[i].mModel.mVertexOffset);
+            uint32_t indexOffset = static_cast<uint32_t>((*drawInfo.mEntities)[i].mModel.mIndexOffset);
+            uint32_t indexCount = static_cast<uint32_t>((*drawInfo.mEntities)[i].mModel.mIndexCount);
 
-        vkCmdDrawIndexed(
-            commandpool.mCommandBuffers[frameIndex],
-            indexCount,
-            1,
-            indexOffset,
-            0,
-            0
-        );
-
+            vkCmdDrawIndexed(
+                commandpool.mCommandBuffers[frameIndex],
+                indexCount,
+                400,
+                indexOffset,
+                0,
+                0
+            );
+        }
 
         vkCmdEndRenderPass(commandpool.mCommandBuffers[frameIndex]);
 

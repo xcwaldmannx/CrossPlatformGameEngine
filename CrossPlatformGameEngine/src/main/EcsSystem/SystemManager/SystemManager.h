@@ -70,15 +70,15 @@ public:
 	}
 
 	template<typename T>
-	void updateSystem()
+	void updateSystem(float deltaTime)
 	{
 		std::type_index id = typeid(T);
 		assert(mSystems.find(id) != mSystems.end() && "System is not registered. Cannot update.");
 
-		mSystems[id]->update();
+		mSystems[id]->update(deltaTime);
 	}
 
-	void updateAllSystems()
+	void updateAllSystems(float deltaTime)
 	{
 		int groupId = 0;
 		for (auto& group : mSystemGroups)
@@ -86,7 +86,7 @@ public:
 			std::cout << "Updating group " << groupId << ":" << std::endl;
 			for (auto& systemId : group)
 			{
-				mSystems[systemId]->update();
+				mSystems[systemId]->update(deltaTime);
 			}
 			std::cout << std::endl;
 

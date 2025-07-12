@@ -20,14 +20,14 @@ DESC: Vulkan Instance creation
 
 namespace ascen {
 
-	struct Instance {
+	struct VulkanInstance {
 		VkInstance mInstance = nullptr;
 		ValidationLayers mValidationLayers;
 		Extensions mExtensions;
 		DebugMessenger mDebugMessenger;
 	};
 
-	void createVulkanInstance(Instance* instance);
-	void destroyVulkanInstance(Instance& instance);
+	void createVulkanInstance(VulkanInstance* instance);
+	void destroyVulkanInstance(VulkanInstance& instance);
 
 }

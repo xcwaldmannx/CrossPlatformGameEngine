@@ -22,6 +22,10 @@
 #include "UniformBuffers.h"
 #include "Entity.h"
 
+#include "RenderComponents.h"
+
+#include <iostream>
+
 #include <optional>
 #include <vector>
 
@@ -36,11 +40,10 @@
 
 #include <vulkan/vulkan.h>
 
-struct PerEntityData {
-	uint32_t textureIdx;
-	uint32_t modelIdx;
-	uint32_t pad1;
-	uint32_t pad2;
+struct alignas(16) PerEntityData {
+	glm::mat4 transform;
+	int textureIdx;
+	int pad0[3];
 };
 
 /*
@@ -54,12 +57,21 @@ public:
 	void create();
 	void destroy();
 
-	void renderLoop();
+	void setModels(const ModelManager& modelManager);
+	void setTextures(const std::vector<const char*>& filepaths);
+
+	bool isRunning();
+	void submit(std::vector<BasicRenderComponent> renderComponents);
+	void render();
 
 private:
+	void loadModels();
+	void loadTextures();
+
 	void createSyncObjects();
 	void destroySyncObjects();
 
+	void createEntities();
 	void createBuffers();
 	void createTextures();
 	void createDepthTexture();
@@ -71,7 +83,7 @@ private:
 
 private:
 	vulkan::WindowManager mWindowManager;
-	ascen::Instance mInstance;
+	ascen::VulkanInstance mInstance;
 
 	ascen::Surface mSurface;
 
@@ -111,10 +123,13 @@ private:
 
 	ascen::Buffer mVertexBuffer;
 	ascen::Buffer mIndexBuffer;
+	ascen::Buffer mInstanceBuffer;
 	ascen::TextureArray mTextureArray;
 
 	ModelManager mModelManager;
 	std::unordered_map<std::string, size_t> mModelOffets;
+
+	std::vector<const char*> mTextureFilepaths;
 
 	// per material data
 	//std::vector<ascen::Texture> mDiffuseTextures;

@@ -2,6 +2,7 @@
 
 #include "../../Utility/FileIO/FileIO.h"
 #include "../Vertex/Vertex.h"
+#include "../Instance/Instance.h"
 
 #include <stdexcept>
 
@@ -34,14 +35,32 @@ namespace ascen {
 
         VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
 
-        auto bindingDescription = Vertex::getBindingDescription();
-        auto attributeDescriptions = Vertex::getAttributeDescriptions();
+        // Collect the per-vertex and per-instance binding descriptions
+        auto vertexBindingDescription = Vertex::getBindingDescription();
+        auto vertexAttributeDescriptions = Vertex::getAttributeDescriptions();
 
+        //auto instanceBindingDescription = Instance::getBindingDescription();
+        //auto instanceAttributeDescriptions = Instance::getAttributeDescriptions();
+
+        // Merge binding descriptions into an array
+        std::array<VkVertexInputBindingDescription, 1> bindingDescriptions = {
+            vertexBindingDescription,
+            //instanceBindingDescription
+        };
+
+        // Merge attribute descriptions into a single vector
+        std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
+        attributeDescriptions.insert(attributeDescriptions.end(),
+            vertexAttributeDescriptions.begin(), vertexAttributeDescriptions.end());
+        //attributeDescriptions.insert(attributeDescriptions.end(),
+        //    instanceAttributeDescriptions.begin(), instanceAttributeDescriptions.end());
+
+        // Fill out pipeline vertex input state
         VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
         vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-        vertexInputInfo.vertexBindingDescriptionCount = 1;
+        vertexInputInfo.vertexBindingDescriptionCount = static_cast<uint32_t>(bindingDescriptions.size());
+        vertexInputInfo.pVertexBindingDescriptions = bindingDescriptions.data();
         vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
-        vertexInputInfo.pVertexBindingDescriptions = &bindingDescription;
         vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
         VkPipelineInputAssemblyStateCreateInfo inputAssembly{};

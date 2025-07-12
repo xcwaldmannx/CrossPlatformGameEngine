@@ -9,25 +9,29 @@
 class EcsSystem {
 public:
 	template<typename T>
-	void registerComponent() {
+	void registerComponent()
+	{
 		mComponentManager.registerComponent<T>();
 		std::cout << "Registered new component!" << std::endl;
 	}
 
 	template<typename T>
-	void registerSystem(Signature readSignature, Signature writeSignature) {
+	void registerSystem(Signature readSignature, Signature writeSignature)
+	{
 		mSystemManager.registerSystem<T>(readSignature, writeSignature, mComponentManager);
 		std::cout << "Registered new system!" << std::endl;
 	}
 
-	EntityId addEntity() {
+	EntityId addEntity()
+	{
 		assert(mEntityManager.count() < ENTITY_MAX && "Entity limit reached. Cannot add entity.");
 		EntityId id = mEntityManager.addEntity();
 		mEntityIdToSignature[id] = {};
 		return id;
 	}
 
-	void removeEntity(EntityId entity) {
+	void removeEntity(EntityId entity)
+	{
 		assert(entity < ENTITY_MAX && "Entity outside limit. Cannot remove entity.");
 
 		const Signature& signature = mEntityIdToSignature.at(entity);
@@ -39,7 +43,8 @@ public:
 	}
 
 	template<typename T>
-	void addComponent(EntityId entity, T&& component) {
+	void addComponent(EntityId entity, T&& component = {})
+	{
 		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot add component.");
 
 		mEntityIdToSignature.at(entity).set(mComponentManager.getComponentId<T>());
@@ -48,7 +53,8 @@ public:
 	}
 
 	template<typename T>
-	void removeComponent(EntityId entity) {
+	void removeComponent(EntityId entity)
+	{
 		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot remove components.");
 
 		mComponentManager.removeComponent<T>(entity);
@@ -57,30 +63,40 @@ public:
 	}
 
 	template<typename T>
-	T& getComponent(EntityId entity) {
+	T& getComponent(EntityId entity)
+	{
 		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot get component.");
 
 		return mComponentManager.getComponent<T>(entity);
 	}
 
+	template<typename T>
+	std::shared_ptr<ComponentList<T>> getComponentList()
+	{
+		return mComponentManager.getComponentList<T>();
+	}
+
 	template<typename... T>
-	Signature getSignature() {
+	Signature getSignature()
+	{
 		Signature signature;
 		(signature.set(mComponentManager.getComponentId<T>()), ...);
 		return signature;
 	}
 
 	template<typename T>
-	void updateSystem() {
-		mSystemManager.updateSystem<T>();
-	}
-
-	void updateAllSystems()
+	void updateSystem(float deltaTime)
 	{
-		mSystemManager.updateAllSystems();
+		mSystemManager.updateSystem<T>(deltaTime);
 	}
 
-	std::string toString() {
+	void updateAllSystems(float deltaTime)
+	{
+		mSystemManager.updateAllSystems(deltaTime);
+	}
+
+	std::string toString()
+	{
 		std::stringstream ss;
 
 		ss << mComponentManager.toString();

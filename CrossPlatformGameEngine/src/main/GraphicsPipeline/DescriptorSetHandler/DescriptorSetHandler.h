@@ -90,7 +90,7 @@ namespace ascen {
 	void createDescriptorSetLayoutBinding(
 		uint32_t slot,
 		DescriptorType type,
-		DescriptorStageFlags flags,
+		unsigned int flags,
 		VkDescriptorSetLayoutBinding* binding);
 
 	void createDescriptorSet(
