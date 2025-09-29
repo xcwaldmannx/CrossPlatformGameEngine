@@ -10,7 +10,7 @@
 
 #include <glm/glm.hpp>
 
-struct ModelMesh {
+struct ModelData {
 	size_t mVertexOffset    = 0;
 	size_t mVertexCount     = 0;
 	size_t mIndexOffset     = 0;
@@ -19,19 +19,17 @@ struct ModelMesh {
 };
 
 struct Model {
-	size_t mVertexOffset    = 0;
-	size_t mVertexCount     = 0;
-	size_t mIndexOffset     = 0;
-	size_t mIndexCount      = 0;
-	size_t mTransformOffset = 0;
-	std::unordered_map<std::string, ModelMesh> mMeshes;
+	ModelData mMesh;
+	std::unordered_map<std::string, ModelData> mMeshes;
 };
 
 class ModelManager {
 public:
 	void createModel(std::string name, const char* filepath);
 
-	const Model& getModel(std::string name) const;
+	const Model& getModel(std::string key) const;
+	const Model& getModel(int id) const;
+	int getModelId(std::string key) const;
 	const std::unordered_map<std::string, Model>& getModels() const;
 
 	const std::vector<Vertex>& getVertices() const;
@@ -43,9 +41,13 @@ private:
 	void processNodes(aiNode* node, aiMesh** meshes, Model& mesh);
 
 private:
-	std::unordered_map<std::string, Model> mModels;
+	std::unordered_map<std::string, Model> mKeyToModel;
+	std::unordered_map<int, Model&> mIdToModel;
+	std::unordered_map<std::string, int> mKeyToId;
 
 	std::vector<Vertex> mVertices;
 	std::vector<uint32_t> mIndices;
 	std::vector<glm::mat4> mTransforms;
+
+	int mModelCount = 0;
 };

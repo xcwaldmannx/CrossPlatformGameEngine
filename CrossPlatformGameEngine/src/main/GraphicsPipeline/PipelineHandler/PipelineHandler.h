@@ -18,7 +18,7 @@ namespace ascen {
 	struct DescriptorGroup;
 	struct RenderPass;
 
-	struct Pipeline {
+	struct PipelineStuff {
 		VkPipeline mPipeline;
 		VkPipelineLayout mLayout;
 	};
@@ -36,7 +36,7 @@ namespace ascen {
 		ShaderModule& fragShader,
 		DescriptorGroup& descriptorGroup,
 		RenderPass& renderpass,
-		Pipeline* pipeline);
+		PipelineStuff* pipeline);
 
 	/*
 	FILE: PipelineHandler.h
@@ -44,5 +44,5 @@ namespace ascen {
 	RTRN: void
 	DESC: Handles Pipeline destruction
 	*/
-	void destroyPipeline(LogicalDevice& logicalDevice, Pipeline& pipeline);
+	void destroyPipeline(LogicalDevice& logicalDevice, PipelineStuff& pipeline);
 }

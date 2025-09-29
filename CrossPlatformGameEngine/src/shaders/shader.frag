@@ -2,7 +2,10 @@
 
 struct PerEntityData {
     mat4 transform;
+    int modelId;
     int textureId;
+    int _pad0;
+    int _pad1;
 };
 
 layout(std430, binding = 1) readonly buffer perEntityDataArray {

@@ -19,7 +19,7 @@ namespace ascen {
         ShaderModule& fragShader,
         DescriptorGroup& descriptorGroup,
         RenderPass& renderpass,
-        Pipeline* pipeline) {
+        PipelineStuff* pipeline) {
 
         VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
         vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
@@ -194,7 +194,7 @@ namespace ascen {
         }
     }
 
-    void destroyPipeline(LogicalDevice& logicalDevice, Pipeline& pipline) {
+    void destroyPipeline(LogicalDevice& logicalDevice, PipelineStuff& pipline) {
         vkDestroyPipeline(logicalDevice.mDevice, pipline.mPipeline, nullptr);
         vkDestroyPipelineLayout(logicalDevice.mDevice, pipline.mLayout, nullptr);
     }

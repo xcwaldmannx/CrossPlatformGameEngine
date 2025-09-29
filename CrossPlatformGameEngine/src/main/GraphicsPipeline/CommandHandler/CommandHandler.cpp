@@ -3,6 +3,7 @@
 #include "../QueueFamilyHandler/QueueFamilyHandler.h"
 
 #include <stdexcept>
+#include <iostream>
 
 /*
 Begin CommandHandler Implementation
@@ -43,7 +44,7 @@ namespace ascen {
         uint32_t imageIndex,
         Swapchain& swapchain,
         RenderPass& renderpass,
-        Pipeline& pipeline,
+        std::shared_ptr<Pipeline> pipeline,
         CommandPool& commandpool) {
 
         vkResetCommandBuffer(commandpool.mCommandBuffers[frameIndex], 0);
@@ -72,7 +73,7 @@ namespace ascen {
         renderPassInfo.pClearValues = clearValues.data();
 
         vkCmdBeginRenderPass(commandpool.mCommandBuffers[frameIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-        vkCmdBindPipeline(commandpool.mCommandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.mPipeline);
+        vkCmdBindPipeline(commandpool.mCommandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->mPipeline);
 
         VkViewport viewport{};
         viewport.x = 0.0f;
@@ -89,14 +90,14 @@ namespace ascen {
         vkCmdSetScissor(commandpool.mCommandBuffers[frameIndex], 0, 1, &scissor);
 
         std::array<uint32_t, 2> dynamicOffsets = {
-            frameIndex * 64 * 3,  // For binding = 0, uniform buffer
+            frameIndex * 64 * 2,  // For binding = 0, uniform buffer
             0,  // For binding = 1, storage buffer
         };
 
         vkCmdBindDescriptorSets(
          commandpool.mCommandBuffers[frameIndex],
          VK_PIPELINE_BIND_POINT_GRAPHICS,
-         pipeline.mLayout,
+         pipeline->mLayout,
          0,
          1,
          &drawInfo.mDescriptorGroup->mSets[0],
@@ -118,20 +119,27 @@ namespace ascen {
             0,
             VK_INDEX_TYPE_UINT32);
 
-        for (size_t i = 0; i < (*drawInfo.mEntities).size(); i++)
+
+        int instanceOffset = 0;
+
+        for (auto& [modelId, instanceCount] : *drawInfo.mModelIdToCount)
         {
-            uint32_t vertexOffset = static_cast<uint32_t>((*drawInfo.mEntities)[i].mModel.mVertexOffset);
-            uint32_t indexOffset = static_cast<uint32_t>((*drawInfo.mEntities)[i].mModel.mIndexOffset);
-            uint32_t indexCount = static_cast<uint32_t>((*drawInfo.mEntities)[i].mModel.mIndexCount);
+            const Model& model = drawInfo.mModelManager->getModel(modelId);
+
+            uint32_t vertexOffset = static_cast<uint32_t>(model.mMesh.mVertexOffset);
+            uint32_t indexOffset = static_cast<uint32_t>(model.mMesh.mIndexOffset);
+            uint32_t indexCount = static_cast<uint32_t>(model.mMesh.mIndexCount);
 
             vkCmdDrawIndexed(
                 commandpool.mCommandBuffers[frameIndex],
                 indexCount,
-                400,
+                instanceCount,
                 indexOffset,
                 0,
-                0
+                instanceOffset
             );
+
+            instanceOffset += instanceCount;
         }
 
         vkCmdEndRenderPass(commandpool.mCommandBuffers[frameIndex]);

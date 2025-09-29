@@ -7,5 +7,6 @@
 struct BasicRenderComponent
 {
 	glm::mat4 mTransform;
+	int mModelId;
 	int mTextureId;
 };

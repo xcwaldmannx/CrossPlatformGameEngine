@@ -5,9 +5,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 struct UniformBufferObject {
-	glm::mat4 model;
-	glm::mat4 view;
-	glm::mat4 projection;
+	glm::mat4 mView;
+	glm::mat4 mProj;
 };
 
 struct Camera {

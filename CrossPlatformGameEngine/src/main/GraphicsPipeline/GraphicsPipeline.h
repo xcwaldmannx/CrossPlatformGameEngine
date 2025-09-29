@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Vulkan/Window/WindowManager.h"
+#include "../WindowManager/WindowManager.h"
 #include "VulkanInstance/VulkanInstance.h"
 #include "SurfaceHandler/SurfaceHandler.h"
 #include "PhysicalDeviceHandler/PhysicalDeviceHandler.h"
@@ -9,7 +9,8 @@
 #include "DescriptorSetHandler/DescriptorSetHandler.h"
 #include "SwapchainHandler/SwapchainHandler.h"
 #include "RenderPassHandler/RenderPassHandler.h"
-#include "PipelineHandler/PipelineHandler.h"
+//#include "PipelineHandler/PipelineHandler.h"
+#include "../Pipelines/WireframePipeline.h"
 #include "CommandHandler/CommandHandler.h"
 
 #include "Resource/ResourceCommonFunctions.h"
@@ -28,6 +29,8 @@
 
 #include <optional>
 #include <vector>
+#include <map>
+#include <unordered_map>
 
 #ifndef GLFW_INCLUDE_VULKAN
 #define GLFW_INCLUDE_VULKAN
@@ -41,9 +44,10 @@
 #include <vulkan/vulkan.h>
 
 struct alignas(16) PerEntityData {
-	glm::mat4 transform;
-	int textureIdx;
-	int pad0[3];
+	glm::mat4 mTransform;
+	int mModelId;
+	int mTextureId;
+	int pad0[2];
 };
 
 /*
@@ -61,7 +65,8 @@ public:
 	void setTextures(const std::vector<const char*>& filepaths);
 
 	bool isRunning();
-	void submit(std::vector<BasicRenderComponent> renderComponents);
+	void submit(std::vector<BasicRenderComponent>& renderComponents);
+	void pollEvents();
 	void render();
 
 private:
@@ -71,9 +76,7 @@ private:
 	void createSyncObjects();
 	void destroySyncObjects();
 
-	void createEntities();
 	void createBuffers();
-	void createTextures();
 	void createDepthTexture();
 
 	void updateUniformBuffer(uint32_t currentImage, ascen::Buffer& buffer);
@@ -82,7 +85,7 @@ private:
 	void drawFrame();
 
 private:
-	vulkan::WindowManager mWindowManager;
+	WindowManager mWindowManager;
 	ascen::VulkanInstance mInstance;
 
 	ascen::Surface mSurface;
@@ -101,7 +104,7 @@ private:
 
 	ascen::RenderPass mRenderPass;
 
-	ascen::Pipeline mPipeline;
+	std::shared_ptr<ascen::Pipeline> mPipeline = nullptr;
 
 	ascen::CommandPool mCommandPool;
 
@@ -128,6 +131,7 @@ private:
 
 	ModelManager mModelManager;
 	std::unordered_map<std::string, size_t> mModelOffets;
+	std::map<int, int> mModelIdToCount;
 
 	std::vector<const char*> mTextureFilepaths;
 
@@ -135,6 +139,4 @@ private:
 	//std::vector<ascen::Texture> mDiffuseTextures;
 	//std::vector<ascen::Texture> mNormalTextures;
 	//std::vector<ascen::Texture> mEmissionTextures;
-
-	std::vector<Entity> mEntities;
 };

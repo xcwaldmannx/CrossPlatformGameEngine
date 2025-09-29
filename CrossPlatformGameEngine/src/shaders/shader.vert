@@ -1,17 +1,16 @@
 #version 450
 
 layout(binding = 0) uniform UniformBufferObject {
-    mat4 model;
     mat4 view;
     mat4 proj;
 } ubo;
 
 struct PerEntityData {
     mat4 transform;
+    int modelId;
     int textureId;
     int _pad0;
     int _pad1;
-    int _pad2;
 };
 
 layout(std430, binding = 1) readonly buffer perEntityDataArray {

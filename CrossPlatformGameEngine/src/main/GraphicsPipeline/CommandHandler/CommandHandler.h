@@ -3,10 +3,14 @@
 #include "../LogicalDeviceHandler/LogicalDeviceHandler.h"
 #include "../SwapchainHandler/SwapchainHandler.h"
 #include "../RenderPassHandler/RenderPassHandler.h"
-#include "../PipelineHandler/PipelineHandler.h"
+#include "../../Pipelines/Pipeline.h"
+#include "../DescriptorSetHandler/DescriptorSetHandler.h"
 
 #include "../Entity.h"
 
+#include <memory>
+
+#include<map>
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -16,7 +20,6 @@ namespace ascen {
 
     struct Buffer;
     struct DescriptorGroup;
-    struct Pipeline;
     struct RenderPass;
 
     struct CommandPool {
@@ -25,10 +28,10 @@ namespace ascen {
     };
 
     struct DrawInfo {
-        std::vector<Entity>* mEntities;
         ascen::Buffer* mVertexBuffer;
         ascen::Buffer* mIndexBuffer;
-        //ascen::Buffer* mInstanceBuffer;
+        ModelManager* mModelManager;
+        std::map<int, int>* mModelIdToCount;
 	    DescriptorGroup* mDescriptorGroup;
     };
 
@@ -81,7 +84,7 @@ namespace ascen {
         uint32_t imageIndex,
         Swapchain& swapchain,
         RenderPass& renderpass,
-        Pipeline& pipeline,
+        std::shared_ptr<Pipeline> pipeline,
         CommandPool& commandpool);
 
     /**

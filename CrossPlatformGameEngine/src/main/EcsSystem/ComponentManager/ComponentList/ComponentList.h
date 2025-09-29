@@ -64,7 +64,7 @@ public:
 		return mEntityToComponentIdx.find(entity) != mEntityToComponentIdx.end();
 	}
 
-	std::vector<T> toList()
+	std::vector<T>& toList()
 	{
 		return mComponents;
 	}

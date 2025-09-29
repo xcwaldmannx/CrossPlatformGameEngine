@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include <vulkan/vulkan.h>
+
 /*
 Begin ShaderHandler Implementation
 */
@@ -23,8 +25,33 @@ namespace ascen {
 		}
 	}
 
-	void destroyShader(LogicalDevice& logicalDevice, ShaderModule& module) {
-		vkDestroyShaderModule(logicalDevice.mDevice, module.mShaderModule, nullptr);
+	void destroyShader(LogicalDevice& device, ShaderModule& module) {
+		vkDestroyShaderModule(device.mDevice, module.mShaderModule, nullptr);
+	}
+
+	void createShaderStage(
+		VkDevice device,
+		const std::vector<char>& byteCode,
+		VkShaderStageFlagBits stageFlags,
+		ShaderStage* stage)
+	{
+		VkShaderModuleCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.codeSize = byteCode.size();
+		createInfo.pCode = reinterpret_cast<const uint32_t*>(byteCode.data());
+
+		if (vkCreateShaderModule(device, &createInfo, nullptr, &stage->mModule) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create shader stage!");
+		}
+
+		stage->mInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		stage->mInfo.stage = stageFlags;
+		stage->mInfo.module = stage->mModule;
+		stage->mInfo.pName = "main";
+	}
+
+	void destroyShaderStage(VkDevice device, ShaderStage& module) {
+		vkDestroyShaderModule(device, module.mModule, nullptr);
 	}
 
 }

@@ -9,14 +9,11 @@
 #include <stdexcept>
 #include <chrono>
 
-/*
-Begin GraphicsPipeline Implementation
-*/
-
 void GraphicsPipeline::create()
 {
 	// Create a GLFW window to display graphics
-	mWindowManager.create();
+	mWindowManager.init();
+	glfwSwapInterval(1);
 
 	// Create the vulkan instance
 	ascen::createVulkanInstance(&mInstance);
@@ -61,9 +58,8 @@ void GraphicsPipeline::create()
 	// create sync objects
 	createSyncObjects();
 
-	// create buffers and textures
+	// create buffers
 	createBuffers();
-	createTextures();
 
 	loadModels();
 	loadTextures();
@@ -89,30 +85,15 @@ void GraphicsPipeline::create()
 
 	ascen::createDescriptorGroup(descriptorGroupInfo, &mDescriptorGroup);
 
-	// create shaders
-	auto vertShaderCode = FileIO::readFile("src/shaders/vert.spv");
-	auto fragShaderCode = FileIO::readFile("src/shaders/frag.spv");
-
-	ShaderModule vertShader;
-	ShaderModule fragShader;
-	ascen::createShader(mLogicalDevice, vertShaderCode, &vertShader);
-	ascen::createShader(mLogicalDevice, fragShaderCode, &fragShader);
-
 	// create pipeline
-	ascen::createPipeline(
-		mLogicalDevice,
-		mSwapchain,
-		vertShader,
-		fragShader,
-		mDescriptorGroup,
-		mRenderPass,
-		&mPipeline);
+	mPipeline = std::make_shared<WireframePipeline>(
+		"src/shaders/vert.spv",
+		"src/shaders/frag.spv",
+		mSwapchain.mExtent,
+		mDescriptorGroup.mLayout,
+		mRenderPass.mRenderPass);
 
-	// destroy shaders after creating the pipeline
-	ascen::destroyShader(mLogicalDevice, vertShader);
-	ascen::destroyShader(mLogicalDevice, fragShader);
-
-	createEntities();
+	mPipeline->create(mLogicalDevice.mDevice);
 }
 
 bool GraphicsPipeline::isRunning()
@@ -163,38 +144,6 @@ void GraphicsPipeline::loadTextures()
 	ascen::createTextureArray(texInfo, rawImages, &mTextureArray);
 }
 
-void GraphicsPipeline::createEntities()
-{
-	//Entity e1;
-	//e1.mModel = mModelManager.getModel("model_00");
-	//e1.mTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0, 4, 0));
-	//e1.mTextureIndex = 0;
-	//mEntities.emplace_back(std::move(e1));
-
-	//Entity e2;
-	//e2.mModel = mModelManager.getModel("model_01");
-	//e2.mTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0, -4, 0));
-	//e2.mTextureIndex = 1;
-	//mEntities.emplace_back(std::move(e2));
-
-	Entity e3;
-	e3.mModel = mModelManager.getModel("model_03");
-	e3.mTransform = glm::translate(glm::mat4(1.0f), glm::vec3(0, -4, 0));
-	e3.mTextureIndex = 1;
-	mEntities.emplace_back(std::move(e3));
-
-	// create per-entity data
-	//for (size_t i = 0; i < mEntities.size(); i++)
-	//{
-	//	PerEntityData perEntityData;
-	//	perEntityData.transform = mEntities[i].mTransform;
-	//	perEntityData.textureIdx = mEntities[i].mTextureIndex;
-	//	mEntityData.emplace_back(std::move(perEntityData));
-	//}
-
-	//std::cout << "PerEntityData count: " << mEntityData.size() << "\n";
-}
-
 void GraphicsPipeline::createBuffers()
 {
 	// setup create buffer info to easily create buffers
@@ -206,56 +155,11 @@ void GraphicsPipeline::createBuffers()
 	// create uniform buffer with enough memory for each frame in flight
 	ascen::createUniformBuffer<UniformBufferObject>(mCreateBufferInfo, MAX_FRAMES_IN_FLIGHT, mUniformBuffer);
 
-	// create vertex buffer containing all vertex data
-
-	//mModelManager.createModel("model_00", "C:\\Users\\xcwal\\Documents\\Models\\testmodel0.fbx");
-	//mModelManager.createModel("model_01", "C:\\Users\\xcwal\\Documents\\Models\\testmodel.fbx");
-	//mModelManager.createModel("model_02", "C:\\Users\\xcwal\\Documents\\Models\\testmodel_1.fbx");
-	//mModelManager.createModel("model_03", "C:\\Users\\xcwal\\Documents\\Models\\testmodel_2.fbx");
-	//mModelManager.createModel("snail", "C:\\Users\\xcwal\\Documents\\Models\\snail.fbx");
-
-	//ascen::createVertexBuffer<Vertex>(mCreateBufferInfo, mVertexBuffer, mModelManager.getVertices());
-	//ascen::createIndexBuffer<uint32_t>(mCreateBufferInfo, mIndexBuffer, mModelManager.getIndices());
-
 	// create entity data buffer and instance buffer
-	std::vector<PerEntityData> allocateEntities(400);
+	std::vector<PerEntityData> allocateEntities(128'000);
 	ascen::createStorageBuffer<PerEntityData>(mCreateBufferInfo, allocateEntities, mStorageBuffer);
 
 	// ascen::createVertexBuffer<Instance>(mCreateBufferInfo, mInstanceBuffer, { {1}, {0} });
-}
-
-void GraphicsPipeline::createTextures() 
-{
-	//ascen::ImageCreateInfo imgInfo{};
-	//imgInfo.mPhysicalDevice = &mPhysicalDevice;
-	//imgInfo.mLogicalDevice = &mLogicalDevice;
-	//imgInfo.mCommandPool = &mCommandPool;
-	//imgInfo.mGraphicsQueue = ascen::getDeviceQueue(mLogicalDevice, mGraphicsFamily.value());
-	//imgInfo.mUsage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	//imgInfo.mProperties = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT;
-	//imgInfo.mFormat = VK_FORMAT_R8G8B8A8_SRGB;
-	//imgInfo.mTiling = VK_IMAGE_TILING_OPTIMAL;
-	//imgInfo.mFlags = VK_IMAGE_ASPECT_COLOR_BIT;
-
-	//ascen::TextureArrayCreateInfo texInfo{};
-	//texInfo.mImageCreateInfo = &imgInfo;
-	//texInfo.mSampler; // = someSampler;
-
-	//std::vector<const char*> filepaths =
-	//{
-	//	"C:\\Users\\xcwal\\OneDrive\\Desktop\\testimg1.png",
-	//	"C:\\Users\\xcwal\\OneDrive\\Desktop\\testimg2.png",
-	//	//"C:\\Users\\xcwal\\Documents\\Models\\Ernest_body_base color.png",
-	//};
-
-	//std::vector<RawImage> rawImages;
-	//rawImages.resize(filepaths.size());
-	//for (size_t i = 0; i < filepaths.size(); i++)
-	//{
-	//	ImageLoader::loadImage(filepaths[i], &rawImages[i]);
-	//}
-
-	//ascen::createTextureArray(texInfo, rawImages, &mTextureArray);
 }
 
 void GraphicsPipeline::createDepthTexture() 
@@ -304,7 +208,7 @@ void GraphicsPipeline::destroy()
 	destroySyncObjects();
 
 	ascen::destroyCommandPool(mLogicalDevice, mCommandPool);
-	ascen::destroyPipeline(mLogicalDevice, mPipeline);
+	mPipeline->destroy(mLogicalDevice.mDevice);
 	ascen::destroyRenderPass(mLogicalDevice, mRenderPass);
 	ascen::destroySwapchain(mLogicalDevice, mSwapchain);
 	ascen::destroyDescriptorGroup(mLogicalDevice, mDescriptorGroup);
@@ -316,22 +220,55 @@ void GraphicsPipeline::destroy()
 	mWindowManager.destroy();
 }
 
-void GraphicsPipeline::submit(std::vector<BasicRenderComponent> renderComponents)
+void GraphicsPipeline::submit(std::vector<BasicRenderComponent>& renderComponents)
 {
-	for (const auto& component : renderComponents)
+	mEntityData.reserve(renderComponents.size());
+
+	for (auto& component : renderComponents)
 	{
-		PerEntityData data;
-		data.transform = component.mTransform;
-		data.textureIdx = component.mTextureId;
+		mModelIdToCount[component.mModelId]++;
+
+		PerEntityData data{};
+		data.mTransform = component.mTransform;
+		data.mModelId = component.mModelId;
+		data.mTextureId = component.mTextureId;
 		mEntityData.emplace_back(std::move(data));
 	}
+
+	std::sort(mEntityData.begin(), mEntityData.end(), [](PerEntityData a, PerEntityData b) {
+		return a.mModelId < b.mModelId;
+	});
+
+	// sanity check
+	size_t i = 0;
+	for (const auto& [modelId, count] : mModelIdToCount)
+	{
+		for (size_t j = 0; j < count; ++j)
+		{
+			if (mEntityData[i + j].mModelId != modelId)
+			{
+				std::cerr << "Mismatch at index " << (i + j)
+					<< ": expected modelId " << modelId
+					<< ", got " << mEntityData[i + j].mModelId << "\n";
+				assert(false);
+			}
+		}
+		i += count;
+	}
+
+}
+
+// abstract away from GP, handle on separate thread
+void GraphicsPipeline::pollEvents()
+{
+	glfwPollEvents();
 }
 
 void GraphicsPipeline::render()
 {
-	glfwPollEvents();
 	drawFrame();
 
+	mModelIdToCount.clear();
 	mEntityData.clear();
 }
 
@@ -377,12 +314,10 @@ void GraphicsPipeline::updateUniformBuffer(uint32_t currentImage, ascen::Buffer&
 	float time = std::chrono::duration<float, std::chrono::seconds::period>(currentTime - startTime).count();
 
 	UniformBufferObject ubo{};
-	// ubo.model = glm::mat4();
-	// ubo.model = glm::rotate(glm::mat4(1.0f), time * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.view = glm::lookAt(glm::vec3(15.0f, 0.0f, 6.0f), glm::vec3(0.0f, 0.0f, 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.projection = glm::perspective(glm::radians(45.0f),
-		mSwapchain.mExtent.width / (float)mSwapchain.mExtent.height, 0.1f, 100.0f);
-	ubo.projection[1][1] *= -1;
+	ubo.mView = glm::lookAt(glm::vec3(0.0f, -16.0f, 6.0f), glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.mProj = glm::perspective(glm::radians(70.0f),
+		mSwapchain.mExtent.width / (float) mSwapchain.mExtent.height, 0.01f, 100.0f);
+	ubo.mProj[1][1] *= -1;
 
 	uint8_t offset = currentImage * sizeof(UniformBufferObject);
 	uint8_t* target = reinterpret_cast<uint8_t*>(buffer.mMappedMemory);
@@ -392,14 +327,17 @@ void GraphicsPipeline::updateUniformBuffer(uint32_t currentImage, ascen::Buffer&
 
 void GraphicsPipeline::updateStorageBuffer(ascen::Buffer& buffer, std::vector<PerEntityData>& data)
 {
-	ascen::copyStorageBuffer<PerEntityData>(
-		mPhysicalDevice,
-		mLogicalDevice,
-		ascen::getDeviceQueue(mLogicalDevice, mGraphicsFamily.value()),
-		mCommandPool,
-		data,
-		buffer,
-		true);
+	if (!data.empty())
+	{
+		ascen::copyStorageBuffer<PerEntityData>(
+			mPhysicalDevice,
+			mLogicalDevice,
+			ascen::getDeviceQueue(mLogicalDevice, mGraphicsFamily.value()),
+			mCommandPool,
+			data,
+			buffer,
+			true);
+	}
 }
 
 
@@ -441,11 +379,12 @@ void GraphicsPipeline::drawFrame()
 	updateUniformBuffer(mCurrentFrame, mUniformBuffer);
 	updateStorageBuffer(mStorageBuffer, mEntityData);
 
+
 	ascen::DrawInfo drawInfo {
-		&mEntities,
 		&mVertexBuffer,
 		&mIndexBuffer,
-		//&mInstanceBuffer,
+		&mModelManager,
+		&mModelIdToCount,
 		&mDescriptorGroup,
 	};
 
@@ -509,7 +448,3 @@ void GraphicsPipeline::drawFrame()
 
 	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
-
-/*
-End GraphicsPipeline Implementation
-*/

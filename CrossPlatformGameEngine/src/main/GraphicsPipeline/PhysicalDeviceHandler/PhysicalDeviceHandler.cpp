@@ -83,10 +83,11 @@ namespace ascen {
         vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
         VkBool32 anisotropicSupport = supportedFeatures.samplerAnisotropy;
+        VkBool32 fillModeNonSolidSupport = supportedFeatures.fillModeNonSolid;
 
         // Result
 
-        return hasQueueFamilySupport && hasSurfaceSupport && hasExtensionSupport && anisotropicSupport;
+        return hasQueueFamilySupport && hasSurfaceSupport && hasExtensionSupport && anisotropicSupport && fillModeNonSolidSupport;
     }
 
     void pickPhysicalDevice(VulkanInstance& instance, Surface& surface, PhysicalDevice* physicalDevice) {

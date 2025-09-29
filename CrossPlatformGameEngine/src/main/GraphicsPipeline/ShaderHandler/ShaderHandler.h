@@ -10,6 +10,12 @@ struct ShaderModule {
 	VkShaderModule mShaderModule;
 };
 
+struct ShaderStage
+{
+	VkShaderModule mModule;
+	VkPipelineShaderStageCreateInfo mInfo;
+};
+
 namespace ascen {
 
 	/*
@@ -29,5 +35,18 @@ namespace ascen {
 	RTRN: void
 	DESC: Handles Shader Module destruction
 	*/
-	void destroyShader(LogicalDevice& logicalDevice, ShaderModule& module);
+	void destroyShader(
+		LogicalDevice& logicalDevice,
+		ShaderModule& module);
+
+	void createShaderStage(
+		VkDevice device,
+		const std::vector<char>& byteCode,
+		VkShaderStageFlagBits stageFlags,
+		ShaderStage* stage);
+
+	void destroyShaderStage(
+		VkDevice device,
+		ShaderStage& module);
+
 };
