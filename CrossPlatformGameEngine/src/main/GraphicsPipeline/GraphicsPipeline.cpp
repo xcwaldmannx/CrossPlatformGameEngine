@@ -3,7 +3,9 @@
 #include "../Utility/FileIO/FileIO.h"
 #include "ShaderHandler/ShaderHandler.h"
 
+#include "../Graphics/Vertex/TextureVertex.h"
 #include "Vertex/Vertex.h"
+
 #include "Instance/Instance.h"
 
 #include <stdexcept>
@@ -34,23 +36,33 @@ void GraphicsPipeline::create()
 		&mLogicalDevice);
 
 	// create a swapchain
-	ascen::createSwapchain(
+	mSwapchain = std::make_shared<ascen::Swapchain>(
 		mWindowManager.getWindow(),
-		mPhysicalDevice,
-		mLogicalDevice,
-		mSurface,
+		mPhysicalDevice.mDevice,
+		mLogicalDevice.mDevice,
+		mSurface.mSurface,
 		mGraphicsFamily.value(),
-		mPresentFamily.value(),
-		mSwapchain);
+		mPresentFamily.value());
+
+	mSwapchain->create(mLogicalDevice.mDevice);
 
 	// create a renderpass
-	ascen::createRenderPass(mPhysicalDevice, mLogicalDevice, mSwapchain, mRenderPass);
+	mRenderPass = std::make_shared<ascen::RenderPass>(
+		mPhysicalDevice.mDevice,
+		mLogicalDevice.mDevice,
+		mSwapchain->mSwapchain,
+		mRenderPass->mRenderPass);
+
+	mRenderPass->create(mLogicalDevice.mDevice);
 
 	// create the depth buffer/texture
 	createDepthTexture();
 
 	// create frame buffers
-	ascen::createFrameBuffers(mLogicalDevice, mSwapchain, mRenderPass, mDepthTexture);
+	mSwapchain->createFrameBuffers(
+		mLogicalDevice.mDevice,
+		mRenderPass->mRenderPass,
+		mDepthTexture.mView);
 
 	// create command pool
 	ascen::createCommandPool(mLogicalDevice, mGraphicsFamily.value(), &mCommandPool);
@@ -89,9 +101,9 @@ void GraphicsPipeline::create()
 	mPipeline = std::make_shared<WireframePipeline>(
 		"src/shaders/vert.spv",
 		"src/shaders/frag.spv",
-		mSwapchain.mExtent,
+		mSwapchain->getExtent(),
 		mDescriptorGroup.mLayout,
-		mRenderPass.mRenderPass);
+		mRenderPass->mRenderPass);
 
 	mPipeline->create(mLogicalDevice.mDevice);
 }
@@ -177,7 +189,7 @@ void GraphicsPipeline::createDepthTexture()
 
 	ascen::DepthImageCreateInfo depthImgInfo{};
 	depthImgInfo.mImageCreateInfo = &imgInfo;
-	depthImgInfo.mSwapchain = &mSwapchain;
+	depthImgInfo.mExtent = &mSwapchain->getExtent();
 
 	ascen::DepthTextureCreateInfo depthTexInfo{};
 	depthTexInfo.mDepthImageCreateInfo = &depthImgInfo;
@@ -209,8 +221,8 @@ void GraphicsPipeline::destroy()
 
 	ascen::destroyCommandPool(mLogicalDevice, mCommandPool);
 	mPipeline->destroy(mLogicalDevice.mDevice);
-	ascen::destroyRenderPass(mLogicalDevice, mRenderPass);
-	ascen::destroySwapchain(mLogicalDevice, mSwapchain);
+	mRenderPass->destroy(mLogicalDevice.mDevice);
+	mSwapchain->destroy(mLogicalDevice.mDevice);
 	ascen::destroyDescriptorGroup(mLogicalDevice, mDescriptorGroup);
 	ascen::destroyLogicalDevice(mLogicalDevice);
 	ascen::destroySurface(mInstance, mSurface);
@@ -316,7 +328,7 @@ void GraphicsPipeline::updateUniformBuffer(uint32_t currentImage, ascen::Buffer&
 	UniformBufferObject ubo{};
 	ubo.mView = glm::lookAt(glm::vec3(0.0f, -16.0f, 6.0f), glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	ubo.mProj = glm::perspective(glm::radians(70.0f),
-		mSwapchain.mExtent.width / (float) mSwapchain.mExtent.height, 0.01f, 100.0f);
+		mSwapchain->getExtent().width / (float)mSwapchain->getExtent().height, 0.01f, 100.0f);
 	ubo.mProj[1][1] *= -1;
 
 	uint8_t offset = currentImage * sizeof(UniformBufferObject);
@@ -348,7 +360,7 @@ void GraphicsPipeline::drawFrame()
 	uint32_t imageIndex;
 	VkResult nextImageResult = vkAcquireNextImageKHR(
 		mLogicalDevice.mDevice,
-		mSwapchain.mSwapchain,
+		mSwapchain->mSwapchain,
 		UINT64_MAX,
 		mImageAvailableSemaphores[mCurrentFrame],
 		VK_NULL_HANDLE,
@@ -356,17 +368,26 @@ void GraphicsPipeline::drawFrame()
 
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		ascen::recreateSwapchain(
+		mSwapchain->destroy(mLogicalDevice.mDevice);
+		mSwapchain.reset();
+		mSwapchain = std::make_shared<ascen::Swapchain>(
 			mWindowManager.getWindow(),
-			mPhysicalDevice,
-			mLogicalDevice,
-			mSurface,
+			mPhysicalDevice.mDevice,
+			mLogicalDevice.mDevice,
+			mSurface.mSurface,
 			mGraphicsFamily.value(),
-			mPresentFamily.value(),
-			mSwapchain);
+			mPresentFamily.value());
+
+		mSwapchain->create(mLogicalDevice.mDevice);
+
 		ascen::destroyDepthTexture(mLogicalDevice, mDepthTexture);
 		createDepthTexture();
-		ascen::createFrameBuffers(mLogicalDevice, mSwapchain, mRenderPass, mDepthTexture);
+
+		mSwapchain->createFrameBuffers(
+			mLogicalDevice.mDevice,
+			mRenderPass->mRenderPass,
+			mDepthTexture.mView);
+
 		return;
 	}
 	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
@@ -388,7 +409,7 @@ void GraphicsPipeline::drawFrame()
 		&mDescriptorGroup,
 	};
 
-	ascen::recordCommandPool(drawInfo, mCurrentFrame, imageIndex, mSwapchain, mRenderPass, mPipeline, mCommandPool);
+	ascen::recordCommandPool(drawInfo, mCurrentFrame, imageIndex, mSwapchain, mRenderPass->mRenderPass, mPipeline, mCommandPool);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -418,7 +439,7 @@ void GraphicsPipeline::drawFrame()
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapChains[] = { mSwapchain.mSwapchain };
+	VkSwapchainKHR swapChains[] = { mSwapchain->mSwapchain };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
@@ -429,17 +450,25 @@ void GraphicsPipeline::drawFrame()
 
 	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR)
 	{
-		ascen::recreateSwapchain(
+		mSwapchain->destroy(mLogicalDevice.mDevice);
+		mSwapchain.reset();
+		mSwapchain = std::make_shared<ascen::Swapchain>(
 			mWindowManager.getWindow(),
-			mPhysicalDevice,
-			mLogicalDevice,
-			mSurface,
+			mPhysicalDevice.mDevice,
+			mLogicalDevice.mDevice,
+			mSurface.mSurface,
 			mGraphicsFamily.value(),
-			mPresentFamily.value(),
-			mSwapchain);
+			mPresentFamily.value());
+
+		mSwapchain->create(mLogicalDevice.mDevice);
+
 		ascen::destroyDepthTexture(mLogicalDevice, mDepthTexture);
 		createDepthTexture();
-		ascen::createFrameBuffers(mLogicalDevice, mSwapchain, mRenderPass, mDepthTexture);
+
+		mSwapchain->createFrameBuffers(
+			mLogicalDevice.mDevice,
+			mRenderPass->mRenderPass,
+			mDepthTexture.mView);
 	}
 	else if (queuePresentResult != VK_SUCCESS)
 	{

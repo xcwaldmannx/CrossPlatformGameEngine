@@ -2,8 +2,8 @@
 
 #include "../LogicalDeviceHandler/LogicalDeviceHandler.h"
 #include "../SwapchainHandler/SwapchainHandler.h"
-#include "../RenderPassHandler/RenderPassHandler.h"
-#include "../../Pipelines/Pipeline.h"
+#include "../../Graphics/RenderPass/RenderPass.h"
+#include "../../Graphics/Pipeline/Pipeline.h"
 #include "../DescriptorSetHandler/DescriptorSetHandler.h"
 
 #include "../Entity.h"
@@ -82,8 +82,9 @@ namespace ascen {
         DrawInfo& drawInfo,
         uint32_t frameIndex,
         uint32_t imageIndex,
-        Swapchain& swapchain,
-        RenderPass& renderpass,
+        const VkExtent2D& renderAreaExtent,
+        const std::vector<VkFramebuffer> frameBuffers,
+        VkRenderPass renderPass,
         std::shared_ptr<Pipeline> pipeline,
         CommandPool& commandpool);
 

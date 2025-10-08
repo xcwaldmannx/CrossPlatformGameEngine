@@ -14,7 +14,8 @@ if (CMAKE_VERSION VERSION_GREATER 3.12)
   set_property(TARGET CrossPlatformGameEngine PROPERTY CXX_STANDARD 20)
 endif()
 
-# TODO: Add tests and install targets if needed.
+# disable dlls
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 
 # VulkanSDK
 
@@ -32,7 +33,6 @@ message(STATUS "Vulkan Include Path: ${Vulkan_INCLUDE_DIRS}")
 set(GLFW_BUILD_DOCS OFF CACHE BOOL "Disable GLFW documentation" FORCE)
 set(GLFW_BUILD_TESTS OFF CACHE BOOL "Disable GLFW tests" FORCE)
 set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "Disable GLFW examples" FORCE)
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build GLFW as a static library" FORCE)
 
 # Add the GLFW source directory
 add_subdirectory(${CMAKE_SOURCE_DIR}/Vendor/glfw3 ${CMAKE_BINARY_DIR}/glfw3_build)

@@ -204,8 +204,8 @@ namespace ascen {
 	}
 
 	void createDepthImage(const DepthImageCreateInfo& info, Image* image) {
-		image->mWidth = info.mSwapchain->mExtent.width;
-		image->mHeight = info.mSwapchain->mExtent.height;
+		image->mWidth = info.mExtent->width;
+		image->mHeight = info.mExtent->height;
 		image->mLayers = 1;
 
 		VkImageCreateInfo imageInfo{};

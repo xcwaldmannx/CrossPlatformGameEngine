@@ -35,9 +35,23 @@ namespace ascen {
 
         VkPhysicalDeviceFeatures deviceFeatures{};
         deviceFeatures.samplerAnisotropy = VK_TRUE;
+        deviceFeatures.fillModeNonSolid = VK_TRUE;
+
+        // this section allows access to all features, not just core 1.0 features.
+        // This is not currently necessary but is here for later use.
+        // -------------------------------------------------------------------------------------
+        //VkPhysicalDeviceShaderDrawParametersFeatures ext_feature = {};
+        //ext_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
+
+        //VkPhysicalDeviceFeatures2 physical_features2 = {};
+        //physical_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+        //physical_features2.pNext = &ext_feature;
+
+        //vkGetPhysicalDeviceFeatures2(physicalDevice.mDevice, &physical_features2);
 
         VkDeviceCreateInfo createInfo{};
         createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+        // createInfo.pNext = &physical_features2;
         createInfo.pQueueCreateInfos = queueCreateInfos.data();
         createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
         createInfo.pEnabledFeatures = &deviceFeatures;

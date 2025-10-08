@@ -1,5 +1,7 @@
 #include "ModelManager.h"
 
+#include "../GraphicsPipeline/Vertex/Vertex.h"
+
 #include <iostream>
 #include <stdexcept>
 

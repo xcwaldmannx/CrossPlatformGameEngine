@@ -42,8 +42,9 @@ namespace ascen {
         DrawInfo& drawInfo,
         uint32_t frameIndex,
         uint32_t imageIndex,
-        Swapchain& swapchain,
-        RenderPass& renderpass,
+        const VkExtent2D& renderAreaExtent,
+        const std::vector<VkFramebuffer> frameBuffers,
+        VkRenderPass renderPass,
         std::shared_ptr<Pipeline> pipeline,
         CommandPool& commandpool) {
 
@@ -60,10 +61,10 @@ namespace ascen {
 
         VkRenderPassBeginInfo renderPassInfo{};
         renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        renderPassInfo.renderPass = renderpass.mRenderPass;
-        renderPassInfo.framebuffer = swapchain.mFrameBuffers[imageIndex];
+        renderPassInfo.renderPass = renderPass;
+        renderPassInfo.framebuffer = frameBuffers[imageIndex];
         renderPassInfo.renderArea.offset = { 0, 0 };
-        renderPassInfo.renderArea.extent = swapchain.mExtent;
+        renderPassInfo.renderArea.extent = renderAreaExtent;
 
         std::array<VkClearValue, 2> clearValues{};
         clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
@@ -78,15 +79,15 @@ namespace ascen {
         VkViewport viewport{};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(swapchain.mExtent.width);
-        viewport.height = static_cast<float>(swapchain.mExtent.height);
+        viewport.width = static_cast<float>(renderAreaExtent.width);
+        viewport.height = static_cast<float>(renderAreaExtent.height);
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
         vkCmdSetViewport(commandpool.mCommandBuffers[frameIndex], 0, 1, &viewport);
 
         VkRect2D scissor{};
         scissor.offset = { 0, 0 };
-        scissor.extent = swapchain.mExtent;
+        scissor.extent = renderAreaExtent;
         vkCmdSetScissor(commandpool.mCommandBuffers[frameIndex], 0, 1, &scissor);
 
         std::array<uint32_t, 2> dynamicOffsets = {

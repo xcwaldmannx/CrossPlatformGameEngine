@@ -177,7 +177,6 @@ namespace ascen {
 		}
 
 		throw std::runtime_error("Failed to find suitable depth format!");
-
 	}
 
 }

@@ -25,7 +25,7 @@ namespace ascen {
 
 	struct DepthImageCreateInfo {
 		const ImageCreateInfo* mImageCreateInfo;
-		Swapchain* mSwapchain;
+		const VkExtent2D* mExtent;
 	};
 
 	struct Image {

@@ -7,10 +7,9 @@
 #include "QueueFamilyHandler/QueueFamilyHandler.h"
 #include "LogicalDeviceHandler/LogicalDeviceHandler.h"
 #include "DescriptorSetHandler/DescriptorSetHandler.h"
-#include "SwapchainHandler/SwapchainHandler.h"
-#include "RenderPassHandler/RenderPassHandler.h"
-//#include "PipelineHandler/PipelineHandler.h"
-#include "../Pipelines/WireframePipeline.h"
+#include "../Graphics/Swapchain/Swapchain.h"
+#include "../Graphics/RenderPass/RenderPass.h"
+#include "../Graphics/Pipeline/WireframePipeline.h"
 #include "CommandHandler/CommandHandler.h"
 
 #include "Resource/ResourceCommonFunctions.h"
@@ -100,10 +99,8 @@ private:
 	ascen::DescriptorGroup mDescriptorGroup;
 	std::vector<VkDescriptorSetLayoutBinding> mBindings;
 
-	ascen::Swapchain mSwapchain;
-
-	ascen::RenderPass mRenderPass;
-
+	std::shared_ptr<ascen::Swapchain> mSwapchain = nullptr;
+	std::shared_ptr<ascen::RenderPass> mRenderPass = nullptr;
 	std::shared_ptr<ascen::Pipeline> mPipeline = nullptr;
 
 	ascen::CommandPool mCommandPool;
