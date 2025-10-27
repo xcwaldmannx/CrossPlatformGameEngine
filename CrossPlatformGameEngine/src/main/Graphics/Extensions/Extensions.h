@@ -15,7 +15,7 @@ namespace ascen
 		static void add(const char** extensions, size_t count, std::vector<const char*>* extensionList);
 		static void add(std::vector<const char*> extensions, std::vector<const char*>* extensionList);
 
-		static void validate(const std::vector<const char*>& extensionList) const;
+		static void validate(const std::vector<const char*>& extensionList);
 	};
 
 }

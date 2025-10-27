@@ -28,6 +28,7 @@ namespace ascen
 
 	protected:
 		std::vector<Attachment> mAttachments;
+		std::vector<VkAttachmentDescription> mAttachmentDescriptions;
 		VkSubpassDescription mSubPassDesc{};
 		VkSubpassDependency mSubPassDependency{};
 		VkRenderPassCreateInfo mRenderPassInfo{};

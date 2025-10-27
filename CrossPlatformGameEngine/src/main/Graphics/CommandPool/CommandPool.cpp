@@ -49,7 +49,7 @@ void CommandPool::record(
     VkBuffer indexBuffer,
     std::shared_ptr<RenderPass> renderPass,
     std::shared_ptr<Swapchain> swapchain,
-    std::shared_ptr<Pipeline> pipeline)
+    std::shared_ptr<Pipeline_I> pipeline)
 {
     vkResetCommandBuffer(mCommandBuffers[frameIndex], 0);
 
@@ -129,6 +129,7 @@ void CommandPool::record(
 
     // TODO: get model data in here and render meshes appropriately
     int instanceOffset = 0;
+    /*
 
     for (auto& [modelId, instanceCount] : *drawInfo.mModelIdToCount)
     {
@@ -149,6 +150,7 @@ void CommandPool::record(
 
         instanceOffset += instanceCount;
     }
+    */
 
     vkCmdEndRenderPass(mCommandBuffers[frameIndex]);
 
@@ -193,4 +195,9 @@ void CommandPool::endSingleTimeCommands(
     vkQueueWaitIdle(graphicsQueue);
 
     vkFreeCommandBuffers(device, mHandle, 1, buffer);
+}
+
+const VkCommandBuffer* CommandPool::getBufferIndex(size_t index) const
+{
+    return &mCommandBuffers[index];
 }

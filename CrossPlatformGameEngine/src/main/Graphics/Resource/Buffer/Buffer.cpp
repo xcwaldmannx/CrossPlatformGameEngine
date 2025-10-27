@@ -46,13 +46,13 @@ void Buffer::copy(
 	commandPool->endSingleTimeCommands(device, graphicsQueue, &commandBuffer);
 }
 
-void Buffer::destroyBuffer(VkDevice device, Buffer& buffer)
+void Buffer::destroy(VkDevice device, Buffer& buffer)
 {
 	vkDestroyBuffer(device, buffer.mBuffer, nullptr);
 	vkFreeMemory(device, buffer.mMemory, nullptr);
 }
 
-BufferMemory Buffer::getMemory(
+BufferMemory Buffer::getMemoryInfo(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
 	VkBuffer buffer,
@@ -81,6 +81,16 @@ BufferMemory Buffer::getMemory(
 	return mem;
 }
 
+VkBuffer Buffer::getBuffer() const
+{
+	return mBuffer;
+}
+
+VkDeviceMemory Buffer::getMemory() const
+{
+	return mMemory;
+}
+
 Buffer::Buffer(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
@@ -100,7 +110,7 @@ Buffer::Buffer(
 		throw std::runtime_error("failed to create buffer!");
 	}
 
-	BufferMemory mem = getMemory(physicalDevice, device, mBuffer, memoryFlags);
+	BufferMemory mem = getMemoryInfo(physicalDevice, device, mBuffer, memoryFlags);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;

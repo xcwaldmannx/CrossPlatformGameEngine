@@ -4,7 +4,7 @@
 
 #include "../../Graphics/Vertex/TextureVertex.h"
 
-class TextureModelLoader : public ModelLoader<TextureVertex>
+class TextureModelLoader : public ModelLoader<ascen::TextureVertex>
 {
 private:
 	static void processModel(aiNode* node, aiMesh** meshes, Model& mesh);

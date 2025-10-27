@@ -5,6 +5,7 @@ using namespace ascen;
 void HandleManager::create(VkDevice device, Handle_I* handle)
 {
 	handle->create(device);
+	mHandles.push_back(handle);
 }
 
 void HandleManager::destroy(VkDevice device)

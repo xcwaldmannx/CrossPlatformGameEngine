@@ -13,8 +13,8 @@ namespace ascen
 	public:
 		virtual ~Handle() override = default;
 
-		virtual void create(VkDevice device) override;
-		virtual void destroy(VkDevice device) override;
+		virtual void create(VkDevice device) override = 0;
+		virtual void destroy(VkDevice device) override = 0;
 
 		T handle() const
 		{

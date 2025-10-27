@@ -62,7 +62,52 @@ namespace ascen
 				buffer,
 				false);
 
-			destroyBuffer(device, stagingBuffer);
+			destroy(device, stagingBuffer);
+
+			return buffer;
+		}
+
+		static Buffer createVertexBuffer(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkQueue graphicsQueue,
+			std::shared_ptr<CommandPool> commandPool,
+			const std::vector<float>& vertices)
+		{
+			size_t itemCount = vertices.size();
+			size_t itemSize = sizeof(vertices[0]);
+			size_t bufferSizeBytes = itemCount * itemSize;
+
+			Buffer stagingBuffer(
+				physicalDevice,
+				device,
+				itemCount,
+				itemSize,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+			void* data;
+			vkMapMemory(device, stagingBuffer.mMemory, 0, bufferSizeBytes, 0, &data);
+			std::memcpy(data, vertices.data(), bufferSizeBytes);
+			vkUnmapMemory(device, stagingBuffer.mMemory);
+
+			Buffer buffer(
+				physicalDevice,
+				device,
+				itemCount,
+				itemSize,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+			copy(
+				device,
+				graphicsQueue,
+				commandPool,
+				stagingBuffer,
+				buffer,
+				false);
+
+			destroy(device, stagingBuffer);
 
 			return buffer;
 		}
@@ -108,7 +153,7 @@ namespace ascen
 				buffer,
 				false);
 
-			destroyBuffer(device, stagingBuffer);
+			destroy(device, stagingBuffer);
 
 			return buffer;
 		}
@@ -177,12 +222,49 @@ namespace ascen
 				buffer,
 				false);
 
-			destroyBuffer(device, stagingBuffer);
+			destroy(device, stagingBuffer);
 
 			return buffer;
 		}
 
-		static void destroyBuffer(VkDevice device, Buffer& buffer);
+		template<typename T>
+		static void updateStorageBuffer(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkQueue graphicsQueue,
+			std::shared_ptr<CommandPool> commandPool,
+			Buffer& buffer,
+			const std::vector<T>& storage)
+		{
+			size_t itemCount = storage.size();
+			size_t itemSize = sizeof(storage[0]);
+			size_t bufferSizeBytes = itemCount * itemSize;
+
+			Buffer stagingBuffer(
+				physicalDevice,
+				device,
+				itemCount,
+				itemSize,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+			void* data;
+			vkMapMemory(device, stagingBuffer.mMemory, 0, bufferSizeBytes, 0, &data);
+			std::memcpy(data, storage.data(), bufferSizeBytes);
+			vkUnmapMemory(device, stagingBuffer.mMemory);
+
+			copy(
+				device,
+				graphicsQueue,
+				commandPool,
+				stagingBuffer,
+				buffer,
+				false);
+
+			destroy(device, stagingBuffer);
+		}
+
+		static void destroy(VkDevice device, Buffer& buffer);
 
 		static void copy(
 			VkDevice device,
@@ -192,11 +274,14 @@ namespace ascen
 			Buffer& dest,
 			bool insertBarrier);
 
-		static BufferMemory getMemory(
+		static BufferMemory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkBuffer buffer,
 			VkMemoryPropertyFlags memoryFlags);
+
+		VkBuffer getBuffer() const;
+		VkDeviceMemory getMemory() const;
 
 	private:
 		Buffer(
@@ -213,5 +298,8 @@ namespace ascen
 		void* mMappedMemory;
 		size_t mItemCount;      // number of elements in the buffer
 		size_t mItemSize;       // size of one element in the buffer
+
+	public:
+		friend class Image;
 	};
 }

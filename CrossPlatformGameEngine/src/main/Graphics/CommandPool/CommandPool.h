@@ -31,9 +31,8 @@ namespace ascen
 			VkBuffer indexBuffer,
 			std::shared_ptr<RenderPass> renderPass,
 			std::shared_ptr<Swapchain> swapchain,
-			std::shared_ptr<Pipeline> pipeline);
+			std::shared_ptr<Pipeline_I> pipeline);
 
-		// TODO: complete these functions
 		void beginSingleTimeCommands(
 			VkDevice device,
 			VkCommandBuffer* buffer);
@@ -42,6 +41,8 @@ namespace ascen
 			VkDevice device,
 			VkQueue queue,
 			VkCommandBuffer* buffer);
+
+		const VkCommandBuffer* getBufferIndex(size_t index) const;
 
 	protected:
 		VkCommandPoolCreateInfo mCreateInfo{};

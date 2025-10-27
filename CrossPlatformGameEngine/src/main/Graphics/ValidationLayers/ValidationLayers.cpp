@@ -4,12 +4,6 @@
 
 using namespace ascen;
 
-#ifdef NDEBUG
-const bool ENABLE_VALIDATION_LAYERS = false;
-#else
-const bool ENABLE_VALIDATION_LAYERS = true;
-#endif
-
 void ValidationLayers::add(const char* layer, std::vector<const char*>* layerList) {
     layerList->push_back(layer);
 }

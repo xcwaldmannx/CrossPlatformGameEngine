@@ -1,7 +1,7 @@
 #pragma once
 
 #include "EcsSystem/SystemManager/System/System_I.h"
-#include "GraphicsPipeline/RenderComponents.h"
+#include "BadGraphicsPipeline/RenderComponents.h"
 #include "Components.h"
 
 #include <glm/gtx/quaternion.hpp>

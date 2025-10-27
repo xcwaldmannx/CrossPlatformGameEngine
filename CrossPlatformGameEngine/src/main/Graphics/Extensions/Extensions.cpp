@@ -19,7 +19,7 @@ void Extensions::add(std::vector<const char*> extensions, std::vector<const char
     extensionList->insert(extensionList->end(), extensions.begin(), extensions.end());
 }
 
-void Extensions::validate(const std::vector<const char*>& extensionList) const
+void Extensions::validate(const std::vector<const char*>& extensionList)
 {
     uint32_t extensionCount = 0;
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr);

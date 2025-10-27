@@ -1,6 +1,7 @@
 #include "DebugMessenger.h"
 
 #include <stdexcept>
+#include <iostream>
 
 using namespace ascen;
 
@@ -20,7 +21,7 @@ VkDebugUtilsMessengerEXT DebugMessenger::create(VkInstance vkInstance)
 
     auto func = (PFN_vkCreateDebugUtilsMessengerEXT)vkGetInstanceProcAddr(vkInstance, "vkCreateDebugUtilsMessengerEXT");
 
-    VkDebugUtilsMessengerEXT messenger;
+    VkDebugUtilsMessengerEXT messenger{};
 
     if (func && func(vkInstance, &createInfo, nullptr, &messenger) != VK_SUCCESS)
     {
@@ -46,6 +47,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessenger::debugCallback(
     void* userData)
 {
 
-    std::cerr << "Validation Layer: " << callbackData->pMessage << std::endl;
+    std::cout << "Validation Layer: " << callbackData->pMessage << std::endl;
     return VK_FALSE;
 }

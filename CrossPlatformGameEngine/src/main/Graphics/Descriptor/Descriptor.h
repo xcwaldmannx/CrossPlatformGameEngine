@@ -1,11 +1,25 @@
 #pragma once
 
-#include <initializer_list>
+#include <vector>
 
 #include <vulkan/vulkan.h>
 
 namespace ascen
 {
+	struct DescriptorWrite
+	{
+		VkWriteDescriptorSet mWrite{};
+	};
+
+	struct DescriptorBufferWrite : public DescriptorWrite
+	{
+		VkDescriptorBufferInfo mInfo{};
+	};
+
+	struct DescriptorImageWrite : public DescriptorWrite
+	{
+		VkDescriptorImageInfo mInfo{};
+	};
 	
 	class Descriptor
 	{
@@ -23,7 +37,7 @@ namespace ascen
 	public:
 		static VkDescriptorPool createPool(
 			VkDevice device,
-			std::initializer_list<PoolSize> poolSizes);
+			std::vector<PoolSize>& poolSizes);
 
 		static VkDescriptorSetLayoutBinding createBinding(
 			uint32_t slot,
@@ -32,14 +46,14 @@ namespace ascen
 
 		static VkDescriptorSetLayout createLayout(
 			VkDevice device,
-			std::initializer_list<VkDescriptorSetLayoutBinding> bindings);
+			std::vector<VkDescriptorSetLayoutBinding>& bindings);
 		
 		static VkDescriptorSet createSet(
 			VkDevice device,
 			VkDescriptorPool pool,
-			std::initializer_list<VkDescriptorSetLayout> layouts);
+			std::vector<VkDescriptorSetLayout>& layouts);
 
-		static VkWriteDescriptorSet createBufferWrite(
+		static DescriptorBufferWrite createBufferWrite(
 			VkDescriptorSet set,
 			VkDescriptorType type,
 			VkBuffer buffer,
@@ -47,7 +61,7 @@ namespace ascen
 			VkDeviceSize range,
 			uint32_t bindingSlot);
 
-		static VkWriteDescriptorSet createImageWrite(
+		static DescriptorImageWrite createImageWrite(
 			VkDescriptorSet set,
 			VkDescriptorType type,
 			VkImageView view,
@@ -56,8 +70,7 @@ namespace ascen
 
 		static void updateSet(
 			VkDevice device,
-			VkDescriptorSet set,
-			std::initializer_list<VkWriteDescriptorSet> writes);
+			std::vector<DescriptorWrite>& writes);
 
 		static void destroy(
 			VkDevice device,

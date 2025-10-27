@@ -39,43 +39,45 @@ RenderPass::RenderPass(
 
     mAttachments.push_back(depthAttachment);
 
-    VkSubpassDescription subpass{};
-    subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &mAttachments[0].mRef;
-    subpass.pDepthStencilAttachment = &mAttachments[1].mRef;
+    mSubPassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    mSubPassDesc.colorAttachmentCount = 1;
+    mSubPassDesc.pColorAttachments = &mAttachments[0].mRef;
+    mSubPassDesc.pDepthStencilAttachment = &mAttachments[1].mRef;
 
-    VkSubpassDependency dependency{};
-    dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-    dependency.dstSubpass = 0;
-    dependency.srcAccessMask = 0;
+    mSubPassDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    mSubPassDependency.dstSubpass = 0;
+    mSubPassDependency.srcAccessMask = 0;
 
-    dependency.srcStageMask =
+    mSubPassDependency.srcStageMask =
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 
-    dependency.dstStageMask =
+    mSubPassDependency.dstStageMask =
         VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT |
         VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 
-    dependency.dstAccessMask =
+    mSubPassDependency.dstAccessMask =
         VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
         VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
-    std::array<VkAttachmentDescription, 2> attachments = { colorAttachment.mDesc, depthAttachment.mDesc };
+    for (auto& attachment : mAttachments)
+    {
+        mAttachmentDescriptions.push_back(attachment.mDesc);
+    }
 
     mRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    mRenderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
-    mRenderPassInfo.pAttachments = attachments.data();
+    mRenderPassInfo.attachmentCount = static_cast<uint32_t>(mAttachmentDescriptions.size());
+    mRenderPassInfo.pAttachments = mAttachmentDescriptions.data();
     mRenderPassInfo.subpassCount = 1;
-    mRenderPassInfo.pSubpasses = &subpass;
+    mRenderPassInfo.pSubpasses = &mSubPassDesc;
     mRenderPassInfo.dependencyCount = 1;
-    mRenderPassInfo.pDependencies = &dependency;
+    mRenderPassInfo.pDependencies = &mSubPassDependency;
 }
 
 void RenderPass::create(VkDevice device)
 {
-    if (vkCreateRenderPass(device, &mRenderPassInfo, nullptr, &mHandle) != VK_SUCCESS) {
+    if (vkCreateRenderPass(device, &mRenderPassInfo, nullptr, &mHandle) != VK_SUCCESS)
+    {
         throw std::runtime_error("failed to create render pass!");
     }
 }
