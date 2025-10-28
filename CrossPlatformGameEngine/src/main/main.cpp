@@ -10,6 +10,7 @@
 #include "Utility/OctTree/OctTree.h"
 
 #include <chrono>
+#include <thread>
 
 #include <string>
 
@@ -203,13 +204,41 @@ void testEcs() {
 //
 //	gp.destroy();
 //}
+std::atomic<bool> running = true;
+void drawLoop(MyGraphicsPipeline* gp)
+{
+	while (running)
+	{
+		if (gp->isResized())
+		{
+			gp->resize();
+		}
+
+		gp->drawFrame();
+	}
+}
 
 void testGraphics2()
 {
-	MyGraphicsPipeline gp;
+	WindowManager wm;
+	wm.init();
+
+	MyGraphicsPipeline gp(wm);
+
 	gp.create();
 
+	std::thread renderThread(drawLoop, &gp);
+		
+	while (wm.isRunning())
+	{
+		wm.pollEvents();
+	}
+
+	running = false;
+	renderThread.join();
+
 	gp.destroy();
+	wm.destroy();
 
 }
 

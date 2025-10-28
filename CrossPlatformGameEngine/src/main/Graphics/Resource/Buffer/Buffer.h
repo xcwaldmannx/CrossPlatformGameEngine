@@ -3,6 +3,7 @@
 #include "../../Vertex/Vertex_I.h"
 #include "../../CommandPool/CommandPool.h"
 
+#include <iostream>
 #include <concepts>
 #include <memory>
 
@@ -117,7 +118,7 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
+			const std::shared_ptr<CommandPool>& commandPool,
 			const std::vector<T>& indices)
 		{
 			size_t itemCount = indices.size();
@@ -186,11 +187,11 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
+			const std::shared_ptr<CommandPool>& commandPool,
 			const std::vector<T>& storage)
 		{
 			size_t itemCount = storage.size();
-			size_t itemSize = sizeof(storage[0]);
+			size_t itemSize = sizeof(T);
 			size_t bufferSizeBytes = itemCount * itemSize;
 
 			Buffer stagingBuffer(
@@ -232,12 +233,12 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
+			const std::shared_ptr<CommandPool>& commandPool,
 			Buffer& buffer,
 			const std::vector<T>& storage)
 		{
 			size_t itemCount = storage.size();
-			size_t itemSize = sizeof(storage[0]);
+			size_t itemSize = sizeof(T);
 			size_t bufferSizeBytes = itemCount * itemSize;
 
 			Buffer stagingBuffer(
@@ -269,7 +270,7 @@ namespace ascen
 		static void copy(
 			VkDevice device,
 			VkQueue queue,
-			std::shared_ptr<CommandPool> commandPool,
+			const std::shared_ptr<CommandPool>& commandPool,
 			Buffer& src,
 			Buffer& dest,
 			bool insertBarrier);
@@ -282,6 +283,7 @@ namespace ascen
 
 		VkBuffer getBuffer() const;
 		VkDeviceMemory getMemory() const;
+		void* getMappedMemory() const;
 
 	private:
 		Buffer(

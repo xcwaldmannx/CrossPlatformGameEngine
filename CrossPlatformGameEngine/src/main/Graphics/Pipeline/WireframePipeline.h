@@ -23,5 +23,6 @@ public:
 			renderPass)
 	{
 		this->mRasterizationStateInfo.polygonMode = VK_POLYGON_MODE_LINE;
+		this->mRasterizationStateInfo.cullMode = VK_CULL_MODE_NONE;
 	}
 };

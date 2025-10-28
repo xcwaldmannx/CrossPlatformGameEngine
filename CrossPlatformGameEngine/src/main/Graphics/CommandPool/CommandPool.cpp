@@ -49,7 +49,8 @@ void CommandPool::record(
     VkBuffer indexBuffer,
     std::shared_ptr<RenderPass> renderPass,
     std::shared_ptr<Swapchain> swapchain,
-    std::shared_ptr<Pipeline_I> pipeline)
+    std::shared_ptr<Pipeline_I> pipeline,
+    const CommandDrawData& data)
 {
     vkResetCommandBuffer(mCommandBuffers[frameIndex], 0);
 
@@ -128,8 +129,20 @@ void CommandPool::record(
         VK_INDEX_TYPE_UINT32);
 
     // TODO: get model data in here and render meshes appropriately
-    int instanceOffset = 0;
+
+    for (int i = 0; i < data.mModelCount; i++)
+    {
+        vkCmdDrawIndexed(
+            mCommandBuffers[frameIndex],
+            data.mIndexCounts[i],
+            1,
+            data.mIndexOffsets[i],
+            data.mVertexOffsets[i],
+            i);
+    }
+
     /*
+    int instanceOffset = 0;
 
     for (auto& [modelId, instanceCount] : *drawInfo.mModelIdToCount)
     {

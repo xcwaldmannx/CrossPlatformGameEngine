@@ -9,7 +9,7 @@ using namespace ascen;
 void Buffer::copy(
 	VkDevice device,
 	VkQueue graphicsQueue,
-	std::shared_ptr<CommandPool> commandPool,
+	const std::shared_ptr<CommandPool>& commandPool,
 	Buffer& src,
 	Buffer& dest,
 	bool insertBarrier)
@@ -18,6 +18,8 @@ void Buffer::copy(
 	commandPool->beginSingleTimeCommands(device, &commandBuffer);
 
 	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
 	copyRegion.size = src.mItemCount * src.mItemSize;
 	vkCmdCopyBuffer(commandBuffer, src.mBuffer, dest.mBuffer, 1, &copyRegion);
 
@@ -89,6 +91,11 @@ VkBuffer Buffer::getBuffer() const
 VkDeviceMemory Buffer::getMemory() const
 {
 	return mMemory;
+}
+
+void* Buffer::getMappedMemory() const
+{
+	return mMappedMemory;
 }
 
 Buffer::Buffer(

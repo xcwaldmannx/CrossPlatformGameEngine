@@ -18,7 +18,7 @@ namespace ascen
 	template<std::derived_from<Vertex_I> T>
 	class Pipeline : public Pipeline_I
 	{
-	protected:
+	public:
 		Pipeline(
 			const std::string vertexShaderFilepath,
 			const std::string pixelShaderFilepath,
@@ -42,7 +42,6 @@ namespace ascen
 			handlePipelineLayoutAndInfo(renderPass);
 		}
 
-	public:
 		void create(VkDevice device) override
 		{
 			// create vertex shader

@@ -5,7 +5,14 @@
 include(FetchContent)
 
 set(SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-file(GLOB_RECURSE SRC_FILES "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.h")
+file(
+    GLOB_RECURSE
+    SRC_FILES
+    "${SRC_DIR}/*.cpp" "${SRC_DIR}/*.h")
+
+list(FILTER SRC_FILES EXCLUDE REGEX "BadGraphicsPipeline")
+
+message(STATUS ${SRC_FILES})
 
 # Add source to this project's executable.
 add_executable (CrossPlatformGameEngine ${SRC_FILES})
@@ -68,16 +75,24 @@ FetchContent_MakeAvailable(assimp)
 
 target_link_libraries(CrossPlatformGameEngine PRIVATE assimp)
 
-# copy shaders to build dir
+# link mass
 
-configure_file(
-    ${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/src/shaders/vert.spv # Source file
-    ${CMAKE_BINARY_DIR}/CrossPlatformGameEngine/src/shaders/vert.spv # Destination
-    COPYONLY                               # Prevents file processing
+target_include_directories(CrossPlatformGameEngine PRIVATE "${CMAKE_SOURCE_DIR}/Vendor/mass/include")
+target_link_libraries(CrossPlatformGameEngine PRIVATE
+    debug   "${CMAKE_SOURCE_DIR}/Vendor/mass/lib/ModelAttributeSelectiveSerializerd.lib"
+    optimized "${CMAKE_SOURCE_DIR}/Vendor/mass/lib/ModelAttributeSelectiveSerializer.lib"
 )
 
-configure_file(
-    ${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/src/shaders/frag.spv # Source file
-    ${CMAKE_BINARY_DIR}/CrossPlatformGameEngine/src/shaders/frag.spv # Destination
-    COPYONLY                               # Prevents file processing
+# copy shaders and resources to build dir
+
+add_custom_command(TARGET CrossPlatformGameEngine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/src/shaders"
+        "$<TARGET_FILE_DIR:CrossPlatformGameEngine>/src/shaders"
+)
+
+add_custom_command(TARGET CrossPlatformGameEngine POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_directory
+        "${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/res"
+        "$<TARGET_FILE_DIR:CrossPlatformGameEngine>/res"
 )

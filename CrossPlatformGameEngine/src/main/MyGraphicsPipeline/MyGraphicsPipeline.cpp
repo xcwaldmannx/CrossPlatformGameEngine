@@ -9,13 +9,14 @@
 #include "../Graphics/Device/Logical/Device.h"
 #include "../Graphics/Descriptor/Descriptor.h"
 
-MyGraphicsPipeline::MyGraphicsPipeline()
-{
-}
+#include "../Graphics/Pipeline/WireframePipeline.h"
+
+MyGraphicsPipeline::MyGraphicsPipeline(const WindowManager& windowManager)
+: mWindowManager(windowManager) {}
+
 
 void MyGraphicsPipeline::create()
 {
-	mWindowManager.init();
 	glfwSwapInterval(1);
 
 	if (ascen::ValidationLayers::isEnabled())
@@ -49,16 +50,16 @@ void MyGraphicsPipeline::create()
 		mSurface,
 		mGraphicsFamily.value(),
 		mPresentFamily.value());
-	mHandleManager.create(mDevice, mSwapchain.get());
+	mSwapchain->create(mDevice);
 
 	mRenderPass = std::make_shared<ascen::RenderPass>(
 		mPhysicalDevice,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		ascen::PhysicalDevice::findDepthFormat(mPhysicalDevice));
-	mHandleManager.create(mDevice, mRenderPass.get());
+	mRenderPass->create(mDevice);
 
 	mCommandPool = std::make_shared<ascen::CommandPool>(mGraphicsFamily.value());
-	mHandleManager.create(mDevice, mCommandPool.get());
+	mCommandPool->create(mDevice);
 
 	createSyncObjects();
 
@@ -83,9 +84,20 @@ void MyGraphicsPipeline::create()
 
 	std::vector<VkDescriptorSetLayoutBinding> bindings =
 	{
-		ascen::Descriptor::createBinding(0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT),
-		ascen::Descriptor::createBinding(1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT),
-		ascen::Descriptor::createBinding(2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT),
+		ascen::Descriptor::createBinding(
+			0,
+			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
+			VK_SHADER_STAGE_VERTEX_BIT),
+
+		ascen::Descriptor::createBinding(
+			1,
+			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
+			VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT),
+
+		ascen::Descriptor::createBinding(
+			2,
+			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+			VK_SHADER_STAGE_FRAGMENT_BIT),
 	};
 
 	mDescriptorSetLayout = ascen::Descriptor::createLayout(mDevice, bindings);
@@ -110,7 +122,7 @@ void MyGraphicsPipeline::create()
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
 		mStorageBuffer->getBuffer(),
 		0,
-		sizeof(SBOStruct),
+		sizeof(SBOStruct) * 3,
 		1);
 
 	auto writeTextureBuffer = ascen::Descriptor::createImageWrite(
@@ -129,13 +141,13 @@ void MyGraphicsPipeline::create()
 
 	ascen::Descriptor::updateSet(mDevice, writes);
 
-	mPipeline = std::make_shared<WireframePipeline<ascen::TextureVertex>>(
+	mPipeline = std::make_shared<ascen::Pipeline<ascen::TextureVertex>>(
 		"src/shaders/vert.spv",
 		"src/shaders/frag.spv",
 		mSwapchain->getExtent(),
 		mDescriptorSetLayout,
 		mRenderPass->handle());
-	mHandleManager.create(mDevice, mPipeline.get());
+	mPipeline->create(mDevice);
 }
 
 void MyGraphicsPipeline::destroy()
@@ -153,27 +165,26 @@ void MyGraphicsPipeline::destroy()
 
 	destroySyncObjects();
 	
-	mHandleManager.destroy(mDevice);
-
 	ascen::Descriptor::destroy(mDevice, mDescriptorSetLayout, mDescriptorPool);
 
-	//mPipeline->destroy(mDevice);
-	//mCommandPool->destroy(mDevice);
-	//mRenderPass->destroy(mDevice);
-	//mSwapchain->destroy(mDevice);
+	mPipeline->destroy(mDevice);
+	mCommandPool->destroy(mDevice);
+	mRenderPass->destroy(mDevice);
+	mSwapchain->destroy(mDevice);
 
 	ascen::Device::destroy(mDevice);
 	ascen::Surface::destroy(mInstance, mSurface);
 	ascen::DebugMessenger::destroy(mInstance, mDebugMessenger);
 	ascen::Instance::destroy(mInstance);
-
-	mWindowManager.destroy();
 }
 
 // TODO: finish drawFrame
 
+int timePassed = 0;
+
 void MyGraphicsPipeline::drawFrame()
 {
+	timePassed = (timePassed % 1000000) + 1;
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t imageIndex;
@@ -187,25 +198,7 @@ void MyGraphicsPipeline::drawFrame()
 
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		mSwapchain->destroy(mDevice);
-		mSwapchain.reset();
-		mSwapchain = std::make_shared<ascen::Swapchain>(
-			mWindowManager.getWindow(),
-			mPhysicalDevice,
-			mSurface,
-			mGraphicsFamily.value(),
-			mPresentFamily.value());
-
-		mSwapchain->create(mDevice);
-
-		// ascen::destroyDepthTexture(mLogicalDevice, mDepthTexture);
-		// createDepthTexture();
-
-		mSwapchain->createFrameBuffers(
-			mDevice,
-			mRenderPass->handle(),
-			0 /* put depth texture image view here */);
-
+		isWindowResized = true;
 		return;
 	}
 	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
@@ -216,19 +209,27 @@ void MyGraphicsPipeline::drawFrame()
 	vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
 	updateUBO(mCurrentFrame);
-	updateSBO<SBOStruct>(*mStorageBuffer, mSBOData);
 
-	// TODO: create draw indo struct or something
+	SBOStruct sbo0{};
+	sbo0.mTransform = glm::mat4(1.0f);
+	sbo0.mTransform = glm::translate(sbo0.mTransform, { -8, 0, 0 });
+	sbo0.mTransform = glm::rotate(sbo0.mTransform, timePassed * 0.005f, { 0, 0, 1 });
+	sbo0.modelId = 0;
+	sbo0.textureId = 0;
 
-	//ascen::DrawInfo drawInfo{
-	//	&mVertexBuffer,
-	//	&mIndexBuffer,
-	//	&mModelManager,
-	//	&mModelIdToCount,
-	//	&mDescriptorGroup,
-	//};
+	SBOStruct sbo1{};
+	sbo1.mTransform = glm::mat4(1.0f);
+	sbo1.modelId = 0;
+	sbo1.textureId = 0;
 
-	// TODO: pass draw info into record command
+	SBOStruct sbo2{};
+	sbo2.mTransform = glm::mat4(1.0f);
+	sbo2.mTransform = glm::translate(sbo2.mTransform, { 8, 0, 0 });
+	sbo2.mTransform = glm::rotate(sbo2.mTransform, timePassed * -0.005f, { 0, 0, 1 });
+	sbo2.modelId = 0;
+	sbo2.textureId = 0;
+
+	updateSBO<SBOStruct>(*mStorageBuffer, { sbo0, sbo1, sbo2 });
 
 	mCommandPool->record(
 		mCurrentFrame,
@@ -238,7 +239,8 @@ void MyGraphicsPipeline::drawFrame()
 		mIndexBuffer->getBuffer(),
 		mRenderPass,
 		mSwapchain,
-		mPipeline);
+		mPipeline,
+		mCommandDrawData);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -279,24 +281,7 @@ void MyGraphicsPipeline::drawFrame()
 
 	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR)
 	{
-		mSwapchain->destroy(mDevice);
-		mSwapchain.reset();
-		mSwapchain = std::make_shared<ascen::Swapchain>(
-			mWindowManager.getWindow(),
-			mPhysicalDevice,
-			mSurface,
-			mGraphicsFamily.value(),
-			mPresentFamily.value());
-
-		mSwapchain->create(mDevice);
-
-		// ascen::destroyDepthTexture(mLogicalDevice, mDepthTexture);
-		// createDepthTexture();
-
-		mSwapchain->createFrameBuffers(
-			mDevice,
-			mRenderPass->handle(),
-			0 /* put depth image view here */);
+		isWindowResized = true;
 	}
 	else if (queuePresentResult != VK_SUCCESS)
 	{
@@ -304,6 +289,37 @@ void MyGraphicsPipeline::drawFrame()
 	}
 
 	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void MyGraphicsPipeline::resize()
+{
+	vkDeviceWaitIdle(mDevice);
+
+	mSwapchain->destroy(mDevice);
+	mSwapchain.reset();
+	mSwapchain = std::make_shared<ascen::Swapchain>(
+		mWindowManager.getWindow(),
+		mPhysicalDevice,
+		mSurface,
+		mGraphicsFamily.value(),
+		mPresentFamily.value());
+
+	mSwapchain->create(mDevice);
+
+	ascen::Texture::destroy(mDevice, *mDepthTexture);
+	createDepthTexture();
+
+	mSwapchain->createFrameBuffers(
+		mDevice,
+		mRenderPass->handle(),
+		mDepthTexture->getView());
+
+	isWindowResized = false;
+}
+
+bool MyGraphicsPipeline::isResized() const
+{
+	return isWindowResized;
 }
 
 void MyGraphicsPipeline::createSyncObjects()
@@ -376,7 +392,32 @@ void MyGraphicsPipeline::createBuffers()
 	config.mHasTexCoords  = true;
 	config.mHasTransforms = true;
 
-	mModelLayout = mass::deserialize(config, "res/testmodel.model");
+	std::vector<std::string> modelFilepaths =
+	{
+		"res/models/prism.model",
+		"res/models/shapes.model",
+		"res/models/windmill.model",
+	};
+
+	std::vector<float> vertices;
+	std::vector<uint32_t> indices;
+
+	for (const auto& path : modelFilepaths)
+	{
+		mass::ModelLayout modelLayout = mass::deserialize(config, path);
+
+		// std::cout << "path: " << path << "\n" << "verts=" << modelLayout.mVertices.size() << "\n" << "stride=" << modelLayout.mVertexLayout.mStride << "\n";
+
+		mCommandDrawData.mVertexOffsets.push_back(vertices.size() / (modelLayout.mVertexLayout.mStride / sizeof(float)));
+		mCommandDrawData.mIndexOffsets.push_back(indices.size());
+
+		vertices.insert(vertices.end(), modelLayout.mVertices.begin(), modelLayout.mVertices.end());
+		indices.insert(indices.end(), modelLayout.mIndices.begin(), modelLayout.mIndices.end());
+
+		mCommandDrawData.mIndexCounts.push_back(modelLayout.mIndices.size());
+	}
+
+	mCommandDrawData.mModelCount = modelFilepaths.size();
 
 	mUniformBuffer = std::make_shared<ascen::Buffer>(
 		ascen::Buffer::createUniformBuffer<UBOStruct>(
@@ -394,7 +435,7 @@ void MyGraphicsPipeline::createBuffers()
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			mModelLayout.mVertices
+			vertices
 		)
 	);
 
@@ -404,12 +445,24 @@ void MyGraphicsPipeline::createBuffers()
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			mModelLayout.mIndices
+			indices
 		)
 	);
 
-	SBOStruct sbo{};
-	sbo.mTransform = glm::mat4(0.0);
+	SBOStruct sbo0{};
+	sbo0.mTransform = glm::mat4(1.0f);
+	sbo0.modelId = 0;
+	sbo0.textureId = 0;
+
+	SBOStruct sbo1{};
+	sbo1.mTransform = glm::mat4(1.0f);
+	sbo1.modelId = 0;
+	sbo1.textureId = 0;
+
+	SBOStruct sbo2{};
+	sbo2.mTransform = glm::mat4(1.0f);
+	sbo2.modelId = 0;
+	sbo2.textureId = 0;
 
 	mStorageBuffer = std::make_shared<ascen::Buffer>(
 		ascen::Buffer::createStorageBuffer<SBOStruct>(
@@ -417,7 +470,7 @@ void MyGraphicsPipeline::createBuffers()
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			{ sbo }
+			{ sbo0, sbo1, sbo2 }
 		)
 	);
 }
@@ -457,12 +510,12 @@ void MyGraphicsPipeline::createTexturesAndSamplers()
 void MyGraphicsPipeline::updateUBO(uint32_t imageIndex)
 {
 	UBOStruct ubo{};
-	ubo.mView = glm::lookAt(glm::vec3(0.0f, -16.0f, 6.0f), glm::vec3(0.0f, 0.0f, 6.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-	ubo.mProj = glm::perspective(glm::radians(70.0f),
+	ubo.mView = glm::lookAt(glm::vec3(0.0f, -15.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.mProj = glm::perspective(glm::radians(90.0f),
 		mSwapchain->getExtent().width / (float)mSwapchain->getExtent().height, 0.01f, 100.0f);
 	ubo.mProj[1][1] *= -1;
 
 	uint8_t offset = imageIndex * sizeof(UBOStruct);
-	uint8_t* target = reinterpret_cast<uint8_t*>(mUniformBuffer->getBuffer());
+	uint8_t* target = reinterpret_cast<uint8_t*>(mUniformBuffer->getMappedMemory());
 	memcpy(target + offset, &ubo, sizeof(ubo));
 }

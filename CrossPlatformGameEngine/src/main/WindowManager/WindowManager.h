@@ -11,7 +11,11 @@ public:
 	void init();
 	void destroy();
 
-	GLFWwindow* getWindow();
+	void pollEvents() const;
+
+	bool isRunning() const;
+
+	GLFWwindow* getWindow() const;
 
 private:
 	GLFWwindow* mWindow = nullptr;

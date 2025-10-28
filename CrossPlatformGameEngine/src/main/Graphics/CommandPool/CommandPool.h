@@ -14,6 +14,14 @@
 
 namespace ascen
 {
+
+	struct CommandDrawData
+	{
+		int mModelCount = 0;
+		std::vector<int> mVertexOffsets;
+		std::vector<int> mIndexCounts;
+		std::vector<int> mIndexOffsets;
+	};
 	
 	class CommandPool : public Handle<VkCommandPool>
 	{
@@ -31,7 +39,8 @@ namespace ascen
 			VkBuffer indexBuffer,
 			std::shared_ptr<RenderPass> renderPass,
 			std::shared_ptr<Swapchain> swapchain,
-			std::shared_ptr<Pipeline_I> pipeline);
+			std::shared_ptr<Pipeline_I> pipeline,
+			const CommandDrawData& data);
 
 		void beginSingleTimeCommands(
 			VkDevice device,

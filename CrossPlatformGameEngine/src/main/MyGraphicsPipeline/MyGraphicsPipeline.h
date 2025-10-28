@@ -5,10 +5,10 @@
 #include "../WindowManager/WindowManager.h"
 #include "../Graphics/QueueFamilies/QueueFamilies.h"
 
-#include "../Graphics/HandleManager/HandleManager.h"
 #include "../Graphics/Swapchain/Swapchain.h"
 #include "../Graphics/RenderPass/RenderPass.h"
 #include "../Graphics/CommandPool/CommandPool.h"
+#include "../Graphics/Pipeline/Pipeline.h"
 
 #include "../Graphics/Resource/Buffer/Buffer.h"
 #include "../Graphics/Resource/Image/Image.h"
@@ -16,7 +16,6 @@
 #include "../Graphics/Resource/Sampler/Sampler.h"
 
 #include "../Graphics/Vertex/TextureVertex.h"
-#include "../Graphics/Pipeline/WireframePipeline.h"
 
 #include <Mass.h>
 
@@ -38,22 +37,26 @@ struct UBOStruct
 	glm::mat4 mProj;
 };
 
-struct SBOStruct
+struct alignas(16) SBOStruct
 {
 	glm::mat4 mTransform;
 	int modelId;
 	int textureId;
+	int pad[2];
 };
 
 class MyGraphicsPipeline
 {
 public:
-	MyGraphicsPipeline();
+	MyGraphicsPipeline(const WindowManager& windowManager);
 
 	void create();
 	void destroy();
 
 	void drawFrame();
+
+	void resize();
+	bool isResized() const;
 
 private:
 	void createSyncObjects();
@@ -79,7 +82,8 @@ private:
 	}
 
 private:
-	WindowManager mWindowManager;
+	const WindowManager mWindowManager;
+	bool isWindowResized = false;
 
 	std::vector<const char*> mExtensions;
 	std::vector<const char*> mValidationLayers;
@@ -93,8 +97,6 @@ private:
 	ascen::QueueFamily mPresentFamily;
 
 	VkDevice mDevice = VK_NULL_HANDLE;
-
-	ascen::HandleManager mHandleManager;
 
 	VkDescriptorPool mDescriptorPool = VK_NULL_HANDLE;
 	VkDescriptorSetLayout mDescriptorSetLayout = VK_NULL_HANDLE;
@@ -129,4 +131,6 @@ private:
 		{ glm::mat4(1) },
 		{ glm::mat4(1) }
 	};
+
+	ascen::CommandDrawData mCommandDrawData{};
 };

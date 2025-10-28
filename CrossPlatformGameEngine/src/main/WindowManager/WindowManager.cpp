@@ -26,7 +26,17 @@ void WindowManager::destroy()
     glfwTerminate();
 }
 
-GLFWwindow* WindowManager::getWindow()
+void WindowManager::pollEvents() const
+{
+    glfwPollEvents();
+}
+
+bool WindowManager::isRunning() const
+{
+    return !glfwWindowShouldClose(mWindow);
+}
+
+GLFWwindow* WindowManager::getWindow() const
 {
 	return mWindow;
 }
