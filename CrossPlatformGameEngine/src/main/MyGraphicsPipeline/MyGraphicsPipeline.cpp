@@ -77,6 +77,7 @@ void MyGraphicsPipeline::create()
 	{
 		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
 		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1),
+		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1),
 		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 	};
 
@@ -96,6 +97,11 @@ void MyGraphicsPipeline::create()
 
 		ascen::Descriptor::createBinding(
 			2,
+			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
+			VK_SHADER_STAGE_VERTEX_BIT),
+
+		ascen::Descriptor::createBinding(
+			3,
 			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			VK_SHADER_STAGE_FRAGMENT_BIT),
 	};
@@ -117,25 +123,34 @@ void MyGraphicsPipeline::create()
 		sizeof(UBOStruct),
 		0);
 
-	auto writeStorageBuffer = ascen::Descriptor::createBufferWrite(
+	auto writeRenderElements = ascen::Descriptor::createBufferWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
-		mStorageBuffer->getBuffer(),
+		mSBORenderElements->getBuffer(),
 		0,
-		sizeof(SBOStruct) * 3,
+		sizeof(RenderElementStruct),
 		1);
+
+	auto writeTransforms = ascen::Descriptor::createBufferWrite(
+		mDescriptorSet,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
+		mSBOTransforms->getBuffer(),
+		0,
+		sizeof(float) * 16,
+		2);
 
 	auto writeTextureBuffer = ascen::Descriptor::createImageWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 		mTexture->getView(),
 		mSampler->getSampler(),
-		2);
+		3);
 
 	std::vector<ascen::DescriptorWrite> writes = 
 	{
 		writeUniformBuffer,
-		writeStorageBuffer,
+		writeRenderElements,
+		writeTransforms,
 		writeTextureBuffer,
 	};
 
@@ -157,7 +172,8 @@ void MyGraphicsPipeline::destroy()
 	ascen::Buffer::destroy(mDevice, *mUniformBuffer);
 	ascen::Buffer::destroy(mDevice, *mVertexBuffer);
 	ascen::Buffer::destroy(mDevice, *mIndexBuffer);
-	ascen::Buffer::destroy(mDevice, *mStorageBuffer);
+	ascen::Buffer::destroy(mDevice, *mSBORenderElements);
+	ascen::Buffer::destroy(mDevice, *mSBOTransforms);
 
 	ascen::Texture::destroy(mDevice, *mTexture);
 	ascen::Sampler::destroy(mDevice, *mSampler);
@@ -178,13 +194,18 @@ void MyGraphicsPipeline::destroy()
 	ascen::Instance::destroy(mInstance);
 }
 
-// TODO: finish drawFrame
-
-int timePassed = 0;
+long framesPassed = 0;
+long frameCountThousand = 0;
 
 void MyGraphicsPipeline::drawFrame()
 {
-	timePassed = (timePassed % 1000000) + 1;
+	framesPassed++;
+	if (framesPassed % 1000 == 0)
+	{
+		framesPassed = 0;
+		frameCountThousand++;
+	}
+
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t imageIndex;
@@ -210,28 +231,24 @@ void MyGraphicsPipeline::drawFrame()
 
 	updateUBO(mCurrentFrame);
 
-	SBOStruct sbo0{};
-	sbo0.mTransform = glm::mat4(1.0f);
-	sbo0.mTransform = glm::translate(sbo0.mTransform, { -8, 0, 0 });
-	sbo0.mTransform = glm::rotate(sbo0.mTransform, timePassed * 0.005f, { 0, 0, 1 });
-	sbo0.modelId = 0;
+	/*
+	RenderElementStruct sbo0{};
+	sbo0.mTransformOffset = 0;
 	sbo0.textureId = 0;
 
-	SBOStruct sbo1{};
-	sbo1.mTransform = glm::mat4(1.0f);
-	sbo1.modelId = 0;
+	RenderElementStruct sbo1{};
+	sbo1.mTransformOffset = 0;
 	sbo1.textureId = 0;
 
-	SBOStruct sbo2{};
-	sbo2.mTransform = glm::mat4(1.0f);
-	sbo2.mTransform = glm::translate(sbo2.mTransform, { 8, 0, 0 });
-	sbo2.mTransform = glm::rotate(sbo2.mTransform, timePassed * -0.005f, { 0, 0, 1 });
-	sbo2.modelId = 0;
+	RenderElementStruct sbo2{};
+	sbo2.mTransformOffset = 0;
 	sbo2.textureId = 0;
 
-	updateSBO<SBOStruct>(*mStorageBuffer, { sbo0, sbo1, sbo2 });
+	updateSBO<RenderElementStruct>(*mSBORenderElements, { sbo0, sbo1, sbo2 });
+	*/
 
 	mCommandPool->record(
+		mPhysicalDevice,
 		mCurrentFrame,
 		imageIndex,
 		mDescriptorSet,
@@ -401,23 +418,40 @@ void MyGraphicsPipeline::createBuffers()
 
 	std::vector<float> vertices;
 	std::vector<uint32_t> indices;
+	std::vector<float> transforms;
+
+	uint32_t globalVertexOffset    = 0;
+	uint32_t globalIndexOffset     = 0;
+	uint32_t globalTransformOffset = 0;
 
 	for (const auto& path : modelFilepaths)
 	{
 		mass::ModelLayout modelLayout = mass::deserialize(config, path);
 
-		// std::cout << "path: " << path << "\n" << "verts=" << modelLayout.mVertices.size() << "\n" << "stride=" << modelLayout.mVertexLayout.mStride << "\n";
+		uint32_t floatsPerVertex = modelLayout.mVertexLayout.mStride / sizeof(float);
 
-		mCommandDrawData.mVertexOffsets.push_back(vertices.size() / (modelLayout.mVertexLayout.mStride / sizeof(float)));
-		mCommandDrawData.mIndexOffsets.push_back(indices.size());
+		assert(modelLayout.mVertices.size() % (modelLayout.mVertexLayout.mStride / sizeof(float)) == 0);
+		assert(modelLayout.mTransforms.size() % 16 == 0);
+
+
+		for (const auto& mesh : modelLayout.mMeshLayouts)
+		{
+			mCommandDrawData.mMeshCount++;
+			mCommandDrawData.mVertexOffsets.push_back(globalVertexOffset);
+			mCommandDrawData.mIndexOffsets.push_back(globalIndexOffset + mesh.mIndexOffset);
+			mCommandDrawData.mIndexCounts.push_back(mesh.mIndexCount);
+			mCommandDrawData.mTransformOffsets.push_back(globalTransformOffset + mesh.mTransformOffset);
+		}
+
 
 		vertices.insert(vertices.end(), modelLayout.mVertices.begin(), modelLayout.mVertices.end());
 		indices.insert(indices.end(), modelLayout.mIndices.begin(), modelLayout.mIndices.end());
+		transforms.insert(transforms.end(), modelLayout.mTransforms.begin(), modelLayout.mTransforms.end());
 
-		mCommandDrawData.mIndexCounts.push_back(modelLayout.mIndices.size());
+		globalVertexOffset = vertices.size() / floatsPerVertex;
+		globalIndexOffset = indices.size();
+		globalTransformOffset = transforms.size() / 16;
 	}
-
-	mCommandDrawData.mModelCount = modelFilepaths.size();
 
 	mUniformBuffer = std::make_shared<ascen::Buffer>(
 		ascen::Buffer::createUniformBuffer<UBOStruct>(
@@ -449,28 +483,47 @@ void MyGraphicsPipeline::createBuffers()
 		)
 	);
 
-	SBOStruct sbo0{};
-	sbo0.mTransform = glm::mat4(1.0f);
-	sbo0.modelId = 0;
-	sbo0.textureId = 0;
+	RenderElementStruct sbo0{};
+	sbo0.mTransformOffset = 0;
+	sbo0.mTextureId = 0;
 
-	SBOStruct sbo1{};
-	sbo1.mTransform = glm::mat4(1.0f);
-	sbo1.modelId = 0;
-	sbo1.textureId = 0;
+	RenderElementStruct sbo1{};
+	sbo1.mTransformOffset = 1;
+	sbo1.mTextureId = 0;
 
-	SBOStruct sbo2{};
-	sbo2.mTransform = glm::mat4(1.0f);
-	sbo2.modelId = 0;
-	sbo2.textureId = 0;
+	RenderElementStruct sbo2{};
+	sbo2.mTransformOffset = 2;
+	sbo2.mTextureId = 0;
 
-	mStorageBuffer = std::make_shared<ascen::Buffer>(
-		ascen::Buffer::createStorageBuffer<SBOStruct>(
+	RenderElementStruct sbo3{};
+	sbo3.mTransformOffset = 3;
+	sbo3.mTextureId = 0;
+
+	RenderElementStruct sbo4{};
+	sbo4.mTransformOffset = 4;
+	sbo4.mTextureId = 0;
+
+	RenderElementStruct sbo5{};
+	sbo5.mTransformOffset = 5;
+	sbo5.mTextureId = 0;
+
+	mSBORenderElements = std::make_shared<ascen::Buffer>(
+		ascen::Buffer::createStorageBuffer<RenderElementStruct>(
 			mPhysicalDevice,
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			{ sbo0, sbo1, sbo2 }
+			{ sbo0, sbo1, sbo2, sbo3, sbo4, sbo5 }
+		)
+	);
+
+	mSBOTransforms = std::make_shared<ascen::Buffer>(
+		ascen::Buffer::createStorageBuffer<float>(
+			mPhysicalDevice,
+			mDevice,
+			graphicsQueue,
+			mCommandPool,
+			transforms
 		)
 	);
 }

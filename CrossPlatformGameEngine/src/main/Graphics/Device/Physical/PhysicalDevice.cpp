@@ -135,3 +135,14 @@ VkFormat PhysicalDevice::findDepthFormat(VkPhysicalDevice physicalDevice)
 
     throw std::runtime_error("Failed to find suitable depth format!");
 }
+
+const VkPhysicalDeviceLimits& PhysicalDevice::getLimits(VkPhysicalDevice physicalDevice)
+{
+    VkPhysicalDeviceProperties properties;
+
+    vkGetPhysicalDeviceProperties(physicalDevice, &properties);
+
+    return properties.limits;
+
+
+}

@@ -85,14 +85,12 @@ target_link_libraries(CrossPlatformGameEngine PRIVATE
 
 # copy shaders and resources to build dir
 
-add_custom_command(TARGET CrossPlatformGameEngine POST_BUILD
+add_custom_target(copy_assets ALL
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/src/shaders"
         "$<TARGET_FILE_DIR:CrossPlatformGameEngine>/src/shaders"
-)
-
-add_custom_command(TARGET CrossPlatformGameEngine POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E copy_directory
         "${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/res"
         "$<TARGET_FILE_DIR:CrossPlatformGameEngine>/res"
+    COMMENT "Copying shaders and resources..."
 )

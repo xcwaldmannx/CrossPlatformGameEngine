@@ -27,11 +27,11 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
+			const std::shared_ptr<CommandPool>& commandPool,
 			const std::vector<T>& vertices)
 		{
 			size_t itemCount = vertices.size();
-			size_t itemSize = sizeof(vertices[0]);
+			size_t itemSize = sizeof(T);
 			size_t bufferSizeBytes = itemCount * itemSize;
 
 			Buffer stagingBuffer(
@@ -72,11 +72,11 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
+			const std::shared_ptr<CommandPool>& commandPool,
 			const std::vector<float>& vertices)
 		{
 			size_t itemCount = vertices.size();
-			size_t itemSize = sizeof(vertices[0]);
+			size_t itemSize = sizeof(float);
 			size_t bufferSizeBytes = itemCount * itemSize;
 
 			Buffer stagingBuffer(
@@ -122,7 +122,7 @@ namespace ascen
 			const std::vector<T>& indices)
 		{
 			size_t itemCount = indices.size();
-			size_t itemSize = sizeof(indices[0]);
+			size_t itemSize = sizeof(T);
 			size_t bufferSizeBytes = itemCount * itemSize;
 
 			Buffer stagingBuffer(

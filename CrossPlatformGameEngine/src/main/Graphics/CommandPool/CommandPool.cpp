@@ -4,6 +4,9 @@
 
 #include <array>
 
+#include <glm/glm.hpp>
+//#include <glm/gtc/matrix_transform.hpp>
+
 using namespace ascen;
 
 CommandPool::CommandPool(uint32_t graphicsFamily)
@@ -42,6 +45,7 @@ void CommandPool::destroy(VkDevice device) {
 // TODO: create a replacement for DrawInfo that gets passed into record for rendering entities
 
 void CommandPool::record(
+    VkPhysicalDevice physicalDevice,
     uint32_t frameIndex,
     uint32_t imageIndex,
     VkDescriptorSet descriptorSet,
@@ -97,22 +101,6 @@ void CommandPool::record(
     scissor.extent = renderArea;
     vkCmdSetScissor(mCommandBuffers[frameIndex], 0, 1, &scissor);
 
-    std::array<uint32_t, 2> dynamicOffsets =
-    {
-        frameIndex * 64 * 2,  // For binding = 0, uniform buffer
-        0,                    // For binding = 1, storage buffer
-    };
-
-    vkCmdBindDescriptorSets(
-        mCommandBuffers[frameIndex],
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline->getLayout(),
-        0,
-        1,
-        &descriptorSet,
-        dynamicOffsets.size(),
-        dynamicOffsets.data());
-
     VkBuffer vertexBuffers[] = { vertexBuffer };
     VkDeviceSize vertexOffsets[] = { 0 };
     vkCmdBindVertexBuffers(
@@ -128,42 +116,46 @@ void CommandPool::record(
         0,
         VK_INDEX_TYPE_UINT32);
 
-    // TODO: get model data in here and render meshes appropriately
+    auto& limits = PhysicalDevice::getLimits(physicalDevice);
+    auto align_up = [](uint32_t v, uint32_t a) { return (v + a - 1) & ~(a - 1); };
 
-    for (int i = 0; i < data.mModelCount; i++)
+    for (int i = 0; i < data.mMeshCount; i++)
     {
+
+
+        const uint32_t alignedUBOSize =
+            align_up(sizeof(glm::mat4) * 2, limits.minUniformBufferOffsetAlignment);
+        const uint32_t alignedRenderElemSize =
+            align_up(sizeof(int) * 4, limits.minStorageBufferOffsetAlignment);
+        const uint32_t alignedMat4Size =
+            align_up(sizeof(glm::mat4), limits.minStorageBufferOffsetAlignment);
+
+
+        std::array<uint32_t, 3> dynamicOffsets =
+        {
+            frameIndex * alignedUBOSize, // For binding = 0, camera ubo
+            i * alignedRenderElemSize,   // For binding = 1, render elements sbo
+            data.mTransformOffsets[i] * alignedMat4Size,         // For binding = 2, transform sbo
+        };
+
+        vkCmdBindDescriptorSets(
+            mCommandBuffers[frameIndex],
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipeline->getLayout(),
+            0,
+            1,
+            &descriptorSet,
+            dynamicOffsets.size(),
+            dynamicOffsets.data());
+
         vkCmdDrawIndexed(
             mCommandBuffers[frameIndex],
             data.mIndexCounts[i],
             1,
             data.mIndexOffsets[i],
             data.mVertexOffsets[i],
-            i);
+            0);
     }
-
-    /*
-    int instanceOffset = 0;
-
-    for (auto& [modelId, instanceCount] : *drawInfo.mModelIdToCount)
-    {
-        const Model& model = drawInfo.mModelManager->getModel(modelId);
-
-        uint32_t vertexOffset = static_cast<uint32_t>(model.mMesh.mVertexOffset);
-        uint32_t indexOffset = static_cast<uint32_t>(model.mMesh.mIndexOffset);
-        uint32_t indexCount = static_cast<uint32_t>(model.mMesh.mIndexCount);
-
-        vkCmdDrawIndexed(
-            mCommandBuffers[frameIndex],
-            indexCount,
-            instanceCount,
-            indexOffset,
-            0,
-            instanceOffset
-        );
-
-        instanceOffset += instanceCount;
-    }
-    */
 
     vkCmdEndRenderPass(mCommandBuffers[frameIndex]);
 

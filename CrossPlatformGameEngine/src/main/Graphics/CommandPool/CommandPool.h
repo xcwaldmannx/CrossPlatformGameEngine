@@ -2,6 +2,7 @@
 
 #include "../HandleManager/Handle.h"
 
+#include "../Device/Physical/PhysicalDevice.h"
 #include "../Swapchain/Swapchain.h"
 #include "../RenderPass/RenderPass.h"
 #include "../Pipeline/Pipeline.h"
@@ -17,10 +18,11 @@ namespace ascen
 
 	struct CommandDrawData
 	{
-		int mModelCount = 0;
-		std::vector<int> mVertexOffsets;
-		std::vector<int> mIndexCounts;
-		std::vector<int> mIndexOffsets;
+		uint32_t mMeshCount = 0;
+		std::vector<uint32_t> mVertexOffsets;
+		std::vector<uint32_t> mIndexCounts;
+		std::vector<uint32_t> mIndexOffsets;
+		std::vector<uint32_t> mTransformOffsets;
 	};
 	
 	class CommandPool : public Handle<VkCommandPool>
@@ -32,6 +34,7 @@ namespace ascen
 		void destroy(VkDevice device) override;
 
 		void record(
+			VkPhysicalDevice physicalDevice,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
 			VkDescriptorSet descriptorSet,

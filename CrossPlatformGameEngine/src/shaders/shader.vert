@@ -1,20 +1,25 @@
 #version 450
 
-layout(binding = 0) uniform UniformBufferObject {
-    mat4 view;
-    mat4 proj;
-} ubo;
+#extension GL_KHR_vulkan_glsl : enable
 
-struct PerEntityData {
-    mat4 transform;
-    int modelId;
+struct RenderElementStruct {
+    int transformOffset;
     int textureId;
     int _pad0;
     int _pad1;
 };
 
-layout(std430, binding = 1) readonly buffer perEntityDataArray {
-    PerEntityData[] entities;
+layout(binding = 0) uniform UniformBufferObject {
+    mat4 view;
+    mat4 proj;
+} ubo;
+
+layout(std430, binding = 1) readonly buffer RenderElementsBuffer {
+    RenderElementStruct renderElements[];
+};
+
+layout(std430, binding = 2) readonly buffer TransformsBuffer {
+    mat4 transforms[];
 };
 
 layout(location = 0) in vec3 inPosition;
@@ -23,11 +28,11 @@ layout(location = 2) in vec2 inTexCoord;
 
 layout(location = 0) out vec3 fragColor;
 layout(location = 1) out vec2 texCoord;
-layout(location = 2) flat out int instanceId;
 
 void main() {
-    gl_Position = ubo.proj * ubo.view * entities[gl_InstanceIndex].transform * vec4(inPosition, 1.0);
+    const RenderElementStruct elem = renderElements[0];
+
+    gl_Position = ubo.proj * ubo.view * transforms[0] * vec4(inPosition, 1.0);
     fragColor = inColor;
-    texCoord = vec2(inTexCoord.x, inTexCoord.y * -1);
-    instanceId = gl_InstanceIndex;
+    texCoord = vec2(inTexCoord.x, -inTexCoord.y);
 }

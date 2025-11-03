@@ -6,6 +6,7 @@
 
 namespace ascen
 {
+
 	static const std::vector<const char*> mDeviceExtensions =
 	{
 		VK_KHR_SWAPCHAIN_EXTENSION_NAME
@@ -18,6 +19,7 @@ namespace ascen
 		static void destroy();
 
 		static VkFormat findDepthFormat(VkPhysicalDevice physicalDevice);
+		static const VkPhysicalDeviceLimits& getLimits(VkPhysicalDevice physicalDevice);
 
 	private:
 		static bool checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR surface);

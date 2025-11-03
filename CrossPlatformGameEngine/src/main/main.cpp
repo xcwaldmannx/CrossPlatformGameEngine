@@ -205,6 +205,7 @@ void testEcs() {
 //	gp.destroy();
 //}
 std::atomic<bool> running = true;
+
 void drawLoop(MyGraphicsPipeline* gp)
 {
 	while (running)

@@ -31,17 +31,16 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-struct UBOStruct
+struct alignas(16) UBOStruct
 {
 	glm::mat4 mView;
 	glm::mat4 mProj;
 };
 
-struct alignas(16) SBOStruct
+struct alignas(16) RenderElementStruct
 {
-	glm::mat4 mTransform;
-	int modelId;
-	int textureId;
+	int mTransformOffset = 0;
+	int mTextureId = 0;
 	int pad[2];
 };
 
@@ -107,12 +106,11 @@ private:
 	std::shared_ptr<ascen::Pipeline<ascen::TextureVertex>> mPipeline = nullptr;
 	std::shared_ptr<ascen::CommandPool> mCommandPool = nullptr;
 
-	mass::ModelLayout mModelLayout;
-
 	std::shared_ptr<ascen::Buffer> mUniformBuffer = nullptr;
 	std::shared_ptr<ascen::Buffer> mVertexBuffer = nullptr;
 	std::shared_ptr<ascen::Buffer> mIndexBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mStorageBuffer = nullptr;
+	std::shared_ptr<ascen::Buffer> mSBORenderElements = nullptr;
+	std::shared_ptr<ascen::Buffer> mSBOTransforms = nullptr;
 
 	std::shared_ptr<ascen::Texture> mDepthTexture = nullptr;
 
@@ -125,12 +123,6 @@ private:
 
 	uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 	uint32_t mCurrentFrame = 0;
-
-	std::vector<SBOStruct> mSBOData =
-	{
-		{ glm::mat4(1) },
-		{ glm::mat4(1) }
-	};
 
 	ascen::CommandDrawData mCommandDrawData{};
 };
