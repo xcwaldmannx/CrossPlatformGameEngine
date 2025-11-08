@@ -20,12 +20,12 @@ namespace ascen
 	{
 	public:
 		Pipeline(
-			const std::string vertexShaderFilepath,
-			const std::string pixelShaderFilepath,
+			const std::string& vertexShaderFilepath,
+			const std::string& pixelShaderFilepath,
 			const VkExtent2D& swapchainExtent,
 			VkDescriptorSetLayout descriptorSetLayout,
-			VkRenderPass renderPass)
-			: Pipeline_I(
+			VkRenderPass renderPass) :
+            Pipeline_I(
                 vertexShaderFilepath,
 			    pixelShaderFilepath)
 		{

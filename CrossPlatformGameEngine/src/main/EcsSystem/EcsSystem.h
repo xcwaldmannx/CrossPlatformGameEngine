@@ -5,6 +5,7 @@
 #include "SystemManager/SystemManager.h"
 
 #include <iostream>
+#include <utility>
 
 class EcsSystem {
 public:
@@ -15,10 +16,14 @@ public:
 		std::cout << "Registered new component!" << std::endl;
 	}
 
-	template<typename T>
-	void registerSystem(Signature readSignature, Signature writeSignature)
+	template<typename T, typename... Args>
+	void registerSystem(Signature readSignature, Signature writeSignature, Args&&... args)
 	{
-		mSystemManager.registerSystem<T>(readSignature, writeSignature, mComponentManager);
+		mSystemManager.registerSystem<T>(
+			readSignature,
+			writeSignature,
+			mComponentManager,
+			std::forward<Args>(args)...);
 		std::cout << "Registered new system!" << std::endl;
 	}
 
@@ -71,7 +76,7 @@ public:
 	}
 
 	template<typename T>
-	std::shared_ptr<ComponentList<T>> getComponentList()
+	const std::shared_ptr<ComponentList<T>>& getComponentList()
 	{
 		return mComponentManager.getComponentList<T>();
 	}
@@ -82,6 +87,12 @@ public:
 		Signature signature;
 		(signature.set(mComponentManager.getComponentId<T>()), ...);
 		return signature;
+	}
+
+	template<typename T>
+	const std::shared_ptr<T>& getSystem()
+	{
+		return mSystemManager.getSystem<T>();
 	}
 
 	template<typename T>

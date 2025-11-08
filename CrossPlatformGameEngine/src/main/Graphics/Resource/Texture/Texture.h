@@ -49,8 +49,8 @@ namespace ascen
 			VkImageAspectFlags aspectFlags);
 
 	private:
-		Image mImage;
-		VkImageView mView;
+		Image mImage{};
+		VkImageView mView = VK_NULL_HANDLE;
 	};
 
 }

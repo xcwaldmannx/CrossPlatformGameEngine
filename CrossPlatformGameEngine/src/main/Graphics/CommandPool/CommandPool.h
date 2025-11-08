@@ -45,6 +45,19 @@ namespace ascen
 			std::shared_ptr<Pipeline_I> pipeline,
 			const CommandDrawData& data);
 
+		void record(
+			VkPhysicalDevice physicalDevice,
+			uint32_t frameIndex,
+			uint32_t imageIndex,
+			VkDescriptorSet descriptorSet,
+			VkBuffer vertexBuffer,
+			VkBuffer indexBuffer,
+			VkBuffer indirectBuffer,
+			std::shared_ptr<RenderPass> renderPass,
+			std::shared_ptr<Swapchain> swapchain,
+			std::shared_ptr<Pipeline_I> pipeline,
+			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
+
 		void beginSingleTimeCommands(
 			VkDevice device,
 			VkCommandBuffer* buffer);

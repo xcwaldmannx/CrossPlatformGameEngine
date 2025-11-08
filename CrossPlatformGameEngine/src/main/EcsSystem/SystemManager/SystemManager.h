@@ -5,6 +5,7 @@
 
 #include "../ComponentManager/ComponentManager.h"
 
+#include <utility>
 #include <memory>
 #include <typeindex>
 
@@ -13,16 +14,17 @@
 
 class SystemManager {
 public:
-	template<typename T>
+	template<typename T, typename... Args>
 	void registerSystem(
 		Signature readSignature,
 		Signature writeSignature,
-		ComponentManager& componentManager) 
+		ComponentManager& componentManager,
+		Args&&... args) 
 	{
 		std::type_index id = typeid(T);
 		assert(mSystems.find(id) == mSystems.end() && "System already registered. Cannot register.");
 
-		mSystems[id] = std::make_shared<T>();
+		mSystems[id] = std::make_shared<T>(std::forward<Args>(args)...);
 		mSystemReadSignatures[id] = readSignature;
 		mSystemWriteSignatures[id] = writeSignature;
 		mSystems[id]->mComponentManager = &componentManager;
@@ -67,6 +69,15 @@ public:
 
 			mSystems[systemId]->mEntities.erase(entity);
 		}
+	}
+
+	template<typename T>
+	const std::shared_ptr<T>& getSystem()
+	{
+		std::type_index id = typeid(T);
+		assert(mSystems.find(id) != mSystems.end() && "System is not registered. Cannot get.");
+
+		return std::dynamic_pointer_cast<T>(mSystems[id]);
 	}
 
 	template<typename T>

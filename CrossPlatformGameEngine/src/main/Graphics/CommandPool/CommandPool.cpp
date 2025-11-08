@@ -126,7 +126,7 @@ void CommandPool::record(
         const uint32_t alignedUBOSize =
             align_up(sizeof(glm::mat4) * 2, limits.minUniformBufferOffsetAlignment);
         const uint32_t alignedRenderElemSize =
-            align_up(sizeof(int) * 4, limits.minStorageBufferOffsetAlignment);
+            align_up(sizeof(glm::mat4), limits.minStorageBufferOffsetAlignment);
         const uint32_t alignedMat4Size =
             align_up(sizeof(glm::mat4), limits.minStorageBufferOffsetAlignment);
 
@@ -156,6 +156,109 @@ void CommandPool::record(
             data.mVertexOffsets[i],
             0);
     }
+
+    vkCmdEndRenderPass(mCommandBuffers[frameIndex]);
+
+    if (vkEndCommandBuffer(mCommandBuffers[frameIndex]) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to record command buffer!");
+    }
+}
+
+void CommandPool::record(
+    VkPhysicalDevice physicalDevice,
+    uint32_t frameIndex,
+    uint32_t imageIndex,
+    VkDescriptorSet descriptorSet,
+    VkBuffer vertexBuffer,
+    VkBuffer indexBuffer,
+    VkBuffer indirectBuffer,
+    std::shared_ptr<RenderPass> renderPass,
+    std::shared_ptr<Swapchain> swapchain,
+    std::shared_ptr<Pipeline_I> pipeline,
+    const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
+{
+    vkResetCommandBuffer(mCommandBuffers[frameIndex], 0);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = 0;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    if (vkBeginCommandBuffer(mCommandBuffers[frameIndex], &beginInfo) != VK_SUCCESS)
+    {
+        throw std::runtime_error("failed to begin recording command buffer!");
+    }
+
+    const VkExtent2D& renderArea = swapchain->getExtent();
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = renderPass->handle();
+    renderPassInfo.framebuffer = swapchain->getFramebuffers()[imageIndex];
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = renderArea;
+
+    std::array<VkClearValue, 2> clearValues{};
+    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[1].depthStencil = { 1.0f, 0 };
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
+
+    vkCmdBeginRenderPass(mCommandBuffers[frameIndex], &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(mCommandBuffers[frameIndex], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle());
+
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(renderArea.width);
+    viewport.height = static_cast<float>(renderArea.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(mCommandBuffers[frameIndex], 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = renderArea;
+    vkCmdSetScissor(mCommandBuffers[frameIndex], 0, 1, &scissor);
+
+    VkBuffer vertexBuffers[] = { vertexBuffer };
+    VkDeviceSize vertexOffsets[] = { 0 };
+    vkCmdBindVertexBuffers(
+        mCommandBuffers[frameIndex],
+        0,
+        1,
+        vertexBuffers,
+        vertexOffsets);
+
+    vkCmdBindIndexBuffer(
+        mCommandBuffers[frameIndex],
+        indexBuffer,
+        0,
+        VK_INDEX_TYPE_UINT32);
+
+    std::vector<uint32_t> dynamicOffets =
+    {
+        frameIndex * 128 // camera UBO
+    };
+
+    vkCmdBindDescriptorSets(
+        mCommandBuffers[frameIndex],
+        VK_PIPELINE_BIND_POINT_GRAPHICS,
+        pipeline->getLayout(),
+        0,
+        1,
+        &descriptorSet,
+        static_cast<uint32_t>(dynamicOffets.size()),
+        &dynamicOffets[0]);
+
+    vkCmdDrawIndexedIndirect(
+        mCommandBuffers[frameIndex],
+        indirectBuffer,
+        0,
+        static_cast<uint32_t>(drawCommands.size()),
+        sizeof(VkDrawIndexedIndirectCommand));
 
     vkCmdEndRenderPass(mCommandBuffers[frameIndex]);
 

@@ -11,9 +11,9 @@ namespace ascen
 	{
 	public:
 		Pipeline_I(
-			const std::string vertexShaderFilepath,
-			const std::string pixelShaderFilepath)
-			: mVertexShaderFilepath(vertexShaderFilepath),
+			const std::string& vertexShaderFilepath,
+			const std::string& pixelShaderFilepath) :
+			mVertexShaderFilepath(vertexShaderFilepath),
 			mPixelShaderFilepath(pixelShaderFilepath) {}
 
 		VkPipelineLayout getLayout() const

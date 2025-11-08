@@ -265,6 +265,47 @@ namespace ascen
 			destroy(device, stagingBuffer);
 		}
 
+		static Buffer createIndirectBuffer(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkQueue graphicsQueue,
+			const std::shared_ptr<CommandPool>& commandPool,
+			const std::vector<VkDrawIndexedIndirectCommand>& storage)
+		{
+			size_t itemCount = storage.size();
+			size_t itemSize = sizeof(VkDrawIndexedIndirectCommand);
+			size_t bufferSizeBytes = itemCount * itemSize;
+
+			Buffer stagingBuffer(
+				physicalDevice,
+				device,
+				itemCount,
+				itemSize,
+				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+			void* data = nullptr;
+			vkMapMemory(device, stagingBuffer.mMemory, 0, bufferSizeBytes, 0, &data);
+			std::memcpy(data, storage.data(), bufferSizeBytes);
+			vkUnmapMemory(device, stagingBuffer.mMemory);
+
+			Buffer buffer(
+				physicalDevice,
+				device,
+				itemCount,
+				itemSize,
+				VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+				VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+			copy(device, graphicsQueue, commandPool, stagingBuffer, buffer, false);
+
+			destroy(device, stagingBuffer);
+
+			return buffer;
+		}
+
+
 		static void destroy(VkDevice device, Buffer& buffer);
 
 		static void copy(
