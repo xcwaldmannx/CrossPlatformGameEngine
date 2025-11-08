@@ -28,6 +28,8 @@ VkDevice Device::create(
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.fillModeNonSolid = VK_TRUE;
+    deviceFeatures.multiDrawIndirect = VK_TRUE;
+    deviceFeatures.drawIndirectFirstInstance = VK_TRUE;
 
     // this section allows access to all features, not just core 1.0 features.
     // This is not currently necessary but is here for later use.

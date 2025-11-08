@@ -11,8 +11,17 @@
 
 #include "../Graphics/Pipeline/WireframePipeline.h"
 
-MyGraphicsPipeline::MyGraphicsPipeline(const WindowManager& windowManager)
-: mWindowManager(windowManager) {}
+MyGraphicsPipeline::MyGraphicsPipeline(
+	const WindowManager& windowManager,
+	const std::unordered_map<uint32_t, ModelInfo>& data,
+	const std::vector<float>& vertices,
+	const std::vector<uint32_t>& indices,
+	const std::vector<float>& transforms) :
+	mWindowManager(windowManager),
+	mModelInfo(data),
+	mVertices(vertices),
+	mIndices(indices),
+	mTransforms(transforms) {}
 
 
 void MyGraphicsPipeline::create()
@@ -123,20 +132,20 @@ void MyGraphicsPipeline::create()
 		sizeof(UBOStruct),
 		0);
 
-	auto writeRenderElements = ascen::Descriptor::createBufferWrite(
+	auto writeModelData = ascen::Descriptor::createBufferWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
-		mSBORenderElements->getBuffer(),
+		mSBOModelData->getBuffer(),
 		0,
-		sizeof(RenderElementStruct),
+		sizeof(GPUModelData),
 		1);
 
-	auto writeTransforms = ascen::Descriptor::createBufferWrite(
+	auto writeInstanceData = ascen::Descriptor::createBufferWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
-		mSBOTransforms->getBuffer(),
+		mSBOInstanceData->getBuffer(),
 		0,
-		sizeof(float) * 16,
+		sizeof(GPUInstanceData),
 		2);
 
 	auto writeTextureBuffer = ascen::Descriptor::createImageWrite(
@@ -149,8 +158,8 @@ void MyGraphicsPipeline::create()
 	std::vector<ascen::DescriptorWrite> writes = 
 	{
 		writeUniformBuffer,
-		writeRenderElements,
-		writeTransforms,
+		writeModelData,
+		writeInstanceData,
 		writeTextureBuffer,
 	};
 
@@ -172,8 +181,8 @@ void MyGraphicsPipeline::destroy()
 	ascen::Buffer::destroy(mDevice, *mUniformBuffer);
 	ascen::Buffer::destroy(mDevice, *mVertexBuffer);
 	ascen::Buffer::destroy(mDevice, *mIndexBuffer);
-	ascen::Buffer::destroy(mDevice, *mSBORenderElements);
-	ascen::Buffer::destroy(mDevice, *mSBOTransforms);
+	ascen::Buffer::destroy(mDevice, *mSBOModelData);
+	ascen::Buffer::destroy(mDevice, *mSBOInstanceData);
 
 	ascen::Texture::destroy(mDevice, *mTexture);
 	ascen::Sampler::destroy(mDevice, *mSampler);
@@ -192,6 +201,11 @@ void MyGraphicsPipeline::destroy()
 	ascen::Surface::destroy(mInstance, mSurface);
 	ascen::DebugMessenger::destroy(mInstance, mDebugMessenger);
 	ascen::Instance::destroy(mInstance);
+}
+
+void MyGraphicsPipeline::submit()
+{
+
 }
 
 long framesPassed = 0;
@@ -219,7 +233,7 @@ void MyGraphicsPipeline::drawFrame()
 
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		isWindowResized = true;
+		mIsWindowResized = true;
 		return;
 	}
 	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
@@ -298,7 +312,7 @@ void MyGraphicsPipeline::drawFrame()
 
 	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR)
 	{
-		isWindowResized = true;
+		mIsWindowResized = true;
 	}
 	else if (queuePresentResult != VK_SUCCESS)
 	{
@@ -331,12 +345,12 @@ void MyGraphicsPipeline::resize()
 		mRenderPass->handle(),
 		mDepthTexture->getView());
 
-	isWindowResized = false;
+	mIsWindowResized = false;
 }
 
 bool MyGraphicsPipeline::isResized() const
 {
-	return isWindowResized;
+	return mIsWindowResized;
 }
 
 void MyGraphicsPipeline::createSyncObjects()
@@ -397,6 +411,7 @@ void MyGraphicsPipeline::createDepthTexture()
 
 void MyGraphicsPipeline::createBuffers()
 {
+	/*
 	// TODO: load buffers with appropriate data
 	mass::Configuration config{};
 	config.mVertexLayout.mAttributes =
@@ -443,7 +458,6 @@ void MyGraphicsPipeline::createBuffers()
 			mCommandDrawData.mTransformOffsets.push_back(globalTransformOffset + mesh.mTransformOffset);
 		}
 
-
 		vertices.insert(vertices.end(), modelLayout.mVertices.begin(), modelLayout.mVertices.end());
 		indices.insert(indices.end(), modelLayout.mIndices.begin(), modelLayout.mIndices.end());
 		transforms.insert(transforms.end(), modelLayout.mTransforms.begin(), modelLayout.mTransforms.end());
@@ -452,7 +466,7 @@ void MyGraphicsPipeline::createBuffers()
 		globalIndexOffset = indices.size();
 		globalTransformOffset = transforms.size() / 16;
 	}
-
+	*/
 	mUniformBuffer = std::make_shared<ascen::Buffer>(
 		ascen::Buffer::createUniformBuffer<UBOStruct>(
 			mPhysicalDevice,
@@ -469,7 +483,7 @@ void MyGraphicsPipeline::createBuffers()
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			vertices
+			mVertices
 		)
 	);
 
@@ -479,51 +493,31 @@ void MyGraphicsPipeline::createBuffers()
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			indices
+			mIndices
 		)
 	);
 
-	RenderElementStruct sbo0{};
-	sbo0.mTransformOffset = 0;
-	sbo0.mTextureId = 0;
+	GPUModelData dummyModelData{};
 
-	RenderElementStruct sbo1{};
-	sbo1.mTransformOffset = 1;
-	sbo1.mTextureId = 0;
-
-	RenderElementStruct sbo2{};
-	sbo2.mTransformOffset = 2;
-	sbo2.mTextureId = 0;
-
-	RenderElementStruct sbo3{};
-	sbo3.mTransformOffset = 3;
-	sbo3.mTextureId = 0;
-
-	RenderElementStruct sbo4{};
-	sbo4.mTransformOffset = 4;
-	sbo4.mTextureId = 0;
-
-	RenderElementStruct sbo5{};
-	sbo5.mTransformOffset = 5;
-	sbo5.mTextureId = 0;
-
-	mSBORenderElements = std::make_shared<ascen::Buffer>(
-		ascen::Buffer::createStorageBuffer<RenderElementStruct>(
+	mSBOModelData = std::make_shared<ascen::Buffer>(
+		ascen::Buffer::createStorageBuffer<GPUModelData>(
 			mPhysicalDevice,
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			{ sbo0, sbo1, sbo2, sbo3, sbo4, sbo5 }
+			{ dummyModelData }
 		)
 	);
 
-	mSBOTransforms = std::make_shared<ascen::Buffer>(
-		ascen::Buffer::createStorageBuffer<float>(
+	GPUInstanceData dummyInstanceData{};
+
+	mSBOInstanceData = std::make_shared<ascen::Buffer>(
+		ascen::Buffer::createStorageBuffer<GPUInstanceData>(
 			mPhysicalDevice,
 			mDevice,
 			graphicsQueue,
 			mCommandPool,
-			transforms
+			{ dummyInstanceData }
 		)
 	);
 }

@@ -71,7 +71,7 @@ public:
 	}
 
 	template<typename T>
-	std::shared_ptr<ComponentList<T>> getComponentList() {
+	const std::shared_ptr<ComponentList<T>>& getComponentList() {
 		std::type_index type = typeid(T);
 		auto it = mComponentLists.find(type);
 		assert(it != mComponentLists.end() && "Component is not registered. Cannot get list.");

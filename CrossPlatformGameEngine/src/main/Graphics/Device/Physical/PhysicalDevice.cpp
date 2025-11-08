@@ -23,12 +23,13 @@ VkPhysicalDevice PhysicalDevice::get(VkInstance instance, VkSurfaceKHR surface)
 
 
     for (const auto& device : devices) {
-        if (checkDeviceSupport(device, surface)) {
+        if (checkDeviceSupport(device, surface))
+        {
             return device;
         }
     }
 
-       throw std::runtime_error("failed to find a suitable GPU!");
+    throw std::runtime_error("failed to find a suitable GPU!");
 }
 
 bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR surface)
@@ -100,10 +101,16 @@ bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR su
 
     VkBool32 anisotropicSupport = supportedFeatures.samplerAnisotropy;
     VkBool32 fillModeNonSolidSupport = supportedFeatures.fillModeNonSolid;
+    VkBool32 multiDrawIndirect = supportedFeatures.multiDrawIndirect;
+    VkBool32 drawIndirectFirstInstance = supportedFeatures.drawIndirectFirstInstance;
 
-    // Result
-
-    return hasQueueFamilySupport && hasSurfaceSupport && hasExtensionSupport && anisotropicSupport && fillModeNonSolidSupport;
+    return hasQueueFamilySupport &&
+        hasSurfaceSupport &&
+        hasExtensionSupport &&
+        anisotropicSupport &&
+        fillModeNonSolidSupport &&
+        multiDrawIndirect &&
+        drawIndirectFirstInstance;
 }
 
 VkFormat PhysicalDevice::findDepthFormat(VkPhysicalDevice physicalDevice)

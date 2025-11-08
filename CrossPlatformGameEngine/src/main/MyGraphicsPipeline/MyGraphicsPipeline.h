@@ -22,6 +22,7 @@
 #include <memory>
 
 #include <stack>
+#include <unordered_map>
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -31,26 +32,61 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+/* BEGIN
+* Temporary structs to demonstrate GPU-driven rendering
+*/
+
+// model data, stored in gpu
+struct GPUModelData
+{
+	uint32_t mVertexOffset = 0;
+	uint32_t mVertexCount  = 0;
+	uint32_t mIndexOffset  = 0;
+	uint32_t mIndexCount   = 0;
+};
+
+// per-instance data for an entity, stored in gpu
+struct GPUInstanceData
+{
+	glm::mat4 mTransform = glm::mat4(1.0);
+	uint32_t mModelId = 0;
+};
+
+/* END
+* Temporary structs to demonstrate GPU-driven rendering
+*/
+
 struct alignas(16) UBOStruct
 {
 	glm::mat4 mView;
 	glm::mat4 mProj;
 };
 
-struct alignas(16) RenderElementStruct
+struct ModelInfo
 {
-	int mTransformOffset = 0;
-	int mTextureId = 0;
-	int pad[2];
+	uint32_t mModelId   = 0;
+	uint32_t mMeshCount = 0;
+
+	std::vector<uint32_t> mVertexOffsets;
+	std::vector<uint32_t> mIndexCounts;
+	std::vector<uint32_t> mIndexOffsets;
+	std::vector<uint32_t> mTransformOffsets;
 };
 
 class MyGraphicsPipeline
 {
 public:
-	MyGraphicsPipeline(const WindowManager& windowManager);
+	MyGraphicsPipeline(
+		const WindowManager& windowManager,
+		const std::unordered_map<uint32_t, ModelInfo>& data,
+		const std::vector<float>& vertices,
+		const std::vector<uint32_t>& indices,
+		const std::vector<float>& transforms);
 
 	void create();
 	void destroy();
+
+	void submit();
 
 	void drawFrame();
 
@@ -82,7 +118,7 @@ private:
 
 private:
 	const WindowManager mWindowManager;
-	bool isWindowResized = false;
+	bool mIsWindowResized = false;
 
 	std::vector<const char*> mExtensions;
 	std::vector<const char*> mValidationLayers;
@@ -106,23 +142,29 @@ private:
 	std::shared_ptr<ascen::Pipeline<ascen::TextureVertex>> mPipeline = nullptr;
 	std::shared_ptr<ascen::CommandPool> mCommandPool = nullptr;
 
-	std::shared_ptr<ascen::Buffer> mUniformBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mVertexBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mIndexBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mSBORenderElements = nullptr;
-	std::shared_ptr<ascen::Buffer> mSBOTransforms = nullptr;
-
-	std::shared_ptr<ascen::Texture> mDepthTexture = nullptr;
-
-	std::shared_ptr<ascen::Texture> mTexture = nullptr;
-	std::shared_ptr<ascen::Sampler> mSampler = nullptr;
-
 	std::vector<VkSemaphore> mImageAvailableSemaphores;
 	std::vector<VkSemaphore> mRenderFinishedSemaphores;
 	std::vector<VkFence> mInFlightFences;
 
 	uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 	uint32_t mCurrentFrame = 0;
+
+	std::shared_ptr<ascen::Buffer> mUniformBuffer = nullptr;
+	std::shared_ptr<ascen::Buffer> mVertexBuffer = nullptr;
+	std::shared_ptr<ascen::Buffer> mIndexBuffer = nullptr;
+
+	std::shared_ptr<ascen::Buffer> mSBOModelData = nullptr;
+	std::shared_ptr<ascen::Buffer> mSBOInstanceData = nullptr;
+
+	std::shared_ptr<ascen::Texture> mDepthTexture = nullptr;
+
+	std::shared_ptr<ascen::Texture> mTexture = nullptr;
+	std::shared_ptr<ascen::Sampler> mSampler = nullptr;
+
+	const std::unordered_map<uint32_t, ModelInfo> mModelInfo;
+	const std::vector<float> mVertices;
+	const std::vector<uint32_t> mIndices;
+	const std::vector<float> mTransforms;
 
 	ascen::CommandDrawData mCommandDrawData{};
 };
