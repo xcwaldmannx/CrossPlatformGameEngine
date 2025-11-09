@@ -9,7 +9,7 @@
 
 void ImageLoader::loadImage(const char* filepath, RawImage* image) {
     // Set filepath (no need to cast away const)
-    image->mFilepath = const_cast<char *>(filepath);
+    image->mFilepath = const_cast<char*>(filepath);
 
     int width, height, channels;
     stbi_uc* pixels = stbi_load(filepath, &width, &height, &channels, STBI_rgb_alpha);
@@ -20,10 +20,8 @@ void ImageLoader::loadImage(const char* filepath, RawImage* image) {
     image->mWidth = width;
     image->mHeight = height;
     image->mChannels = 4;
-    image->mPixels = pixels;
-}
+    size_t size = static_cast<size_t>(width) * static_cast<size_t>(height) * 4;
+    image->mPixels.insert(image->mPixels.end(), pixels, pixels + size);
 
-
-void ImageLoader::unloadImage(RawImage& image) {
-    stbi_image_free(image.mPixels);
+    stbi_image_free(pixels);
 }

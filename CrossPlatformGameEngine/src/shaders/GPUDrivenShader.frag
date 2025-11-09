@@ -1,14 +1,12 @@
 #version 450
 
-//layout(binding = 2) uniform sampler2DArray texArray;
-layout(binding = 2) uniform sampler2D tex;
+layout(binding = 2) uniform sampler2DArray texArray;
 
 layout(location = 0) in vec2 inTexCoord;
+layout(location = 1) in flat uint inTextureId;
 
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    // int texIndex = renderElements[0].textureId;
-    // outColor = texture(texArray, vec3(texCoord, texIndex));
-    outColor = texture(tex, inTexCoord);
+    outColor = texture(texArray, vec3(inTexCoord, inTextureId));
 }

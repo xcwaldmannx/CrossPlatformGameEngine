@@ -5,6 +5,8 @@
 
 #include <memory>
 
+#include <vector>
+
 #include <vulkan/vulkan.h>
 
 namespace ascen
@@ -28,7 +30,7 @@ namespace ascen
 			std::shared_ptr<CommandPool> commandPool,
 			VkFormat format,
 			VkImageTiling tiling,
-			unsigned char* pixels,
+			const std::vector<unsigned char>& pixels,
 			uint32_t width,
 			uint32_t height,
 			uint32_t layers,
@@ -66,7 +68,7 @@ namespace ascen
 			std::shared_ptr<CommandPool> commandPool,
 			VkFormat format,
 			VkImageTiling tiling,
-			unsigned char* pixels,
+			const std::vector<unsigned char>& pixels,
 			uint32_t width,
 			uint32_t height,
 			uint32_t layers,
@@ -80,6 +82,7 @@ namespace ascen
 			std::shared_ptr<CommandPool> commandPool,
 			VkImageLayout oldLayout,
 			VkImageLayout newLayout,
+			uint32_t layers,
 			VkImageAspectFlags aspectFlags);
 
 	private:

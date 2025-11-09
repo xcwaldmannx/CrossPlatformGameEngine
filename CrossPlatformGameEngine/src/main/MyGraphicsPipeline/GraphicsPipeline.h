@@ -108,7 +108,7 @@ namespace ascen
 			mDrawCommands = drawCommands;
 		}
 
-		void drawFrame(float delta) override
+		void drawFrame() override
 		{
 			vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
@@ -216,7 +216,7 @@ namespace ascen
 					mCommandPool,
 					PhysicalDevice::findDepthFormat(mPhysicalDevice),
 					VK_IMAGE_TILING_OPTIMAL,
-					nullptr,
+					{},
 					mSwapchain->getExtent().width,
 					mSwapchain->getExtent().height,
 					1,

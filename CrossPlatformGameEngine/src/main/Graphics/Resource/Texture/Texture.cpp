@@ -13,7 +13,7 @@ Texture Texture::create(
 	std::shared_ptr<CommandPool> commandPool,
 	VkFormat format,
 	VkImageTiling tiling,
-	unsigned char* pixels,
+	const std::vector<unsigned char>& pixels,
 	uint32_t width,
 	uint32_t height,
 	uint32_t layers,
@@ -56,7 +56,7 @@ Texture::Texture(
 	std::shared_ptr<CommandPool> commandPool,
 	VkFormat format,
 	VkImageTiling tiling,
-	unsigned char* pixels,
+	const std::vector<unsigned char>& pixels,
 	uint32_t width,
 	uint32_t height,
 	uint32_t layers,
@@ -74,13 +74,13 @@ Texture::Texture(
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
 	viewInfo.image = mImage.mImage;
-	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D_ARRAY;
 	viewInfo.format = format;
 	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
-	viewInfo.subresourceRange.layerCount = 1;
+	viewInfo.subresourceRange.layerCount = layers;
 
 	if (vkCreateImageView(
 		device, &viewInfo, nullptr, &mView) != VK_SUCCESS) {
