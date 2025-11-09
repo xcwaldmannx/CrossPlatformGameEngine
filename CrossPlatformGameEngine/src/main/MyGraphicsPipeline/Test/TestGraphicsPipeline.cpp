@@ -209,7 +209,7 @@ void TestGraphicsPipeline::createTextures()
 {
 	ImageLoader il;
 	RawImage raw;
-	il.loadImage("res/testimg1.png", &raw);
+	il.loadImage("res/textures/testimg1.png", &raw);
 
 	mTexture = std::make_shared<ascen::Texture>(
 		ascen::Texture::create(

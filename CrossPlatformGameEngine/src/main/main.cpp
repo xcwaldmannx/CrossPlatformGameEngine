@@ -269,10 +269,11 @@ void initECS(EcsSystem& ecs)
 
 enum MyModels : uint32_t
 {
-	NONE     = 0,
-	PRISM    = 1,
-	SHAPES   = 2,
-	WINDMILL = 3,
+	NONE       = 0,
+	PRISM      = 1,
+	SHAPES     = 2,
+	WINDMILL   = 3,
+	HELICOPTER = 4,
 };
 
 std::vector<float> mVertices;
@@ -297,6 +298,7 @@ void initModels()
 		{ PRISM,    "res/models/prism.model"    },
 		{ SHAPES,   "res/models/shapes.model"   },
 		{ WINDMILL, "res/models/windmill.model" },
+		{ HELICOPTER, "res/models/helicopter.model" },
 	};
 
 	uint32_t globalVertexOffset = 0;
@@ -344,31 +346,37 @@ void testECSandPerMeshRender()
 	auto e0 = mEcs.addEntity();
 
 	TransformComponent t0{};
-	t0.mPosition = { -6, 0, 0 };
-	t0.mRotation = {  0, 0, 0 };
-	t0.mScale    = {  1, 1, 1 };
+	t0.mPosition = { 0, 0, -3 };
+	t0.mRotation = {  0, 0.25f, -1.6 };
+	t0.mScale    = {  2, 2, 2 };
 
 	ModelComponent m0{};
-	m0.mModelId = PRISM;
+	m0.mModelId = HELICOPTER;
 	m0.mTextureId = 0;
 	m0.mIsHidden = false;
+	m0.mMeshTransforms.push_back({ {0, 0, 1.75}, {0, 0, 0}, {1, 1, 1} }); // main
+	m0.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
+	m0.mMeshTransforms.push_back({ {0, 7, 1.5}, {0, 0, 0}, {1, 1, 1} }); // tail
 
 	mEcs.addComponent<TransformComponent>(e0, std::move(t0));
 	mEcs.addComponent<ModelComponent>(e0, std::move(m0));
 
 
 
-	auto e1 = mEcs.addEntity();
+	/*auto e1 = mEcs.addEntity();
 
 	TransformComponent t1{};
-	t1.mPosition = { 6, 0, 0 };
-	t1.mRotation = { 0, 0, 0 };
-	t1.mScale    = { 3, 3, 3 };
+	t1.mPosition = { 10, 0, 0 };
+	t1.mRotation = { 0, 0, 0.78f };
+	t1.mScale    = { 1, 1, 1 };
 
 	ModelComponent m1{};
 	m1.mModelId = SHAPES;
 	m1.mTextureId = 0;
 	m1.mIsHidden = false;
+	m1.mMeshTransforms.push_back({ {-2, 0, 0}, {0, 0, 0}, {2, 1, 1} });
+	m1.mMeshTransforms.push_back({  {0, 0, 0}, {0, 0, 0}, {1, 2, 1} });
+	m1.mMeshTransforms.push_back({  {2, 0, 0}, {0, 0, 0}, {1, 1, 2} });
 
 	mEcs.addComponent<TransformComponent>(e1, std::move(t1));
 	mEcs.addComponent<ModelComponent>(e1, std::move(m1));
@@ -376,17 +384,19 @@ void testECSandPerMeshRender()
 	auto e2 = mEcs.addEntity();
 
 	TransformComponent t2{};
-	t2.mPosition = { 0, 0, 0 };
+	t2.mPosition = { 0, 10, 0 };
 	t2.mRotation = { 0, 0, 0 };
-	t2.mScale    = { 1, 0, 1 };
+	t2.mScale    = { 1, 1, 1 };
 
 	ModelComponent m2{};
 	m2.mModelId = WINDMILL;
 	m2.mTextureId = 0;
 	m2.mIsHidden = false;
+	m2.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+	m2.mMeshTransforms.push_back({ {0, 0, 8.5f}, {0, 0, 0}, {1, 1, 1} });
 
 	mEcs.addComponent<TransformComponent>(e2, std::move(t2));
-	mEcs.addComponent<ModelComponent>(e2, std::move(m2));
+	mEcs.addComponent<ModelComponent>(e2, std::move(m2));*/
 
 	initModels();
 
@@ -409,6 +419,22 @@ void testECSandPerMeshRender()
 	{
 		wm.pollEvents();
 
+		auto& e0t = mEcs.getComponent<TransformComponent>(e0);
+		e0t.mRotation += glm::vec3(0, 0, 0.001f);
+
+		auto& e0m0m0 = mEcs.getComponent<ModelComponent>(e0);
+		e0m0m0.mMeshTransforms[0].mRotation += glm::vec3(0, 0, 0.025f);
+		auto& e0m0m2 = mEcs.getComponent<ModelComponent>(e0);
+		e0m0m2.mMeshTransforms[2].mRotation += glm::vec3(0.05f, 0, 0);
+
+
+
+		//auto& e2t = mEcs.getComponent<TransformComponent>(e2);
+		//e2t.mRotation += glm::vec3(0.001f, 0.001f, 0.001f);
+
+		//auto& e2m2m1 = mEcs.getComponent<ModelComponent>(e2);
+		//e2m2m1.mMeshTransforms[1].mRotation += glm::vec3(0, 0.01f, 0);
+
 		mEcs.updateSystem<RenderSystem>(1);
 
 		const auto& renderSystem = mEcs.getSystem<RenderSystem>();
@@ -429,7 +455,7 @@ void testECSandPerMeshRender()
 	}
 
 	running = false;
-	//renderThread.join();
+	// renderThread.join();
 
 	gp.destroy();
 	wm.destroy();

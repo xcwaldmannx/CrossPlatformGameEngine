@@ -1,5 +1,7 @@
 #pragma once
 
+#include "TransformComponent.h"
+
 #include <cstdint>
 
 #include <glm/glm.hpp>
@@ -10,4 +12,6 @@ struct ModelComponent
 	uint32_t mTextureId = 0;
 
 	bool mIsHidden = false;
+
+	std::vector<TransformComponent> mMeshTransforms;
 };
