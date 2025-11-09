@@ -12,7 +12,8 @@
 #include "Utility/QuadTree/QuadTree.h"
 #include "Utility/OctTree/OctTree.h"
 
-#include <chrono>
+#include "Utility/FrameCounter.h"
+
 #include <thread>
 
 #include <string>
@@ -21,27 +22,6 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-//struct EntityTest {
-//	Model model;
-//	glm::mat4 transform;
-//	std::unordered_map<std::string, glm::mat4> subTransforms;
-//};
-//
-//void testModel() {
-//	ModelManager mm;
-//	mm.createModel("mesh1", "C:\\Users\\xcwal\\Documents\\Models\\testmodel.fbx");
-//	auto& model = mm.getModel("mesh1");
-//
-//	glm::mat4 trans = glm::mat4(1.0f);
-//
-//	EntityTest e1;
-//	e1.model = mm.getModel("mesh1");
-//	e1.transform = glm::translate(trans, glm::vec3(0, 0, 0));
-//	e1.subTransforms["x"] = glm::translate(glm::mat4(1.0f), glm::vec3(1, 0, 0));
-//	e1.subTransforms["y"] = glm::translate(glm::mat4(1.0f), glm::vec3(0, 1, 0));
-//	e1.subTransforms["z"] = glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 1));
-//}
 
 //#include "EcsSystem/Systems.h"
 
@@ -95,158 +75,56 @@
 //
 //}
 
-//void testGraphics() {
-//	ModelManager modelManager;
-//	modelManager.createModel("model_00", "C:\\Users\\xcwal\\Documents\\Models\\testmodel0.fbx");
-//	modelManager.createModel("model_01", "C:\\Users\\xcwal\\Documents\\Models\\testmodel.fbx");
-//	modelManager.createModel("model_02", "C:\\Users\\xcwal\\Documents\\Models\\testmodel_1.fbx");
-//	modelManager.createModel("model_04", "C:\\Users\\xcwal\\Documents\\Models\\testhuman1.fbx");
-//	modelManager.createModel("model_03", "C:\\Users\\xcwal\\Documents\\Models\\testmodel_2.fbx");
-//	modelManager.createModel("shell", "C:\\Users\\xcwal\\Documents\\Models\\shell.fbx");
-//	modelManager.createModel("snail", "C:\\Users\\xcwal\\Documents\\Models\\snail.fbx");
-//
-//	// TODO: Still need a TextureManager to map texture names to ids for shader texture arrays
-//	std::vector<const char*> textureFilepaths =
-//	{
-//		"C:\\Users\\xcwal\\OneDrive\\Desktop\\testimg1.png",
-//		"C:\\Users\\xcwal\\OneDrive\\Desktop\\testimg2.png",
-//		//"C:\\Users\\xcwal\\Documents\\Models\\Ernest_body_base color.png",
-//	};
-//
-//	EcsSystem ecs;
-//
-//	ecs.registerComponent<BasicRenderComponent>();
-//	ecs.registerComponent<TransformComponent>();
-//	ecs.registerComponent<ModelComponent>();
-//	ecs.registerComponent<ColliderComponent>();
-//	ecs.registerComponent<RigidbodyComponent>();
-//
-//	Signature rSigTransform = ecs.getSignature<TransformComponent>();
-//	Signature wSigTransform = ecs.getSignature<TransformComponent>();
-//	ecs.registerSystem<TransformSystem>(rSigTransform, wSigTransform);
-//
-//	Signature rSigRender = ecs.getSignature<TransformComponent, ModelComponent>();
-//	Signature wSigRender = ecs.getSignature<BasicRenderComponent>();
-//	ecs.registerSystem<RenderSystem>(rSigRender, wSigRender);
-//
-//	Signature rSigPhysics = ecs.getSignature<ColliderComponent>();
-//	Signature wSigPhysics = ecs.getSignature<TransformComponent, RigidbodyComponent>();
-//	ecs.registerSystem<PhysicsSystem>(rSigPhysics, wSigPhysics);
-//
-//	const Model& model = modelManager.getModel("model_04");
-//	int model_id = modelManager.getModelId("model_04");
-//
-//	int scale = 16;
-//	int step = 2;
-//
-//	OctTreeRegion otr{ { -scale, -scale, -scale }, scale * 2 };
-//	OctTree<EntityId> otn(otr, 2);
-//
-//
-//	glm::vec3 position(0, 0, 0);
-//
-//	auto e = ecs.addEntity();
-//	ecs.addComponent<BasicRenderComponent>(e, { glm::mat4(), model_id, 0 });
-//	ecs.addComponent<TransformComponent>(e, { position, glm::vec3(0, 0, 0), glm::vec3(10, 10, 10) });
-//	ecs.addComponent<ModelComponent>(e, { model, 0 });
-//	ecs.addComponent<ColliderComponent>(e, { AABB, true });
-//	ecs.addComponent<RigidbodyComponent>(e);
-//
-//	ecs.getComponent<RigidbodyComponent>(e).setMass(30.0f);
-//	ecs.getComponent<RigidbodyComponent>(e).applyImpulse(glm::vec3{ 0, 0, 50 });
-//
-//	GraphicsPipeline gp;
-//	gp.setModels(modelManager);
-//	gp.setTextures(textureFilepaths);
-//	gp.create();
-//
-//	std::chrono::time_point startTime = std::chrono::high_resolution_clock::now();
-//	std::chrono::time_point lastFrameTime = startTime;
-//	std::chrono::milliseconds pollInterval(100);
-//	std::chrono::time_point pollEventsTime = startTime + pollInterval;
-//
-//	float timePassed = 0;
-//
-//	while (gp.isRunning())
-//	{
-//		std::chrono::time_point currentTime = std::chrono::high_resolution_clock::now();
-//		std::chrono::duration<double, std::milli> delta = currentTime - lastFrameTime;
-//		float deltaTimeSeconds = delta.count() * 0.001f;
-//		lastFrameTime = currentTime;
-//
-//		// TODO: this should occur on a seprate thread
-//		if (currentTime >= pollEventsTime)
-//		{
-//			gp.pollEvents();
-//			pollEventsTime = currentTime + pollInterval;
-//		}
-//
-//		ecs.updateSystem<PhysicsSystem>(deltaTimeSeconds);
-//		ecs.updateSystem<TransformSystem>(deltaTimeSeconds);
-//		ecs.updateSystem<RenderSystem>(deltaTimeSeconds);
-//
-//
-//		std::vector<BasicRenderComponent> renderComponents;
-//
-//		renderComponents = ecs.getComponentList<BasicRenderComponent>()->toList();
-//
-//		if (!renderComponents.empty()) gp.submit(renderComponents);
-//		
-//		gp.render();
-//
-//		static float frameSum = 0.0f;
-//		static int frameCount = 0;
-//		frameSum += deltaTimeSeconds;
-//		frameCount++;
-//		if (frameSum >= 1.0f) {
-//			std::cout << "FPS: " << frameCount << " (" << ((frameSum / frameCount) * 1000.0f) << " ms)\n";
-//			frameSum = 0.0f;
-//			frameCount = 0;
-//		}
-//
-//		timePassed += deltaTimeSeconds;
-//	}
-//
-//	gp.destroy();
-//}
+auto startTime = std::chrono::high_resolution_clock::now();
+auto endTime = std::chrono::high_resolution_clock::now();
+
 std::atomic<bool> running = true;
 
-void drawLoop(ascen::GraphicsPipeline_I* gp)
+void drawLoop(TestGraphicsPipeline* gp, EcsSystem* ecs)
 {
+	FrameCounter frameCounter;
+
 	while (running)
 	{
+		frameCounter.frame();
+
+		auto& e0t = ecs->getComponent<TransformComponent>(0);
+		e0t.mRotation += glm::vec3(0, 0, 0.001f);
+
+		auto& e0m0m0 = ecs->getComponent<ModelComponent>(0);
+		e0m0m0.mMeshTransforms[0].mRotation += glm::vec3(0, 0, 0.025f);
+		auto& e0m0m2 = ecs->getComponent<ModelComponent>(0);
+		e0m0m2.mMeshTransforms[2].mRotation += glm::vec3(0.05f, 0, 0);
+
+
+
+		auto& e2t = ecs->getComponent<TransformComponent>(2);
+		e2t.mRotation += glm::vec3(0.001f, 0.001f, 0.001f);
+
+		auto& e2m2m1 = ecs->getComponent<ModelComponent>(2);
+		e2m2m1.mMeshTransforms[1].mRotation += glm::vec3(0, 0.01f, 0);
+
+		ecs->updateSystem<RenderSystem>(frameCounter.deltaTime());
+
+		const auto& renderSystem = ecs->getSystem<RenderSystem>();
+		const auto& instances = renderSystem->getInstances();
+		const auto& drawCommands = renderSystem->getDrawCommands();
+
+		gp->updateInstances(instances);
+		gp->updateDrawCommands(drawCommands);
+
+		gp->submit(drawCommands);
+
 		if (gp->isResized())
 		{
 			gp->resize();
 		}
 
 		gp->drawFrame(0);
+
+		std::cout << frameCounter.fps() << "\n";
 	}
 }
-
-//void testGraphics2()
-//{
-//	WindowManager wm;
-//	wm.init();
-//
-//	MyGraphicsPipeline gp(wm);
-//
-//	gp.create();
-//
-//	std::thread renderThread(drawLoop, &gp);
-//		
-//	while (wm.isRunning())
-//	{
-//		wm.pollEvents();
-//	}
-//
-//	running = false;
-//	renderThread.join();
-//
-//	gp.destroy();
-//	wm.destroy();
-//
-//}
 
 #include "Graphics/Ecs/Components/ModelComponent.h"
 #include "Graphics/Ecs/Components/TransformComponent.h"
@@ -257,14 +135,14 @@ EcsSystem mEcs;
 
 std::unordered_map<uint32_t, ModelData> mModelInfos;
 
-void initECS(EcsSystem& ecs)
+void initECS(EcsSystem* ecs)
 {
-	ecs.registerComponent<TransformComponent>();
-	ecs.registerComponent<ModelComponent>();
+	ecs->registerComponent<TransformComponent>();
+	ecs->registerComponent<ModelComponent>();
 
-	Signature readSig = ecs.getSignature<TransformComponent, ModelComponent>();
-	Signature writeSig = ecs.getSignature<ModelComponent>();
-	ecs.registerSystem<RenderSystem>(readSig, writeSig, &mModelInfos);
+	Signature readSig = ecs->getSignature<TransformComponent, ModelComponent>();
+	Signature writeSig = ecs->getSignature<ModelComponent>();
+	ecs->registerSystem<RenderSystem>(readSig, writeSig, &mModelInfos);
 }
 
 enum MyModels : uint32_t
@@ -339,7 +217,7 @@ void initModels()
 
 void testECSandPerMeshRender()
 {
-	initECS(mEcs);
+	initECS(&mEcs);
 
 
 
@@ -363,7 +241,7 @@ void testECSandPerMeshRender()
 
 
 
-	/*auto e1 = mEcs.addEntity();
+	auto e1 = mEcs.addEntity();
 
 	TransformComponent t1{};
 	t1.mPosition = { 10, 0, 0 };
@@ -396,7 +274,7 @@ void testECSandPerMeshRender()
 	m2.mMeshTransforms.push_back({ {0, 0, 8.5f}, {0, 0, 0}, {1, 1, 1} });
 
 	mEcs.addComponent<TransformComponent>(e2, std::move(t2));
-	mEcs.addComponent<ModelComponent>(e2, std::move(m2));*/
+	mEcs.addComponent<ModelComponent>(e2, std::move(m2));
 
 	initModels();
 
@@ -413,49 +291,15 @@ void testECSandPerMeshRender()
 
 	gp.create();
 
-	// std::thread renderThread(drawLoop, &gp);
+	std::thread renderThread(drawLoop, &gp, &mEcs);
 
 	while (wm.isRunning())
 	{
 		wm.pollEvents();
-
-		auto& e0t = mEcs.getComponent<TransformComponent>(e0);
-		e0t.mRotation += glm::vec3(0, 0, 0.001f);
-
-		auto& e0m0m0 = mEcs.getComponent<ModelComponent>(e0);
-		e0m0m0.mMeshTransforms[0].mRotation += glm::vec3(0, 0, 0.025f);
-		auto& e0m0m2 = mEcs.getComponent<ModelComponent>(e0);
-		e0m0m2.mMeshTransforms[2].mRotation += glm::vec3(0.05f, 0, 0);
-
-
-
-		//auto& e2t = mEcs.getComponent<TransformComponent>(e2);
-		//e2t.mRotation += glm::vec3(0.001f, 0.001f, 0.001f);
-
-		//auto& e2m2m1 = mEcs.getComponent<ModelComponent>(e2);
-		//e2m2m1.mMeshTransforms[1].mRotation += glm::vec3(0, 0.01f, 0);
-
-		mEcs.updateSystem<RenderSystem>(1);
-
-		const auto& renderSystem = mEcs.getSystem<RenderSystem>();
-		const auto& instances = renderSystem->getInstances();
-		const auto& drawCommands = renderSystem->getDrawCommands();
-
-		gp.updateInstances(instances);
-		gp.updateDrawCommands(drawCommands);
-
-		gp.submit(drawCommands);
-
-		if (gp.isResized())
-		{
-			gp.resize();
-		}
-
-		gp.drawFrame(1);
 	}
 
 	running = false;
-	// renderThread.join();
+	renderThread.join();
 
 	gp.destroy();
 	wm.destroy();

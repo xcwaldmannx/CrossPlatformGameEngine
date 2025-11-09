@@ -1,7 +1,0 @@
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/CMakeFiles/uninstall.dir
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/CMakeFiles/INSTALL.dir
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/CMakeFiles/ALL_BUILD.dir
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/CMakeFiles/ZERO_CHECK.dir
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/src/CMakeFiles/glfw.dir
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/src/CMakeFiles/update_mappings.dir
-C:/Users/xcwal/source/repos/CrossPlatformGameEngine/Vendor/glfw3/build/src/CMakeFiles/INSTALL.dir
