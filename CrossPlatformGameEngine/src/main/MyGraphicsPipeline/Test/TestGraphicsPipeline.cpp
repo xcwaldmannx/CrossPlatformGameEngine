@@ -208,8 +208,28 @@ void TestGraphicsPipeline::createBuffers()
 void TestGraphicsPipeline::createTextures()
 {
 	ImageLoader il;
-	RawImage raw;
-	il.loadImage("res/textures/testimg1.png", &raw);
+
+	std::vector<const char*> mTextureFilepaths =
+	{
+		"res/textures/testimg1.png",
+		"res/textures/testimg2.png",
+		"res/textures/testimg3.png",
+	};
+
+	std::vector<unsigned char> pixels;
+	uint32_t width    = 1024;
+	uint32_t height   = 1024;
+	uint32_t channels = 4;
+
+	pixels.reserve(width * height * channels * mTextureFilepaths.size());
+
+	for (const auto& filepath : mTextureFilepaths)
+	{
+		RawImage raw;
+		il.loadImage(filepath, &raw);
+		std::cout << "pixel count: " << raw.mPixels.size() << "\n";
+		pixels.insert(pixels.end(), raw.mPixels.begin(), raw.mPixels.end());
+	}
 
 	mTexture = std::make_shared<ascen::Texture>(
 		ascen::Texture::create(
@@ -219,10 +239,10 @@ void TestGraphicsPipeline::createTextures()
 			mCommandPool,
 			VK_FORMAT_R8G8B8A8_SRGB,
 			VK_IMAGE_TILING_OPTIMAL,
-			raw.mPixels,
-			raw.mWidth,
-			raw.mHeight,
-			1,
+			pixels,
+			width,
+			height,
+			static_cast<uint32_t>(mTextureFilepaths.size()),
 			VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 			VK_IMAGE_ASPECT_COLOR_BIT

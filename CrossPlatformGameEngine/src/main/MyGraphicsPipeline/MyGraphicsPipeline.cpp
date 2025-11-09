@@ -398,7 +398,7 @@ void MyGraphicsPipeline::createDepthTexture()
 			mCommandPool,
 			ascen::PhysicalDevice::findDepthFormat(mPhysicalDevice),
 			VK_IMAGE_TILING_OPTIMAL,
-			nullptr,
+			{},
 			mSwapchain->getExtent().width,
 			mSwapchain->getExtent().height,
 			1,

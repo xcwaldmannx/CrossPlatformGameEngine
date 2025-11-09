@@ -16,7 +16,7 @@ Image Image::create(
 	std::shared_ptr<CommandPool> commandPool,
 	VkFormat format,
 	VkImageTiling tiling,
-	unsigned char* pixels,
+	const std::vector<unsigned char>& pixels,
 	uint32_t width,
 	uint32_t height,
 	uint32_t layers,
@@ -133,7 +133,7 @@ Image::Image(
 	std::shared_ptr<CommandPool> commandPool,
 	VkFormat format,
 	VkImageTiling tiling,
-	unsigned char* pixels,
+	const std::vector<unsigned char>& pixels,
 	uint32_t width,
 	uint32_t height,
 	uint32_t layers,
@@ -143,7 +143,7 @@ Image::Image(
 {
 	Buffer* stagingBuffer = nullptr;
 
-	if (pixels)
+	if (!pixels.empty())
 	{
 		VkDeviceSize pixelCount = width * height * layers;
 		size_t pixelSize = 4;
@@ -159,7 +159,7 @@ Image::Image(
 
 		void* data;
 		vkMapMemory(device, stagingBuffer->mMemory, 0, imageSizeBytes, 0, &data);
-		memcpy(data, pixels, static_cast<size_t>(imageSizeBytes));
+		memcpy(data, pixels.data(), static_cast<size_t>(imageSizeBytes));
 		vkUnmapMemory(device, stagingBuffer->mMemory);
 	}
 
@@ -171,8 +171,8 @@ Image::Image(
 	imageInfo.extent.depth = 1;
 	imageInfo.mipLevels = 1;
 	imageInfo.arrayLayers = layers;
-	imageInfo.format = format;// VK_FORMAT_R8G8B8A8_SRGB;
-	imageInfo.tiling = tiling;// VK_IMAGE_TILING_OPTIMAL;
+	imageInfo.format = format;
+	imageInfo.tiling = tiling;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageInfo.usage = usageFlags;
 	imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -195,7 +195,7 @@ Image::Image(
 
 	vkBindImageMemory(device, mImage, mMemory, 0);
 
-	if (pixels)
+	if (!pixels.empty())
 	{
 		transitionLayout(
 			device,
@@ -203,6 +203,7 @@ Image::Image(
 			commandPool,
 			VK_IMAGE_LAYOUT_UNDEFINED,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			layers,
 			aspectFlags);
 
 		copy(device, graphicsQueue, commandPool, *stagingBuffer, *this, format, width, height, layers, aspectFlags);
@@ -213,13 +214,13 @@ Image::Image(
 			commandPool,
 			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+			layers,
 			aspectFlags);
 
 		Buffer::destroy(device, *stagingBuffer);
 
 		delete stagingBuffer;
 	}
-
 }
 
 void Image::transitionLayout(
@@ -228,6 +229,7 @@ void Image::transitionLayout(
 	std::shared_ptr<CommandPool> commandPool,
 	VkImageLayout oldLayout,
 	VkImageLayout newLayout,
+	uint32_t layers,
 	VkImageAspectFlags aspectFlags)
 {
 	VkCommandBuffer commandBuffer = nullptr;
@@ -240,11 +242,11 @@ void Image::transitionLayout(
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 	barrier.image = mImage;
-	barrier.subresourceRange.aspectMask = aspectFlags;// VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.aspectMask = aspectFlags;
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = 1;
 	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = 1;
+	barrier.subresourceRange.layerCount = layers;
 
 	VkPipelineStageFlags sourceStage;
 	VkPipelineStageFlags destinationStage;

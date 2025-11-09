@@ -19,6 +19,8 @@
 struct alignas(16) GPUInstance
 {
 	glm::mat4 mTransform = glm::mat4(1.0);
+	uint32_t mTextureId = 0;
+	uint32_t pad[3];
 };
 
 struct ModelData
@@ -62,11 +64,11 @@ public:
 
 		for (EntityId e : mEntities)
 		{
-			auto& model = mComponentManager->getComponent<ModelComponent>(e);
+			const auto& model = mComponentManager->getComponent<ModelComponent>(e);
 			if (model.mIsHidden) continue;
 
 			ModelData& modelData = mModelData->at(model.mModelId);
-			auto& transform = mComponentManager->getComponent<TransformComponent>(e);
+			const auto& transform = mComponentManager->getComponent<TransformComponent>(e);
 
 			glm::mat4 T0 = glm::translate(glm::mat4(1.0f), transform.mPosition);
 			glm::mat4 R0 = glm::toMat4(glm::quat(transform.mRotation));
@@ -87,6 +89,7 @@ public:
 				glm::mat4 meshMatrix = T1 * R1 * S1;
 
 				instance.mTransform = modelMatrix * meshMatrix;
+				instance.mTextureId = model.mTextureId;
 
 				MeshKey key{ model.mModelId, i };
 				mMeshGroups[key].emplace_back(std::move(instance));

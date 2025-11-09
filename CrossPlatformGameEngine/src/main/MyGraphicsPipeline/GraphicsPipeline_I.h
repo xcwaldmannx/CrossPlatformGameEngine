@@ -50,7 +50,7 @@ namespace ascen
 
 		virtual void record(uint32_t imageIndex) = 0;
 
-		virtual void drawFrame(float delta) = 0;
+		virtual void drawFrame() = 0;
 
 		virtual void resize() = 0;
 
