@@ -12,7 +12,7 @@ namespace ascen
 	{
 	public:
 		GraphicsPipeline(
-			const WindowManager& windowManager,
+			WindowManager* windowManager,
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath) :
 			GraphicsPipeline_I(windowManager, vertexShaderFilepath, pixelShaderFilepath) {}
@@ -36,7 +36,7 @@ namespace ascen
 			Extensions::validate(mExtensions);
 
 			mInstance = Instance::create(mValidationLayers, mExtensions);
-			mSurface = Surface::create(mInstance, mWindowManager.getWindow());
+			mSurface = Surface::create(mInstance, mWindowManager->getWindow());
 
 			mDebugMessenger = DebugMessenger::create(mInstance);
 
@@ -47,7 +47,7 @@ namespace ascen
 			mDevice = Device::create(mPhysicalDevice, mGraphicsFamily.value(), mPresentFamily.value());
 
 			mSwapchain = std::make_shared<Swapchain>(
-				mWindowManager.getWindow(),
+				mWindowManager->getWindow(),
 				mPhysicalDevice,
 				mSurface,
 				mGraphicsFamily.value(),
@@ -112,14 +112,14 @@ namespace ascen
 		{
 			vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
-			uint32_t imageIndex;
+			uint32_t currentImage;
 			VkResult nextImageResult = vkAcquireNextImageKHR(
 				mDevice,
 				mSwapchain->handle(),
 				UINT64_MAX,
 				mImageAvailableSemaphores[mCurrentFrame],
 				VK_NULL_HANDLE,
-				&imageIndex);
+				&currentImage);
 
 			if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 			{
@@ -133,8 +133,7 @@ namespace ascen
 
 			vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
-			// updateUBO(mCurrentFrame);
-			record(imageIndex);
+			record(currentImage);
 
 			VkSubmitInfo submitInfo{};
 			submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -167,7 +166,7 @@ namespace ascen
 			VkSwapchainKHR swapChains[] = { mSwapchain->handle() };
 			presentInfo.swapchainCount = 1;
 			presentInfo.pSwapchains = swapChains;
-			presentInfo.pImageIndices = &imageIndex;
+			presentInfo.pImageIndices = &currentImage;
 			presentInfo.pResults = nullptr;
 
 			VkQueue presentQueue = ascen::QueueFamilies::getDeviceQueue(mDevice, mPresentFamily.value());
@@ -195,7 +194,7 @@ namespace ascen
 
 			mSwapchain.reset();
 			mSwapchain = std::make_shared<ascen::Swapchain>(
-				mWindowManager.getWindow(),
+				mWindowManager->getWindow(),
 				mPhysicalDevice,
 				mSurface,
 				mGraphicsFamily.value(),

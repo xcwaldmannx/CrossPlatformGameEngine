@@ -36,7 +36,7 @@ namespace ascen
 	{
 	public:
 		GraphicsPipeline_I(
-			const WindowManager& windowManager,
+			WindowManager* windowManager,
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath) :
 			mWindowManager(windowManager),
@@ -48,7 +48,7 @@ namespace ascen
 
 		virtual void submit(std::vector<VkDrawIndexedIndirectCommand> drawCommands) = 0;
 
-		virtual void record(uint32_t imageIndex) = 0;
+		virtual void record(uint32_t currentImage) = 0;
 
 		virtual void drawFrame() = 0;
 
@@ -67,7 +67,7 @@ namespace ascen
 		virtual void destroySyncObjects() = 0;
 
 	protected:
-		const WindowManager mWindowManager;
+		WindowManager* mWindowManager = nullptr;
 		bool mIsWindowResized = false;
 
 		std::vector<const char*> mExtensions;
@@ -103,6 +103,7 @@ namespace ascen
 
 		uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 		uint32_t mCurrentFrame = 0;
+		uint32_t mCurrentImage = 0;
 
 		std::vector<VkDrawIndexedIndirectCommand> mDrawCommands;
 	};
