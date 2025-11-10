@@ -11,7 +11,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-struct alignas(16) TestGPUCameraData
+struct GPUCamera
 {
 	glm::mat4 mView;
 	glm::mat4 mProj;
@@ -27,7 +27,7 @@ class TestGraphicsPipeline : public ascen::GraphicsPipeline<ascen::TextureVertex
 {
 public:
 	TestGraphicsPipeline(
-		const WindowManager& windowManager,
+		WindowManager* windowManager,
 		const std::string vertexShaderFilepath,
 		const std::string pixelShaderFilepath,
 		const std::vector<float> vertices,
@@ -39,8 +39,9 @@ public:
 	void createDescriptorResources() override;
 	void destroyDescriptorResources() override;
 
-	void record(uint32_t imageIndex) override;
+	void record(uint32_t currentImage) override;
 
+	void updateCamera(glm::mat4& transform);
 	void updateInstances(const std::vector<GPUInstance>& instances);
 	void updateDrawCommands(const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
 
@@ -48,10 +49,9 @@ private:
 	void createBuffers();
 	void createTextures();
 	void createSamplers();
-	void updateUBO(uint32_t imageIndex);
 
 private:
-	std::shared_ptr<ascen::Buffer> mUniformBuffer = nullptr;
+	std::shared_ptr<ascen::Buffer> mCameraBuffer = nullptr;
 	std::shared_ptr<ascen::Buffer> mVertexBuffer = nullptr;
 	std::shared_ptr<ascen::Buffer> mIndexBuffer = nullptr;
 	std::shared_ptr<ascen::Buffer> mIndirectBuffer = nullptr;

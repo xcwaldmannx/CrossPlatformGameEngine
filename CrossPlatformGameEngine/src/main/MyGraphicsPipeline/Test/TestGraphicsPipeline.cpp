@@ -1,7 +1,7 @@
 #include "TestGraphicsPipeline.h"
 
 TestGraphicsPipeline::TestGraphicsPipeline(
-	const WindowManager& windowManager,
+	WindowManager* windowManager,
 	const std::string vertexShaderFilepath,
 	const std::string pixelShaderFilepath,
 	const std::vector<float> vertices,
@@ -21,7 +21,7 @@ void TestGraphicsPipeline::createShaderResources()
 
 void TestGraphicsPipeline::destroyShaderResources()
 {
-	ascen::Buffer::destroy(mDevice, *mUniformBuffer);
+	ascen::Buffer::destroy(mDevice, *mCameraBuffer);
 	ascen::Buffer::destroy(mDevice, *mVertexBuffer);
 	ascen::Buffer::destroy(mDevice, *mIndexBuffer);
 	ascen::Buffer::destroy(mDevice, *mInstanceBuffer);
@@ -71,9 +71,9 @@ void TestGraphicsPipeline::createDescriptorResources()
 	auto writeUniformBuffer = ascen::Descriptor::createBufferWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-		mUniformBuffer->getBuffer(),
+		mCameraBuffer->getBuffer(),
 		0,
-		sizeof(TestGPUCameraData),
+		sizeof(GPUCamera),
 		0);
 
 	auto writeInstanceBuffer = ascen::Descriptor::createBufferWrite(
@@ -106,14 +106,12 @@ void TestGraphicsPipeline::destroyDescriptorResources()
 	ascen::Descriptor::destroy(mDevice, mDescriptorSetLayout, mDescriptorPool);
 }
 
-void TestGraphicsPipeline::record(uint32_t imageIndex)
+void TestGraphicsPipeline::record(uint32_t currentImage)
 {
-	updateUBO(imageIndex);
-
 	mCommandPool->record(
 		mPhysicalDevice,
 		mCurrentFrame,
-		imageIndex,
+		currentImage,
 		mDescriptorSet,
 		mVertexBuffer->getBuffer(),
 		mIndexBuffer->getBuffer(),
@@ -148,11 +146,11 @@ void TestGraphicsPipeline::updateDrawCommands(const std::vector<VkDrawIndexedInd
 
 void TestGraphicsPipeline::createBuffers()
 {
-	mUniformBuffer = std::make_shared<ascen::Buffer>(
-		ascen::Buffer::createUniformBuffer<TestGPUCameraData>(
+	mCameraBuffer = std::make_shared<ascen::Buffer>(
+		ascen::Buffer::createUniformBuffer<GPUCamera>(
 			mPhysicalDevice,
 			mDevice,
-			2
+			MAX_FRAMES_IN_FLIGHT
 		)
 	);
 
@@ -227,7 +225,6 @@ void TestGraphicsPipeline::createTextures()
 	{
 		RawImage raw;
 		il.loadImage(filepath, &raw);
-		std::cout << "pixel count: " << raw.mPixels.size() << "\n";
 		pixels.insert(pixels.end(), raw.mPixels.begin(), raw.mPixels.end());
 	}
 
@@ -260,15 +257,15 @@ void TestGraphicsPipeline::createSamplers()
 	);
 }
 
-void TestGraphicsPipeline::updateUBO(uint32_t imageIndex)
+void TestGraphicsPipeline::updateCamera(glm::mat4& transform)
 {
-	TestGPUCameraData ubo{};
-	ubo.mView = glm::lookAt(glm::vec3(0.0f, -15.0f, 2.0f), glm::vec3(0.0f, 0.0f, 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	GPUCamera ubo{};
+	ubo.mView = glm::inverse(transform);
 	ubo.mProj = glm::perspective(glm::radians(90.0f),
 		mSwapchain->getExtent().width / (float)mSwapchain->getExtent().height, 0.01f, 100.0f);
 	ubo.mProj[1][1] *= -1;
 
-	uint8_t offset = imageIndex * sizeof(TestGPUCameraData);
-	uint8_t* target = reinterpret_cast<uint8_t*>(mUniformBuffer->getMappedMemory());
+	size_t offset = mCurrentFrame * sizeof(GPUCamera);
+	uint8_t* target = reinterpret_cast<uint8_t*>(mCameraBuffer->getMappedMemory());
 	memcpy(target + offset, &ubo, sizeof(ubo));
 }

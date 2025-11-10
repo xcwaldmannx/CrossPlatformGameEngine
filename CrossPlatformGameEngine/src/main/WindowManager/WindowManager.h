@@ -1,24 +1,37 @@
 #pragma once
 
+#include "InputManager/InputManager.h"
+
+#include <atomic>
+#include <thread>
+
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 
 class WindowManager
 {
 public:
-	WindowManager();
-
-	void init();
+	void create();
 	void destroy();
-
-	void pollEvents() const;
 
 	bool isRunning() const;
 
 	GLFWwindow* getWindow() const;
+	InputManager& getInput();
+
+private:
+	void windowThread();
 
 private:
 	GLFWwindow* mWindow = nullptr;
+
+	std::atomic<bool> mIsRunning = false;
+	std::atomic<bool> mWindowReady = false;
+
+
+	std::thread mWindowThread;
+
+	InputManager mInputManager;
 
 	const uint32_t WINDOW_WIDTH = 800;
 	const uint32_t WINDOW_HEIGHT = 600;
