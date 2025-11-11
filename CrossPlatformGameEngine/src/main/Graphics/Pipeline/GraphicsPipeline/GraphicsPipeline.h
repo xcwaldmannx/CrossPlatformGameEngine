@@ -31,15 +31,15 @@ namespace ascen
         {
             mDescriptorSetLayouts = { descriptorSetLayout };
 
-            handleVertexInputState();
-            handleInputAssemblyState();
-            handleDynamicState();
-            handleViewportState(swapchainExtent);
-            handleRasterizationState();
-            handleMultisampleState();
-            handleColorBlendState();
-            handleDepthStencilState();
-            handlePipelineLayoutAndInfo(renderPass);
+            handleVertexInput();
+            handleInputAssembly();
+            handleDynamic();
+            handleViewport(swapchainExtent);
+            handleRasterization();
+            handleMultisample();
+            handleColorBlend();
+            handleDepthStencil();
+            handlePipeline(renderPass);
         }
 
         void create(VkDevice device) override
@@ -95,7 +95,7 @@ namespace ascen
             if (vkCreatePipelineLayout(
                 device, &mLayoutInfo, nullptr, &mLayout) != VK_SUCCESS)
             {
-                throw std::runtime_error("failed to create pipeline layout!");
+                throw std::runtime_error("failed to create graphics pipeline layout!");
             }
 
             mCreateInfo.layout = mLayout;
@@ -120,22 +120,15 @@ namespace ascen
         }
 
     private:
-        void handleVertexInputState()
+        void handleVertexInput()
         {
-            // Collect the per-vertex and per-instance binding descriptions
             auto vertexBindingDescription = T::getBindingDescription();
             auto vertexAttributeDescriptions = T::getAttributeDescriptions();
 
-            //auto instanceBindingDescription = Instance::getBindingDescription();
-            //auto instanceAttributeDescriptions = Instance::getAttributeDescriptions();
-
             mVertexInputBindingDescs.push_back(vertexBindingDescription);
-            //mPipelineInfo.mVertexInputBindingInfo.push_back(instanceBindingDescription);
 
             mVertexInputAtrribDescs.insert(mVertexInputAtrribDescs.end(),
                 vertexAttributeDescriptions.begin(), vertexAttributeDescriptions.end());
-            //attributeDescriptions.insert(attributeDescriptions.end(),
-            //    instanceAttributeDescriptions.begin(), instanceAttributeDescriptions.end());
 
             mVertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
@@ -152,14 +145,14 @@ namespace ascen
                 mVertexInputAtrribDescs.data();
         }
 
-        void handleInputAssemblyState()
+        void handleInputAssembly()
         {
             mInputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
             mInputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
             mInputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
         }
 
-        void handleDynamicState()
+        void handleDynamic()
         {
             mDynamicStates.push_back(VK_DYNAMIC_STATE_VIEWPORT);
             mDynamicStates.push_back(VK_DYNAMIC_STATE_SCISSOR);
@@ -169,7 +162,7 @@ namespace ascen
             mDynamicStateInfo.pDynamicStates = mDynamicStates.data();
         }
 
-        void handleViewportState(const VkExtent2D& swapchainExtent)
+        void handleViewport(const VkExtent2D& swapchainExtent)
         {
             mViewport.x = 0.0f;
             mViewport.y = 0.0f;
@@ -188,7 +181,7 @@ namespace ascen
             mViewportStateInfo.pScissors = &mViewportScissor;
         }
 
-        void handleRasterizationState()
+        void handleRasterization()
         {
             mRasterizationStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             mRasterizationStateInfo.depthClampEnable = VK_FALSE;
@@ -203,7 +196,7 @@ namespace ascen
             mRasterizationStateInfo.depthBiasSlopeFactor = 0.0f; // Optional
         }
 
-        void handleMultisampleState()
+        void handleMultisample()
         {
             mMultisampleStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
             mMultisampleStateInfo.sampleShadingEnable = VK_FALSE;
@@ -214,7 +207,7 @@ namespace ascen
             mMultisampleStateInfo.alphaToOneEnable = VK_FALSE; // Optional
         }
 
-        void handleColorBlendState()
+        void handleColorBlend()
         {
             mColorBlendAttachmentState.colorWriteMask =
                 VK_COLOR_COMPONENT_R_BIT |
@@ -240,7 +233,7 @@ namespace ascen
             mColorBlendStateInfo.blendConstants[3] = 0.0f; // Optional
         }
 
-        void handleDepthStencilState()
+        void handleDepthStencil()
         {
             mDepthStencilStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
             mDepthStencilStateInfo.depthTestEnable = VK_TRUE;
@@ -254,16 +247,14 @@ namespace ascen
             mDepthStencilStateInfo.back = {}; // Optional
         }
 
-        void handlePipelineLayoutAndInfo(VkRenderPass renderPass)
+        void handlePipeline(VkRenderPass renderPass)
         {
-            // pipeline layout creation
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             mLayoutInfo.setLayoutCount = static_cast<uint32_t>(mDescriptorSetLayouts.size());
             mLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
             mLayoutInfo.pushConstantRangeCount = 0; // Optional
             mLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
-            // pipeline creation
             mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());
             mCreateInfo.pStages = mShaderStages.data();
@@ -277,8 +268,6 @@ namespace ascen
             mCreateInfo.pDepthStencilState = &mDepthStencilStateInfo;
             mCreateInfo.renderPass = renderPass;
             mCreateInfo.subpass = 0;
-            mCreateInfo.basePipelineHandle = nullptr; // Optional
-            mCreateInfo.basePipelineIndex = -1; // Optional
         }
 
     protected:
