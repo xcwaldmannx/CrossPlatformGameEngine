@@ -235,32 +235,32 @@ void Image::transitionLayout(
 {
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 
-	VkPipelineStageFlags srcStage;
-	VkPipelineStageFlags dstStage;
+	VkAccessFlags2 srcAccess;
+	VkPipelineStageFlags2 srcStage;
 
-	VkAccessFlags srcAccess;
-	VkAccessFlags dstAccess;
+	VkAccessFlags2 dstAccess;
+	VkPipelineStageFlags2 dstStage;
 
 	if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 	{
-		srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		srcAccess = 0;
-		dstAccess = VK_ACCESS_TRANSFER_WRITE_BIT;
+		srcAccess = VK_ACCESS_2_NONE;
+		srcStage  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+		dstAccess = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+		dstStage  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
 	}
 	else if (oldLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && newLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 	{
-		srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-		srcAccess = VK_ACCESS_TRANSFER_WRITE_BIT;
-		dstAccess = VK_ACCESS_SHADER_READ_BIT;
+		srcAccess = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+		srcStage  = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+		dstAccess = VK_ACCESS_2_SHADER_READ_BIT;
+		dstStage  = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
 	}
 	else if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 	{
-		srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
-		dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-		srcAccess = 0;
-		dstAccess = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		srcAccess = VK_ACCESS_2_NONE;
+		srcStage  = VK_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT;
+		dstAccess = VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		dstStage  = VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT;
 	}
 	else {
 		throw std::invalid_argument("unsupported layout transition!");
@@ -269,8 +269,8 @@ void Image::transitionLayout(
 	Barrier::image(
 		commandBuffer, mImage, layers,
 		oldLayout, newLayout,
-		srcStage, dstStage,
-		srcAccess, dstAccess,
+		srcAccess, srcStage,
+		dstAccess, dstStage,
 		aspectFlags);
 
 	commandPool->endSingle(device, graphicsQueue, commandBuffer);

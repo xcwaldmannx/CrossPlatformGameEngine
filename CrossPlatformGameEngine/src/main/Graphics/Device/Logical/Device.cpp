@@ -25,27 +25,21 @@ VkDevice Device::create(
         queueCreateInfos.push_back(queueCreateInfo);
     }
 
+    // TODO: improve the usability of checking support and enabling features
+
     VkPhysicalDeviceFeatures deviceFeatures{};
     deviceFeatures.samplerAnisotropy = VK_TRUE;
     deviceFeatures.fillModeNonSolid = VK_TRUE;
     deviceFeatures.multiDrawIndirect = VK_TRUE;
     deviceFeatures.drawIndirectFirstInstance = VK_TRUE;
 
-    // this section allows access to all features, not just core 1.0 features.
-    // This is not currently necessary but is here for later use.
-    // -------------------------------------------------------------------------------------
-    //VkPhysicalDeviceShaderDrawParametersFeatures ext_feature = {};
-    //ext_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES;
-
-    //VkPhysicalDeviceFeatures2 physical_features2 = {};
-    //physical_features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    //physical_features2.pNext = &ext_feature;
-
-    //vkGetPhysicalDeviceFeatures2(physicalDevice.mDevice, &physical_features2);
+    VkPhysicalDeviceSynchronization2FeaturesKHR sync2Features{};
+    sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
+    sync2Features.synchronization2 = VK_TRUE;
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    // createInfo.pNext = &physical_features2;
+    createInfo.pNext = &sync2Features;
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pEnabledFeatures = &deviceFeatures;

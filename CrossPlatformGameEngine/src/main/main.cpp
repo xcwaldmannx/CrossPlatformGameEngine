@@ -1,7 +1,8 @@
-﻿#include "../main/WindowManager/WindowManager.h"
-#include "../main/MyPipelines/Graphics/MyGraphicsPipeline.h"
-#include "../main/MyPipelines/Compute/MyComputePipeline.h"
-#include "../main/EcsSystem/EcsSystem.h"
+﻿#include "WindowManager/WindowManager.h"
+#include "MyPipelines/Graphics/MyGraphicsPipeline.h"
+#include "MyPipelines/Compute/MyComputePipeline.h"
+#include "Graphics/RenderGraph/RenderGraph.h"
+#include "EcsSystem/EcsSystem.h"
 
 #include "../main/Utility/FrameCounter.h"
 
@@ -187,6 +188,23 @@ void initEntities()
 	}
 }
 
+void initResources()
+{
+
+}
+
+ascen::RenderGraph mRenderGraph;
+
+void initRenderGraph()
+{
+	ascen::RenderGraphNode n0;
+	n0.mResourceType = ascen::ResourceType::BUFFER;
+	n0.mAccess = ascen::Access::READ;
+	n0.mStage = ascen::Stage::VERTEX;
+	n0.mPipeline = 0;
+	// n0.mResource = 0;
+}
+
 int main()
 {
 	mWindow.create();
@@ -208,7 +226,7 @@ int main()
 		"src/shaders/GPUDrivenCS.spv",
 		0);
 
-	FrameCounter frameCounter(240);
+	FrameCounter frameCounter(120);
 
 	glm::vec3 camUpWorld(0.0f, 1.0f, 0.0f);
 	glm::vec3 camPosition(0.0f);

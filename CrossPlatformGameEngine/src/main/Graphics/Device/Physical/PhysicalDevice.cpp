@@ -95,6 +95,8 @@ bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR su
 
     hasExtensionSupport = requiredExtensions.empty();
 
+    // TODO: improve the usability of checking support and enabling features
+
     // other support
     VkPhysicalDeviceFeatures supportedFeatures;
     vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
@@ -104,13 +106,25 @@ bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR su
     VkBool32 multiDrawIndirect = supportedFeatures.multiDrawIndirect;
     VkBool32 drawIndirectFirstInstance = supportedFeatures.drawIndirectFirstInstance;
 
+    VkPhysicalDeviceSynchronization2FeaturesKHR sync2Features{};
+    sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
+
+    VkPhysicalDeviceFeatures2 features2{};
+    features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+    features2.pNext = &sync2Features;
+
+    vkGetPhysicalDeviceFeatures2(device, &features2);
+
+    VkBool32 sync2Support = sync2Features.synchronization2;
+
     return hasQueueFamilySupport &&
         hasSurfaceSupport &&
         hasExtensionSupport &&
         anisotropicSupport &&
         fillModeNonSolidSupport &&
         multiDrawIndirect &&
-        drawIndirectFirstInstance;
+        drawIndirectFirstInstance &&
+        sync2Support;
 }
 
 VkFormat PhysicalDevice::findDepthFormat(VkPhysicalDevice physicalDevice)
