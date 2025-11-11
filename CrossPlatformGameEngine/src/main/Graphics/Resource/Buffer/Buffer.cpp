@@ -1,6 +1,7 @@
 #include "Buffer.h"
 
 #include "../../CommandPool/CommandPool.h"
+#include "../Barrier/Barrier.h"
 
 #include <stdexcept>
 
@@ -14,8 +15,8 @@ void Buffer::copy(
 	Buffer& dest,
 	bool insertBarrier)
 {
-	VkCommandBuffer commandBuffer = nullptr;
-	commandPool->beginSingleTimeCommands(device, &commandBuffer);
+	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
+	
 
 	VkBufferCopy copyRegion{};
 	copyRegion.srcOffset = 0;
@@ -23,29 +24,18 @@ void Buffer::copy(
 	copyRegion.size = src.mItemCount * src.mItemSize;
 	vkCmdCopyBuffer(commandBuffer, src.mBuffer, dest.mBuffer, 1, &copyRegion);
 
-	if (insertBarrier) {
-		VkBufferMemoryBarrier barrier{};
-		barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-		barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-		barrier.buffer = dest.mBuffer;
-		barrier.offset = 0;
-		barrier.size = VK_WHOLE_SIZE;
-
-		vkCmdPipelineBarrier(
-			commandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT,
-			VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-			0,
-			0, nullptr,
-			1, &barrier,
-			0, nullptr
-		);
+	if (insertBarrier)
+	{
+		Barrier::buffer(
+		commandBuffer,
+		dest.mBuffer,
+		VK_ACCESS_TRANSFER_WRITE_BIT,
+		VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+		VK_PIPELINE_STAGE_TRANSFER_BIT,
+		VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 	}
 
-	commandPool->endSingleTimeCommands(device, graphicsQueue, &commandBuffer);
+	commandPool->endSingle(device, graphicsQueue, commandBuffer);
 }
 
 void Buffer::destroy(VkDevice device, Buffer& buffer)

@@ -58,14 +58,8 @@ namespace ascen
 			std::shared_ptr<Pipeline_I> pipeline,
 			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
 
-		void beginSingleTimeCommands(
-			VkDevice device,
-			VkCommandBuffer* buffer);
-
-		void endSingleTimeCommands(
-			VkDevice device,
-			VkQueue queue,
-			VkCommandBuffer* buffer);
+		VkCommandBuffer beginSingle(VkDevice device);
+		void endSingle(VkDevice device, VkQueue queue, VkCommandBuffer buffer);
 
 		const VkCommandBuffer* getBufferIndex(size_t index) const;
 

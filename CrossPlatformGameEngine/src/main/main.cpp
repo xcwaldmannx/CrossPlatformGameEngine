@@ -203,17 +203,27 @@ int main()
 		mTransforms);
 	pipeline.create();
 
-	FrameCounter frameCounter;
+	FrameCounter frameCounter(240);
 
 	glm::vec3 camUpWorld(0.0f, 1.0f, 0.0f);
 	glm::vec3 camPosition(0.0f);
 	glm::vec3 camRotation(0.0f); // radians: x=pitch, y=yaw
 	float camSpeed = 10.0f;
 
+	float timePassed = 0;
+
 	while (mWindow.isRunning())
 	{
 		frameCounter.frame();
+
 		const float delta = frameCounter.deltaTime();
+
+		timePassed += delta;
+		if (timePassed > 1.0f)
+		{
+			std::cout << frameCounter.fps() << "\n";
+			timePassed = 0.0f;
+		}
 
 		if (mWindow.getInput().isKeyPressed(GLFW_KEY_ESCAPE))
 			break;

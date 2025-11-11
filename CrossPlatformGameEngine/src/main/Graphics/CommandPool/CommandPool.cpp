@@ -270,41 +270,43 @@ void CommandPool::record(
     }
 }
 
-void CommandPool::beginSingleTimeCommands(
-    VkDevice device,
-    VkCommandBuffer* buffer)
+VkCommandBuffer CommandPool::beginSingle(VkDevice device)
 {
+    VkCommandBuffer buffer;
+
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandPool = mHandle;
     allocInfo.commandBufferCount = 1;
 
-    vkAllocateCommandBuffers(device, &allocInfo, buffer);
+    if (vkAllocateCommandBuffers(device, &allocInfo, &buffer) != VK_SUCCESS)
+    {
+        throw std::runtime_error("Failed to allocate command buffer");
+    }
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-    vkBeginCommandBuffer(*buffer, &beginInfo);
+    vkBeginCommandBuffer(buffer, &beginInfo);
+
+    return buffer;
 }
 
-void CommandPool::endSingleTimeCommands(
-    VkDevice device,
-    VkQueue graphicsQueue,
-    VkCommandBuffer* buffer)
+void CommandPool::endSingle(VkDevice device, VkQueue queue, VkCommandBuffer buffer)
 {
-    vkEndCommandBuffer(*buffer);
+    vkEndCommandBuffer(buffer);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = buffer;
+    submitInfo.pCommandBuffers = &buffer;
 
-    vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(graphicsQueue);
+    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(queue);
 
-    vkFreeCommandBuffers(device, mHandle, 1, buffer);
+    vkFreeCommandBuffers(device, mHandle, 1, &buffer);
 }
 
 const VkCommandBuffer* CommandPool::getBufferIndex(size_t index) const
