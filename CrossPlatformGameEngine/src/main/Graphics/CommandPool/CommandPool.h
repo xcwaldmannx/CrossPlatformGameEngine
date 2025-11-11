@@ -5,7 +5,8 @@
 #include "../Device/Physical/PhysicalDevice.h"
 #include "../Swapchain/Swapchain.h"
 #include "../RenderPass/RenderPass.h"
-#include "../Pipeline/Pipeline.h"
+#include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
+#include "../Pipeline/ComputePipeline/ComputePipeline_I.h"
 
 #include <memory>
 

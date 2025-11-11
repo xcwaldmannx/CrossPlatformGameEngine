@@ -1,8 +1,8 @@
 #pragma once
 
-#include "Pipeline_I.h"
-#include "../../Utility/FileIO/FileIO.h"
-#include "../Vertex/Vertex_I.h"
+#include "GraphicsPipeline_I.h"
+#include "../../../Utility/FileIO/FileIO.h"
+#include "../../Vertex/Vertex_I.h"
 
 #include <concepts>
 #include <stdexcept>
@@ -15,111 +15,111 @@
 namespace ascen
 {
 
-	template<std::derived_from<Vertex_I> T>
-	class Pipeline : public Pipeline_I
-	{
-	public:
-		Pipeline(
-			const std::string& vertexShaderFilepath,
-			const std::string& pixelShaderFilepath,
-			const VkExtent2D& swapchainExtent,
-			VkDescriptorSetLayout descriptorSetLayout,
-			VkRenderPass renderPass) :
-            Pipeline_I(
+    template<std::derived_from<Vertex_I> T>
+    class GraphicsPipeline : public GraphicsPipeline_I
+    {
+    public:
+        GraphicsPipeline(
+            const std::string& vertexShaderFilepath,
+            const std::string& pixelShaderFilepath,
+            const VkExtent2D& swapchainExtent,
+            VkDescriptorSetLayout descriptorSetLayout,
+            VkRenderPass renderPass) :
+            GraphicsPipeline_I(
                 vertexShaderFilepath,
-			    pixelShaderFilepath)
-		{
+                pixelShaderFilepath)
+        {
             mDescriptorSetLayouts = { descriptorSetLayout };
 
-			handleVertexInputState();
-			handleInputAssemblyState();
-			handleDynamicState();
-			handleViewportState(swapchainExtent);
-			handleRasterizationState();
-			handleMultisampleState();
-			handleColorBlendState();
-			handleDepthStencilState();
-			handlePipelineLayoutAndInfo(renderPass);
-		}
+            handleVertexInputState();
+            handleInputAssemblyState();
+            handleDynamicState();
+            handleViewportState(swapchainExtent);
+            handleRasterizationState();
+            handleMultisampleState();
+            handleColorBlendState();
+            handleDepthStencilState();
+            handlePipelineLayoutAndInfo(renderPass);
+        }
 
-		void create(VkDevice device) override
-		{
-			// create vertex shader
-			auto vertexShaderCode = FileIO::readFile(mVertexShaderFilepath);
+        void create(VkDevice device) override
+        {
+            // create vertex shader
+            auto vertexShaderCode = FileIO::readFile(mVertexShaderFilepath);
 
-			VkShaderModuleCreateInfo vertexShaderModuleInfo{};
-			vertexShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			vertexShaderModuleInfo.codeSize = vertexShaderCode.size();
-			vertexShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(vertexShaderCode.data());
+            VkShaderModuleCreateInfo vertexShaderModuleInfo{};
+            vertexShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            vertexShaderModuleInfo.codeSize = vertexShaderCode.size();
+            vertexShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(vertexShaderCode.data());
 
-			VkShaderModule vertexShaderModule;
-			if (vkCreateShaderModule(device, &vertexShaderModuleInfo, nullptr, &vertexShaderModule) != VK_SUCCESS)
+            VkShaderModule vertexShaderModule;
+            if (vkCreateShaderModule(device, &vertexShaderModuleInfo, nullptr, &vertexShaderModule) != VK_SUCCESS)
             {
-				throw std::runtime_error("failed to create vertex shader stage!");
-			}
+                throw std::runtime_error("failed to create vertex shader stage!");
+            }
 
-			VkPipelineShaderStageCreateInfo vertexShaderStageInfo{};
-			vertexShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			vertexShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
-			vertexShaderStageInfo.module = vertexShaderModule;
-			vertexShaderStageInfo.pName = "main";
+            VkPipelineShaderStageCreateInfo vertexShaderStageInfo{};
+            vertexShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            vertexShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+            vertexShaderStageInfo.module = vertexShaderModule;
+            vertexShaderStageInfo.pName = "main";
 
-			mShaderStages.push_back(vertexShaderStageInfo);
+            mShaderStages.push_back(vertexShaderStageInfo);
 
-			// create pixel shader
-			auto pixelShaderCode = FileIO::readFile(mPixelShaderFilepath);
+            // create pixel shader
+            auto pixelShaderCode = FileIO::readFile(mPixelShaderFilepath);
 
-			VkShaderModuleCreateInfo pixelShaderModuleInfo{};
-			pixelShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-			pixelShaderModuleInfo.codeSize = pixelShaderCode.size();
-			pixelShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(pixelShaderCode.data());
+            VkShaderModuleCreateInfo pixelShaderModuleInfo{};
+            pixelShaderModuleInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+            pixelShaderModuleInfo.codeSize = pixelShaderCode.size();
+            pixelShaderModuleInfo.pCode = reinterpret_cast<const uint32_t*>(pixelShaderCode.data());
 
-			VkShaderModule pixelShaderModule;
-			if (vkCreateShaderModule(device, &pixelShaderModuleInfo, nullptr, &pixelShaderModule) != VK_SUCCESS)
+            VkShaderModule pixelShaderModule;
+            if (vkCreateShaderModule(device, &pixelShaderModuleInfo, nullptr, &pixelShaderModule) != VK_SUCCESS)
             {
-				throw std::runtime_error("failed to create pixel shader stage!");
-			}
+                throw std::runtime_error("failed to create pixel shader stage!");
+            }
 
-			VkPipelineShaderStageCreateInfo pixelShaderStageInfo{};
-			pixelShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-			pixelShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
-			pixelShaderStageInfo.module = pixelShaderModule;
-			pixelShaderStageInfo.pName = "main";
+            VkPipelineShaderStageCreateInfo pixelShaderStageInfo{};
+            pixelShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+            pixelShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+            pixelShaderStageInfo.module = pixelShaderModule;
+            pixelShaderStageInfo.pName = "main";
 
-			mShaderStages.push_back(pixelShaderStageInfo);
+            mShaderStages.push_back(pixelShaderStageInfo);
 
-			mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());
-			mCreateInfo.pStages = mShaderStages.data();
+            mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());
+            mCreateInfo.pStages = mShaderStages.data();
 
-			// create pipeline layout and pipeline
-			if (vkCreatePipelineLayout(
-				device, &mLayoutInfo, nullptr, &mLayout) != VK_SUCCESS)
+            // create pipeline layout and pipeline
+            if (vkCreatePipelineLayout(
+                device, &mLayoutInfo, nullptr, &mLayout) != VK_SUCCESS)
             {
-				throw std::runtime_error("failed to create pipeline layout!");
-			}
+                throw std::runtime_error("failed to create pipeline layout!");
+            }
 
-			mCreateInfo.layout = mLayout;
+            mCreateInfo.layout = mLayout;
 
-			if (vkCreateGraphicsPipelines(
-				device, nullptr, 1, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
+            if (vkCreateGraphicsPipelines(
+                device, nullptr, 1, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
             {
-				throw std::runtime_error("failed to create graphics pipeline!");
-			}
+                throw std::runtime_error("failed to create graphics pipeline!");
+            }
 
-			// destroy the shaders
-			for (VkPipelineShaderStageCreateInfo& stage : mShaderStages)
-			{
-				vkDestroyShaderModule(device, stage.module, nullptr);
-			}
-		}
+            // destroy the shaders
+            for (VkPipelineShaderStageCreateInfo& stage : mShaderStages)
+            {
+                vkDestroyShaderModule(device, stage.module, nullptr);
+            }
+        }
 
-		void destroy(VkDevice device) override
-		{
-			vkDestroyPipeline(device, mHandle, nullptr);
-			vkDestroyPipelineLayout(device, mLayout, nullptr);
-		}
+        void destroy(VkDevice device) override
+        {
+            vkDestroyPipeline(device, mHandle, nullptr);
+            vkDestroyPipelineLayout(device, mLayout, nullptr);
+        }
 
-	private:
+    private:
         void handleVertexInputState()
         {
             // Collect the per-vertex and per-instance binding descriptions
@@ -281,25 +281,25 @@ namespace ascen
             mCreateInfo.basePipelineIndex = -1; // Optional
         }
 
-	protected:
-		std::vector<VkPipelineShaderStageCreateInfo> mShaderStages;
-		std::vector<VkVertexInputBindingDescription>  mVertexInputBindingDescs;
-		std::vector<VkVertexInputAttributeDescription> mVertexInputAtrribDescs;
+    protected:
+        std::vector<VkPipelineShaderStageCreateInfo> mShaderStages;
+        std::vector<VkVertexInputBindingDescription>  mVertexInputBindingDescs;
+        std::vector<VkVertexInputAttributeDescription> mVertexInputAtrribDescs;
         std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
-		VkPipelineVertexInputStateCreateInfo mVertexInputStateInfo{};
-		VkPipelineInputAssemblyStateCreateInfo mInputAssemblyInfo{};
-		std::vector<VkDynamicState> mDynamicStates;
-		VkPipelineDynamicStateCreateInfo mDynamicStateInfo{};
-		VkViewport mViewport{};
-		VkRect2D mViewportScissor{};
-		VkPipelineViewportStateCreateInfo mViewportStateInfo{};
-		VkPipelineRasterizationStateCreateInfo mRasterizationStateInfo{};
-		VkPipelineMultisampleStateCreateInfo mMultisampleStateInfo{};
-		VkPipelineColorBlendAttachmentState mColorBlendAttachmentState{};
-		VkPipelineColorBlendStateCreateInfo mColorBlendStateInfo{};
-		VkPipelineDepthStencilStateCreateInfo mDepthStencilStateInfo{};
-		VkPipelineLayoutCreateInfo mLayoutInfo{};
-		VkGraphicsPipelineCreateInfo mCreateInfo{};
+        VkPipelineVertexInputStateCreateInfo mVertexInputStateInfo{};
+        VkPipelineInputAssemblyStateCreateInfo mInputAssemblyInfo{};
+        std::vector<VkDynamicState> mDynamicStates;
+        VkPipelineDynamicStateCreateInfo mDynamicStateInfo{};
+        VkViewport mViewport{};
+        VkRect2D mViewportScissor{};
+        VkPipelineViewportStateCreateInfo mViewportStateInfo{};
+        VkPipelineRasterizationStateCreateInfo mRasterizationStateInfo{};
+        VkPipelineMultisampleStateCreateInfo mMultisampleStateInfo{};
+        VkPipelineColorBlendAttachmentState mColorBlendAttachmentState{};
+        VkPipelineColorBlendStateCreateInfo mColorBlendStateInfo{};
+        VkPipelineDepthStencilStateCreateInfo mDepthStencilStateInfo{};
+        VkPipelineLayoutCreateInfo mLayoutInfo{};
+        VkGraphicsPipelineCreateInfo mCreateInfo{};
 
-	};
+    };
 }

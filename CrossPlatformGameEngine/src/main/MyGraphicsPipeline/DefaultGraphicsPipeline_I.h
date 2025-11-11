@@ -14,7 +14,8 @@
 #include "../Graphics/Swapchain/Swapchain.h"
 #include "../Graphics/RenderPass/RenderPass.h"
 #include "../Graphics/CommandPool/CommandPool.h"
-#include "../Graphics/Pipeline/Pipeline.h"
+#include "../Graphics/Pipeline/GraphicsPipeline/GraphicsPipeline.h"
+#include "../Graphics/Pipeline/ComputePipeline/ComputePipeline.h"
 #include "../Graphics/Vertex/Vertex_I.h"
 #include "../Graphics/Resource/Buffer/Buffer.h"
 #include "../Graphics/Resource/Image/Image.h"
@@ -32,10 +33,10 @@
 namespace ascen
 {
 
-	class GraphicsPipeline_I
+	class DefaultGraphicsPipeline_I
 	{
 	public:
-		GraphicsPipeline_I(
+		DefaultGraphicsPipeline_I(
 			WindowManager* windowManager,
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath) :
@@ -92,7 +93,7 @@ namespace ascen
 
 		std::shared_ptr<Swapchain> mSwapchain = nullptr;
 		std::shared_ptr<RenderPass> mRenderPass = nullptr;
-		std::shared_ptr<Pipeline_I> mPipeline = nullptr;
+		std::shared_ptr<GraphicsPipeline_I> mPipeline = nullptr;
 		std::shared_ptr<CommandPool> mCommandPool = nullptr;
 
 		std::shared_ptr<Texture> mDepthTexture = nullptr;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "GraphicsPipeline_I.h"
+#include "DefaultGraphicsPipeline_I.h"
 
 #include <stdexcept>
 
@@ -8,14 +8,14 @@ namespace ascen
 {
 
 	template<std::derived_from<Vertex_I> T>
-	class GraphicsPipeline : public GraphicsPipeline_I
+	class DefaultGraphicsPipeline : public DefaultGraphicsPipeline_I
 	{
 	public:
-		GraphicsPipeline(
+		DefaultGraphicsPipeline(
 			WindowManager* windowManager,
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath) :
-			GraphicsPipeline_I(windowManager, vertexShaderFilepath, pixelShaderFilepath) {}
+			DefaultGraphicsPipeline_I(windowManager, vertexShaderFilepath, pixelShaderFilepath) {}
 
 		void create() override
 		{
@@ -71,7 +71,7 @@ namespace ascen
 
 			createDescriptorResources();
 
-			mPipeline = std::make_shared<Pipeline<T>>(
+			mPipeline = std::make_shared<GraphicsPipeline<T>>(
 				mVertexShaderFilepath,
 				mPixelShaderFilepath,
 				mSwapchain->getExtent(),

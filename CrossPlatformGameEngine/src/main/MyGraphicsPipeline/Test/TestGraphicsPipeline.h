@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../Utility/ImageLoader/ImageLoader.h"
-#include "../GraphicsPipeline.h"
+#include "../DefaultGraphicsPipeline.h"
 #include "../../Graphics/Vertex/TextureVertex.h"
 
 #include "../../Graphics/Ecs/Systems/RenderSystem.h"
@@ -23,7 +23,7 @@ struct alignas(16) TestGPUInstanceData
 	glm::mat4 mTransform = glm::mat4(1.0);
 };
 
-class TestGraphicsPipeline : public ascen::GraphicsPipeline<ascen::TextureVertex>
+class TestGraphicsPipeline : public ascen::DefaultGraphicsPipeline<ascen::TextureVertex>
 {
 public:
 	TestGraphicsPipeline(

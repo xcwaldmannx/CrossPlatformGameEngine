@@ -7,7 +7,7 @@ TestGraphicsPipeline::TestGraphicsPipeline(
 	const std::vector<float> vertices,
 	const std::vector<uint32_t> indices,
 	const std::vector<float> transforms) :
-	GraphicsPipeline<ascen::TextureVertex>(windowManager, vertexShaderFilepath, pixelShaderFilepath),
+	DefaultGraphicsPipeline<ascen::TextureVertex>(windowManager, vertexShaderFilepath, pixelShaderFilepath),
 	mVertices(vertices),
 	mIndices(indices), 
 	mTransforms(transforms) {}
