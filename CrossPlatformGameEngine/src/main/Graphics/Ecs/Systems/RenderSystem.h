@@ -18,9 +18,11 @@
 
 struct alignas(16) GPUInstance
 {
-	glm::mat4 mTransform = glm::mat4(1.0);
+	glm::mat4 mModelTransform = glm::mat4(1.0);
+	glm::mat4 mMeshTransform = glm::mat4(1.0);
+	uint32_t mTransformId = 0;
 	uint32_t mTextureId = 0;
-	uint32_t pad[3];
+	uint32_t pad[2];
 };
 
 struct ModelData
@@ -88,7 +90,10 @@ public:
 
 				glm::mat4 meshMatrix = T1 * R1 * S1;
 
-				instance.mTransform = modelMatrix * meshMatrix;
+				instance.mModelTransform = modelMatrix;
+				instance.mMeshTransform   = meshMatrix;
+
+				instance.mTransformId = modelData.mTransformOffsets[i];
 				instance.mTextureId = model.mTextureId;
 
 				MeshKey key{ model.mModelId, i };

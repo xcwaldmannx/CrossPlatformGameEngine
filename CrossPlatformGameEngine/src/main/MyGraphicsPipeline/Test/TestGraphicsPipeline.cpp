@@ -24,6 +24,7 @@ void TestGraphicsPipeline::destroyShaderResources()
 	ascen::Buffer::destroy(mDevice, *mCameraBuffer);
 	ascen::Buffer::destroy(mDevice, *mVertexBuffer);
 	ascen::Buffer::destroy(mDevice, *mIndexBuffer);
+	ascen::Buffer::destroy(mDevice, *mTransformBuffer);
 	ascen::Buffer::destroy(mDevice, *mInstanceBuffer);
 	ascen::Buffer::destroy(mDevice, *mIndirectBuffer);
 	ascen::Texture::destroy(mDevice, *mTexture);
@@ -35,7 +36,7 @@ void TestGraphicsPipeline::createDescriptorResources()
 	std::vector<ascen::Descriptor::PoolSize> poolSizes =
 	{
 		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
-		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1),
+		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2),
 		ascen::Descriptor::PoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 	};
 
@@ -43,18 +44,31 @@ void TestGraphicsPipeline::createDescriptorResources()
 
 	std::vector<VkDescriptorSetLayoutBinding> bindings =
 	{
+		// buffer 0x00-0x0F
+
+		// camera ubo
 		ascen::Descriptor::createBinding(
-			0,
+			0x00,
 			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
 			VK_SHADER_STAGE_VERTEX_BIT),
 
+		// transform ssbo
 		ascen::Descriptor::createBinding(
-			1,
+			0x01,
 			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
 			VK_SHADER_STAGE_VERTEX_BIT),
 
+		// instance ssbo
 		ascen::Descriptor::createBinding(
-			2,
+			0x02,
+			VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+			VK_SHADER_STAGE_VERTEX_BIT),
+
+		// image 0x10-0x1F
+
+		// texture array
+		ascen::Descriptor::createBinding(
+			0x10,
 			VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 			VK_SHADER_STAGE_FRAGMENT_BIT),
 	};
@@ -68,13 +82,21 @@ void TestGraphicsPipeline::createDescriptorResources()
 
 	mDescriptorSet = ascen::Descriptor::createSet(mDevice, mDescriptorPool, layouts);
 
-	auto writeUniformBuffer = ascen::Descriptor::createBufferWrite(
+	auto writeCameraBuffer = ascen::Descriptor::createBufferWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
 		mCameraBuffer->getBuffer(),
 		0,
 		sizeof(GPUCamera),
-		0);
+		0x00);
+
+	auto writeTransformBuffer = ascen::Descriptor::createBufferWrite(
+		mDescriptorSet,
+		VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+		mTransformBuffer->getBuffer(),
+		0,
+		VK_WHOLE_SIZE,
+		0x01);
 
 	auto writeInstanceBuffer = ascen::Descriptor::createBufferWrite(
 		mDescriptorSet,
@@ -82,18 +104,19 @@ void TestGraphicsPipeline::createDescriptorResources()
 		mInstanceBuffer->getBuffer(),
 		0,
 		VK_WHOLE_SIZE,
-		1);
+		0x02);
 
 	auto writeTextureBuffer = ascen::Descriptor::createImageWrite(
 		mDescriptorSet,
 		VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 		mTexture->getView(),
 		mSampler->getSampler(),
-		2);
+		0x10);
 
 	std::vector<ascen::DescriptorWrite> writes =
 	{
-		writeUniformBuffer,
+		writeCameraBuffer,
+		writeTransformBuffer,
 		writeInstanceBuffer,
 		writeTextureBuffer,
 	};
@@ -173,6 +196,16 @@ void TestGraphicsPipeline::createBuffers()
 			graphicsQueue,
 			mCommandPool,
 			mIndices
+		)
+	);
+
+	mTransformBuffer = std::make_shared<ascen::Buffer>(
+		ascen::Buffer::createStorageBuffer<float>(
+			mPhysicalDevice,
+			mDevice,
+			graphicsQueue,
+			mCommandPool,
+			mTransforms
 		)
 	);
 

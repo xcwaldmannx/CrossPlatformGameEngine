@@ -51,12 +51,18 @@ private:
 	void createSamplers();
 
 private:
+	// ubo
 	std::shared_ptr<ascen::Buffer> mCameraBuffer = nullptr;
+
+	// ssbo static
 	std::shared_ptr<ascen::Buffer> mVertexBuffer = nullptr;
 	std::shared_ptr<ascen::Buffer> mIndexBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mIndirectBuffer = nullptr;
+	std::shared_ptr<ascen::Buffer> mTransformBuffer = nullptr;
 
+	// ssbo dynamic
 	std::shared_ptr<ascen::Buffer> mInstanceBuffer = nullptr;
+
+	std::shared_ptr<ascen::Buffer> mIndirectBuffer = nullptr;
 
 	std::shared_ptr<ascen::Texture> mDepthTexture = nullptr;
 
@@ -67,6 +73,4 @@ private:
 	const std::vector<float> mVertices;
 	const std::vector<uint32_t> mIndices;
 	const std::vector<float> mTransforms;
-
-	ascen::CommandDrawData mCommandDrawData{};
 };

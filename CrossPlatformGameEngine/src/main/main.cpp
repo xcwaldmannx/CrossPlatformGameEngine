@@ -104,7 +104,7 @@ void initEntities()
 		auto e = mEcs.addEntity();
 
 		TransformComponent t{};
-		t.mPosition = { 0, 0, -5 };
+		t.mPosition = { 0, 0, -10 };
 		t.mRotation = { 0.25, 0, 0 };
 		t.mScale    = { 1, 1, 1 };
 
@@ -112,9 +112,9 @@ void initEntities()
 		m.mModelId = HELICOPTER;
 		m.mTextureId = 0;
 		m.mIsHidden = false;
-		m.mMeshTransforms.push_back({ {0, 0, 0},    {0, 0, 0}, {1, 1, 1} }); // body
-		m.mMeshTransforms.push_back({ {0, 1.75, -0.2}, {0, 0, 0}, {1, 1, 1} }); // main
-		m.mMeshTransforms.push_back({ {0, 1.5, -7},  {0, 0, 0}, {1, 1, 1} }); // tail
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // main
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // tail
 		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
 		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
 
@@ -263,10 +263,9 @@ int main()
 		// view = inverse(cameraTransform)
 		pipeline.updateCamera(cameraTransform);
 
-
 		// update entities
 		auto& t = mEcs.getComponent<TransformComponent>(0);
-		t.mRotation += glm::vec3(0, 2.0f, 0) * delta;
+		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
 
 		auto& m = mEcs.getComponent<ModelComponent>(0);
 		m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main

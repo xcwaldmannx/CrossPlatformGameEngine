@@ -1,6 +1,8 @@
 #version 450
 
-layout(binding = 2) uniform sampler2DArray texArray;
+#extension GL_KHR_vulkan_glsl : enable
+
+layout(set = 0, binding = 0x10) uniform sampler2DArray texArray;
 
 layout(location = 0) in vec2 inTexCoord;
 layout(location = 1) in flat uint inTextureId;
