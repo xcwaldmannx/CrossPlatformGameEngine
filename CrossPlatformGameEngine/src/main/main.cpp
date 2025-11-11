@@ -1,5 +1,6 @@
 ﻿#include "../main/WindowManager/WindowManager.h"
-#include "../main/MyGraphicsPipeline/Test/TestGraphicsPipeline.h"
+#include "../main/MyPipelines/Graphics/MyGraphicsPipeline.h"
+#include "../main/MyPipelines/Compute/MyComputePipeline.h"
 #include "../main/EcsSystem/EcsSystem.h"
 
 #include "../main/Utility/FrameCounter.h"
@@ -146,7 +147,7 @@ void initEntities()
 		auto e = mEcs.addEntity();
 
 		TransformComponent t{};
-		t.mPosition = { 0, 10, 0 };
+		t.mPosition = { -10, -10, -5 };
 		t.mRotation = { 0, 0, 0 };
 		t.mScale = { 1, 1, 1 };
 
@@ -155,7 +156,7 @@ void initEntities()
 		m.mTextureId = 2;
 		m.mIsHidden = false;
 		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
-		m.mMeshTransforms.push_back({ {0, 0, 8.5f}, {0, 0, 0}, {1, 1, 1} });
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
 
 		mEcs.addComponent<TransformComponent>(e, std::move(t));
 		mEcs.addComponent<ModelComponent>(e, std::move(m));
@@ -194,14 +195,18 @@ int main()
 	initEcs();
 	initEntities();
 
-	TestGraphicsPipeline pipeline(
+	MyGraphicsPipeline graphics(
 		&mWindow,
 		"src/shaders/GPUDrivenVS.spv",
 		"src/shaders/GPUDrivenPS.spv",
 		mVertices,
 		mIndices,
 		mTransforms);
-	pipeline.create();
+	graphics.create();
+
+	MyComputePipeline compute(
+		"src/shaders/GPUDrivenCS.spv",
+		0);
 
 	FrameCounter frameCounter(240);
 
@@ -228,12 +233,12 @@ int main()
 		if (mWindow.getInput().isKeyPressed(GLFW_KEY_ESCAPE))
 			break;
 
-		if (pipeline.isResized())
-			pipeline.resize();
+		if (graphics.isResized())
+			graphics.resize();
 
 		// --- yaw (Q/E), pitch clamped ---
-		if (mWindow.getInput().isKeyPressed(GLFW_KEY_Q)) camRotation.y -= camSpeed * 0.5f * delta; // look left
-		if (mWindow.getInput().isKeyPressed(GLFW_KEY_E)) camRotation.y += camSpeed * 0.5f * delta; // look right
+		if (mWindow.getInput().isKeyPressed(GLFW_KEY_Q)) camRotation.y -= camSpeed * 0.25f * delta; // look left
+		if (mWindow.getInput().isKeyPressed(GLFW_KEY_E)) camRotation.y += camSpeed * 0.25f * delta; // look right
 		camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f); // ±89°
 
 		// --- derive camera basis (-Z forward, Y up) ---
@@ -261,15 +266,23 @@ int main()
 		glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), camPosition) * rot;
 
 		// view = inverse(cameraTransform)
-		pipeline.updateCamera(cameraTransform);
+		graphics.updateCamera(cameraTransform);
 
 		// update entities
-		auto& t = mEcs.getComponent<TransformComponent>(0);
-		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
 
-		auto& m = mEcs.getComponent<ModelComponent>(0);
-		m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
-		m.mMeshTransforms[2].mRotation += glm::vec3(40.0f, 0, 0) * delta; // tail
+		{ // helicopter
+			auto& t = mEcs.getComponent<TransformComponent>(0);
+			t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
+
+			auto& m = mEcs.getComponent<ModelComponent>(0);
+			m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
+			m.mMeshTransforms[2].mRotation += glm::vec3(40.0f, 0, 0) * delta; // tail
+		}
+
+		{ // windmill
+			auto& m = mEcs.getComponent<ModelComponent>(2);
+			m.mMeshTransforms[1].mRotation += glm::vec3(0, 5.0f, 0) * delta; // fan
+		}
 
 		mEcs.updateSystem<RenderSystem>(delta);
 
@@ -277,15 +290,15 @@ int main()
 		const auto& instances = renderSystem->getInstances();
 		const auto& drawCommands = renderSystem->getDrawCommands();
 
-		pipeline.updateInstances(instances);
-		pipeline.updateDrawCommands(drawCommands);
+		graphics.updateInstances(instances);
+		graphics.updateDrawCommands(drawCommands);
 
-		pipeline.submit(drawCommands);
+		graphics.submit(drawCommands);
 
-		pipeline.drawFrame();
+		graphics.drawFrame();
 	}
 
-	pipeline.destroy();
+	graphics.destroy();
 	mWindow.destroy();
 
 

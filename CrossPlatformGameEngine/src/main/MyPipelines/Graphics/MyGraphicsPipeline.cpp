@@ -1,25 +1,25 @@
-#include "TestGraphicsPipeline.h"
+#include "MyGraphicsPipeline.h"
 
-TestGraphicsPipeline::TestGraphicsPipeline(
+MyGraphicsPipeline::MyGraphicsPipeline(
 	WindowManager* windowManager,
 	const std::string vertexShaderFilepath,
 	const std::string pixelShaderFilepath,
 	const std::vector<float> vertices,
 	const std::vector<uint32_t> indices,
 	const std::vector<float> transforms) :
-	GraphicsPipeline<ascen::TextureVertex>(windowManager, vertexShaderFilepath, pixelShaderFilepath),
+	DefaultGraphicsPipeline<ascen::TextureVertex>(windowManager, vertexShaderFilepath, pixelShaderFilepath),
 	mVertices(vertices),
 	mIndices(indices), 
 	mTransforms(transforms) {}
 
-void TestGraphicsPipeline::createShaderResources()
+void MyGraphicsPipeline::createShaderResources()
 {
 	createBuffers();
 	createTextures();
 	createSamplers();
 }
 
-void TestGraphicsPipeline::destroyShaderResources()
+void MyGraphicsPipeline::destroyShaderResources()
 {
 	ascen::Buffer::destroy(mDevice, *mCameraBuffer);
 	ascen::Buffer::destroy(mDevice, *mVertexBuffer);
@@ -31,7 +31,7 @@ void TestGraphicsPipeline::destroyShaderResources()
 	ascen::Sampler::destroy(mDevice, *mSampler);
 }
 
-void TestGraphicsPipeline::createDescriptorResources()
+void MyGraphicsPipeline::createDescriptorResources()
 {
 	std::vector<ascen::Descriptor::PoolSize> poolSizes =
 	{
@@ -124,12 +124,12 @@ void TestGraphicsPipeline::createDescriptorResources()
 	ascen::Descriptor::updateSet(mDevice, writes);
 }
 
-void TestGraphicsPipeline::destroyDescriptorResources()
+void MyGraphicsPipeline::destroyDescriptorResources()
 {
 	ascen::Descriptor::destroy(mDevice, mDescriptorSetLayout, mDescriptorPool);
 }
 
-void TestGraphicsPipeline::record(uint32_t currentImage)
+void MyGraphicsPipeline::record(uint32_t currentImage)
 {
 	mCommandPool->record(
 		mPhysicalDevice,
@@ -145,7 +145,7 @@ void TestGraphicsPipeline::record(uint32_t currentImage)
 		mDrawCommands);
 }
 
-void TestGraphicsPipeline::updateInstances(const std::vector<GPUInstance>& instances)
+void MyGraphicsPipeline::updateInstances(const std::vector<GPUInstance>& instances)
 {
 	ascen::Buffer::updateStorageBuffer<GPUInstance>(
 		mPhysicalDevice,
@@ -156,7 +156,7 @@ void TestGraphicsPipeline::updateInstances(const std::vector<GPUInstance>& insta
 		instances);
 }
 
-void TestGraphicsPipeline::updateDrawCommands(const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
+void MyGraphicsPipeline::updateDrawCommands(const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
 {
 	ascen::Buffer::updateStorageBuffer<VkDrawIndexedIndirectCommand>(
 		mPhysicalDevice,
@@ -167,7 +167,7 @@ void TestGraphicsPipeline::updateDrawCommands(const std::vector<VkDrawIndexedInd
 		drawCommands);
 }
 
-void TestGraphicsPipeline::createBuffers()
+void MyGraphicsPipeline::createBuffers()
 {
 	mCameraBuffer = std::make_shared<ascen::Buffer>(
 		ascen::Buffer::createUniformBuffer<GPUCamera>(
@@ -236,7 +236,7 @@ void TestGraphicsPipeline::createBuffers()
 	);
 }
 
-void TestGraphicsPipeline::createTextures()
+void MyGraphicsPipeline::createTextures()
 {
 	ImageLoader il;
 
@@ -280,7 +280,7 @@ void TestGraphicsPipeline::createTextures()
 	);
 }
 
-void TestGraphicsPipeline::createSamplers()
+void MyGraphicsPipeline::createSamplers()
 {
 	mSampler = std::make_shared<ascen::Sampler>(
 		ascen::Sampler::create(
@@ -290,7 +290,7 @@ void TestGraphicsPipeline::createSamplers()
 	);
 }
 
-void TestGraphicsPipeline::updateCamera(glm::mat4& transform)
+void MyGraphicsPipeline::updateCamera(glm::mat4& transform)
 {
 	GPUCamera ubo{};
 	ubo.mView = glm::inverse(transform);

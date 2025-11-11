@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Pipeline.h"
+#include "GraphicsPipeline.h"
 
 #include <concepts>
 
