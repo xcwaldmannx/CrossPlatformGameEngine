@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../Vertex/Vertex_I.h"
+#include "../../QueueFamilies/QueueFamilies.h"
 #include "../../CommandPool/CommandPool.h"
 
 #include <iostream>
@@ -22,12 +23,14 @@ namespace ascen
 	class Buffer
 	{
 	public:
+		using DrawCommand = VkDrawIndexedIndirectCommand;
+
 		template<std::derived_from<Vertex_I> T>
 		static Buffer createVertexBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			const std::shared_ptr<CommandPool>& commandPool,
+			uint32_t queueFamilyIndex,
+			const CommandPoolPtr& commandPool,
 			const std::vector<T>& vertices)
 		{
 			size_t itemCount = vertices.size();
@@ -55,13 +58,9 @@ namespace ascen
 				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			copy(
-				device,
-				graphicsQueue,
-				commandPool,
-				stagingBuffer,
-				buffer,
-				false);
+			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
+
+			copy(device, queue, commandPool, stagingBuffer, buffer, false);
 
 			destroy(device, stagingBuffer);
 
@@ -71,8 +70,8 @@ namespace ascen
 		static Buffer createVertexBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			const std::shared_ptr<CommandPool>& commandPool,
+			uint32_t queueFamilyIndex,
+			const CommandPoolPtr& commandPool,
 			const std::vector<float>& vertices)
 		{
 			size_t itemCount = vertices.size();
@@ -100,13 +99,9 @@ namespace ascen
 				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			copy(
-				device,
-				graphicsQueue,
-				commandPool,
-				stagingBuffer,
-				buffer,
-				false);
+			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
+
+			copy(device, queue, commandPool, stagingBuffer, buffer, false);
 
 			destroy(device, stagingBuffer);
 
@@ -117,8 +112,8 @@ namespace ascen
 		static Buffer createIndexBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			const std::shared_ptr<CommandPool>& commandPool,
+			uint32_t queueFamilyIndex,
+			const CommandPoolPtr& commandPool,
 			const std::vector<T>& indices)
 		{
 			size_t itemCount = indices.size();
@@ -146,13 +141,9 @@ namespace ascen
 				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			copy(
-				device,
-				graphicsQueue,
-				commandPool,
-				stagingBuffer,
-				buffer,
-				false);
+			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
+
+			copy(device, queue, commandPool, stagingBuffer, buffer, false);
 
 			destroy(device, stagingBuffer);
 
@@ -163,11 +154,11 @@ namespace ascen
 		static Buffer createUniformBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkDeviceSize size)
+			uint64_t size)
 		{
-			size_t itemCount = size;
-			size_t itemSize = sizeof(T);
-			size_t bufferSizeBytes = itemCount * itemSize;
+			uint64_t itemCount = size;
+			uint64_t itemSize = sizeof(T);
+			VkDeviceSize bufferSizeBytes = static_cast<VkDeviceSize>(itemCount * itemSize);
 
 			Buffer buffer(
 				physicalDevice,
@@ -186,13 +177,13 @@ namespace ascen
 		static Buffer createStorageBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			const std::shared_ptr<CommandPool>& commandPool,
+			uint32_t queueFamilyIndex,
+			const CommandPoolPtr& commandPool,
 			const std::vector<T>& storage)
 		{
-			size_t itemCount = storage.size();
-			size_t itemSize = sizeof(T);
-			size_t bufferSizeBytes = itemCount * itemSize;
+			uint64_t itemCount = storage.size();
+			uint64_t itemSize = sizeof(T);
+			VkDeviceSize bufferSizeBytes = static_cast<VkDeviceSize>(itemCount * itemSize);
 
 			Buffer stagingBuffer(
 				physicalDevice,
@@ -215,13 +206,9 @@ namespace ascen
 				VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			copy(
-				device,
-				graphicsQueue,
-				commandPool,
-				stagingBuffer,
-				buffer,
-				false);
+			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
+
+			copy(device, queue, commandPool, stagingBuffer, buffer, false);
 
 			destroy(device, stagingBuffer);
 
@@ -232,7 +219,7 @@ namespace ascen
 		static void updateStorageBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
+			uint32_t queueFamilyIndex,
 			const std::shared_ptr<CommandPool>& commandPool,
 			Buffer& buffer,
 			const std::vector<T>& storage)
@@ -254,13 +241,9 @@ namespace ascen
 			std::memcpy(data, storage.data(), bufferSizeBytes);
 			vkUnmapMemory(device, stagingBuffer.mMemory);
 
-			copy(
-				device,
-				graphicsQueue,
-				commandPool,
-				stagingBuffer,
-				buffer,
-				false);
+			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
+
+			copy(device, queue, commandPool, stagingBuffer, buffer, false);
 
 			destroy(device, stagingBuffer);
 		}
@@ -268,13 +251,13 @@ namespace ascen
 		static Buffer createIndirectBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
+			uint32_t queueFamilyIndex,
 			const std::shared_ptr<CommandPool>& commandPool,
-			const std::vector<VkDrawIndexedIndirectCommand>& storage)
+			const std::vector<DrawCommand>& storage)
 		{
-			size_t itemCount = storage.size();
-			size_t itemSize = sizeof(VkDrawIndexedIndirectCommand);
-			size_t bufferSizeBytes = itemCount * itemSize;
+			uint64_t itemCount = storage.size();
+			uint64_t itemSize = sizeof(DrawCommand);
+			uint64_t bufferSizeBytes = itemCount * itemSize;
 
 			Buffer stagingBuffer(
 				physicalDevice,
@@ -298,7 +281,9 @@ namespace ascen
 				VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-			copy(device, graphicsQueue, commandPool, stagingBuffer, buffer, false);
+			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
+
+			copy(device, queue, commandPool, stagingBuffer, buffer, false);
 
 			destroy(device, stagingBuffer);
 
@@ -311,7 +296,7 @@ namespace ascen
 		static void copy(
 			VkDevice device,
 			VkQueue queue,
-			const std::shared_ptr<CommandPool>& commandPool,
+			const CommandPoolPtr& commandPool,
 			Buffer& src,
 			Buffer& dest,
 			bool insertBarrier);
@@ -330,8 +315,8 @@ namespace ascen
 		Buffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			size_t itemCount,
-			size_t itemSize,
+			uint64_t itemCount,
+			uint64_t itemSize,
 			VkBufferUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryFlags);
 
@@ -339,8 +324,8 @@ namespace ascen
 		VkBuffer mBuffer;
 		VkDeviceMemory mMemory;
 		void* mMappedMemory;
-		size_t mItemCount;      // number of elements in the buffer
-		size_t mItemSize;       // size of one element in the buffer
+		size_t mItemCount;      // number of items
+		size_t mItemSize;       // byte size of item
 
 	public:
 		friend class Image;

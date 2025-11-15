@@ -10,7 +10,7 @@ using namespace ascen;
 void Buffer::copy(
 	VkDevice device,
 	VkQueue graphicsQueue,
-	const std::shared_ptr<CommandPool>& commandPool,
+	const CommandPoolPtr& commandPool,
 	Buffer& src,
 	Buffer& dest,
 	bool insertBarrier)
@@ -93,15 +93,15 @@ void* Buffer::getMappedMemory() const
 Buffer::Buffer(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
-	size_t itemCount,
-	size_t itemSize,
+	uint64_t itemCount,
+	uint64_t itemSize,
 	VkBufferUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryFlags)
 	: mItemCount(itemCount), mItemSize(itemSize)
 {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = itemCount * itemSize;
+	bufferInfo.size = static_cast<VkDeviceSize>(itemCount * itemSize);
 	bufferInfo.usage = usageFlags;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 

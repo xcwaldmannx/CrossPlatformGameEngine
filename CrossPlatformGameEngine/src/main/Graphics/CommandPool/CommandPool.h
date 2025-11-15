@@ -1,14 +1,15 @@
 #pragma once
 
-#include "../HandleManager/Handle.h"
+#include "../Types.h"
+
+#include "../HandleManager/Handle_I.h"
 
 #include "../Device/Physical/PhysicalDevice.h"
+#include "../Descriptor/Set/DescriptorSet.h"
 #include "../Swapchain/Swapchain.h"
 #include "../RenderPass/RenderPass.h"
 #include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
 #include "../Pipeline/ComputePipeline/ComputePipeline_I.h"
-
-#include <memory>
 
 #include <vector>
 
@@ -16,6 +17,8 @@
 
 namespace ascen
 {
+
+	class CommandPoolFactory;
 
 	struct CommandDrawData
 	{
@@ -28,9 +31,10 @@ namespace ascen
 	
 	class CommandPool : public Handle<VkCommandPool>
 	{
-	public:
-		CommandPool(uint32_t graphicsFamily);
+	private:
+		CommandPool(uint32_t queueFamilyIndex);
 
+	public:
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
@@ -38,25 +42,13 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
-			VkDescriptorSet descriptorSet,
-			VkBuffer vertexBuffer,
-			VkBuffer indexBuffer,
-			std::shared_ptr<RenderPass> renderPass,
-			std::shared_ptr<Swapchain> swapchain,
-			std::shared_ptr<Pipeline_I> pipeline,
-			const CommandDrawData& data);
-
-		void record(
-			VkPhysicalDevice physicalDevice,
-			uint32_t frameIndex,
-			uint32_t imageIndex,
-			VkDescriptorSet descriptorSet,
 			VkBuffer vertexBuffer,
 			VkBuffer indexBuffer,
 			VkBuffer indirectBuffer,
-			std::shared_ptr<RenderPass> renderPass,
-			std::shared_ptr<Swapchain> swapchain,
-			std::shared_ptr<Pipeline_I> pipeline,
+			const DescriptorSetPtr& descriptorSet,
+			const RenderPassPtr& renderPass,
+			const SwapchainPtr& swapchain,
+			const GraphicsPipelinePtr& pipeline,
 			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
 
 		VkCommandBuffer beginSingle(VkDevice device);
@@ -64,12 +56,12 @@ namespace ascen
 
 		const VkCommandBuffer* getBufferIndex(size_t index) const;
 
-	protected:
+	private:
 		VkCommandPoolCreateInfo mCreateInfo{};
 		VkCommandBufferAllocateInfo mAllocInfo{};
-
-	private:
 		std::vector<VkCommandBuffer> mCommandBuffers;
+
+		friend class CommandPoolFactory;
 	};
 
 }

@@ -1,10 +1,16 @@
 #pragma once
 
-#include "ComputePipeline_I.h"
+#include "../../Types.h"
+
 #include "../../../Utility/FileIO/FileIO.h"
+
+#include "ComputePipeline_I.h"
+#include "../../Descriptor/Layout/DescriptorSetLayout.h"
 
 #include <concepts>
 #include <stdexcept>
+
+#include <memory>
 
 #include <string>
 #include <vector>
@@ -16,17 +22,16 @@ namespace ascen
 
     class ComputePipeline : public ComputePipeline_I
     {
-    public:
+    private:
         ComputePipeline(
             const std::string& computeShaderFilepath,
-            VkDescriptorSetLayout descriptorSetLayout) :
+            const DescriptorSetLayoutPtr& descriptorSetLayout) :
             ComputePipeline_I(computeShaderFilepath)
         {
-            mDescriptorSetLayouts = { descriptorSetLayout };
-
-            handlePipeline();
+            handlePipeline(descriptorSetLayout->handle());
         }
 
+    public:
         void create(VkDevice device) override
         {
             auto computeShaderCode = FileIO::readFile(mComputeShaderFilepath);
@@ -48,7 +53,7 @@ namespace ascen
             computeShaderStageInfo.module = computeShaderModule;
             computeShaderStageInfo.pName = "main";
 
-            mShaderStage = computeShaderStageInfo;
+            mCreateInfo.stage = computeShaderStageInfo;
 
             // create pipeline layout and pipeline
             if (vkCreatePipelineLayout(
@@ -76,23 +81,23 @@ namespace ascen
         }
 
     private:
-        void handlePipeline()
+        void handlePipeline(VkDescriptorSetLayout& descriptorSetLayout)
         {
             // pipeline layout creation
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = static_cast<uint32_t>(mDescriptorSetLayouts.size());
-            mLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
+            mLayoutInfo.setLayoutCount = 1;
+            mLayoutInfo.pSetLayouts = &descriptorSetLayout;
 
             // pipeline creation
-            mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            mCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
             mCreateInfo.stage = mShaderStage;
         }
 
     protected:
-        VkPipelineShaderStageCreateInfo mShaderStage;
-        std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
+        VkPipelineShaderStageCreateInfo mShaderStage{};
         VkPipelineLayoutCreateInfo mLayoutInfo{};
         VkComputePipelineCreateInfo mCreateInfo{};
 
+        friend class ComputePipelineFactory;
     };
 }

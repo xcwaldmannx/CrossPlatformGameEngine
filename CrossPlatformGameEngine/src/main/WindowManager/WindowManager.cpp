@@ -21,9 +21,24 @@ void WindowManager::destroy()
     }
 }
 
+void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
+    glViewport(0, 0, width, height);
+    mIsResized.store(true, std::memory_order_release);
+}
+
+void WindowManager::setResized(bool resized)
+{
+    mIsResized.store(resized, std::memory_order_release);
+}
+
 bool WindowManager::isRunning() const
 {
     return mIsRunning.load(std::memory_order_acquire);
+}
+
+bool WindowManager::isResized() const
+{
+    return mIsResized.load(std::memory_order_acquire);
 }
 
 GLFWwindow* WindowManager::getWindow() const
@@ -57,6 +72,7 @@ void WindowManager::windowThread()
     mWindowReady.store(true, std::memory_order_release);
 
     glfwMakeContextCurrent(mWindow);
+    glfwSwapInterval(1);
 
     while (!glfwWindowShouldClose(mWindow) && mIsRunning.load(std::memory_order_acquire))
     {

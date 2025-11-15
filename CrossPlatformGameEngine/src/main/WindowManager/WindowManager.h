@@ -14,7 +14,11 @@ public:
 	void create();
 	void destroy();
 
+	void framebufferSizeCallback(GLFWwindow* window, int width, int height);
+	void setResized(bool resized);
+
 	bool isRunning() const;
+	bool isResized() const;
 
 	GLFWwindow* getWindow() const;
 	InputManager& getInput();
@@ -27,7 +31,7 @@ private:
 
 	std::atomic<bool> mIsRunning = false;
 	std::atomic<bool> mWindowReady = false;
-
+	std::atomic<bool> mIsResized = false;
 
 	std::thread mWindowThread;
 

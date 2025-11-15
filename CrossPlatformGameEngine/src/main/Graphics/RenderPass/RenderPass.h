@@ -17,12 +17,13 @@ namespace ascen
 
 	class RenderPass : public Handle<VkRenderPass>
 	{
-	public:
+	private:
 		RenderPass(
 			VkPhysicalDevice physicalDevice,
 			VkFormat colorFormat,
 			VkFormat depthFormat);
 
+	public:
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
@@ -33,6 +34,7 @@ namespace ascen
 		VkSubpassDependency mSubPassDependency{};
 		VkRenderPassCreateInfo mRenderPassInfo{};
 
+		friend class RenderPassFactory;
 	};
 
 }

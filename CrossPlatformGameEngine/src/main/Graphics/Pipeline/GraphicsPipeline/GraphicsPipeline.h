@@ -1,8 +1,14 @@
 #pragma once
 
-#include "GraphicsPipeline_I.h"
+#include "../../Types.h"
+
 #include "../../../Utility/FileIO/FileIO.h"
+
+#include "GraphicsPipeline_I.h"
 #include "../../Vertex/Vertex_I.h"
+#include "../../Descriptor/Layout/DescriptorSetLayout.h"
+#include "../../Swapchain/Swapchain.h"
+#include "../../RenderPass/RenderPass.h"
 
 #include <concepts>
 #include <stdexcept>
@@ -18,30 +24,29 @@ namespace ascen
     template<std::derived_from<Vertex_I> T>
     class GraphicsPipeline : public GraphicsPipeline_I
     {
-    public:
+    private:
         GraphicsPipeline(
             const std::string& vertexShaderFilepath,
             const std::string& pixelShaderFilepath,
-            const VkExtent2D& swapchainExtent,
-            VkDescriptorSetLayout descriptorSetLayout,
-            VkRenderPass renderPass) :
+            const DescriptorSetLayoutPtr& descriptorSetLayout,
+            const SwapchainPtr& swapchain,
+            const RenderPassPtr& renderPass) :
             GraphicsPipeline_I(
                 vertexShaderFilepath,
                 pixelShaderFilepath)
         {
-            mDescriptorSetLayouts = { descriptorSetLayout };
-
             handleVertexInput();
             handleInputAssembly();
             handleDynamic();
-            handleViewport(swapchainExtent);
+            handleViewport(swapchain->getExtent());
             handleRasterization();
             handleMultisample();
             handleColorBlend();
             handleDepthStencil();
-            handlePipeline(renderPass);
+            handlePipeline(descriptorSetLayout->handle(), renderPass->handle());
         }
 
+    public:
         void create(VkDevice device) override
         {
             // create vertex shader
@@ -166,8 +171,8 @@ namespace ascen
         {
             mViewport.x = 0.0f;
             mViewport.y = 0.0f;
-            mViewport.width = (float)swapchainExtent.width;
-            mViewport.height = (float)swapchainExtent.height;
+            mViewport.width = (float) swapchainExtent.width;
+            mViewport.height = (float) swapchainExtent.height;
             mViewport.minDepth = 0.0f;
             mViewport.maxDepth = 1.0f;
 
@@ -247,11 +252,11 @@ namespace ascen
             mDepthStencilStateInfo.back = {}; // Optional
         }
 
-        void handlePipeline(VkRenderPass renderPass)
+        void handlePipeline(VkDescriptorSetLayout& descriptorSetLayout, VkRenderPass renderPass)
         {
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = static_cast<uint32_t>(mDescriptorSetLayouts.size());
-            mLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
+            mLayoutInfo.setLayoutCount = 1;
+            mLayoutInfo.pSetLayouts = &descriptorSetLayout;
             mLayoutInfo.pushConstantRangeCount = 0; // Optional
             mLayoutInfo.pPushConstantRanges = nullptr; // Optional
 
@@ -274,10 +279,10 @@ namespace ascen
         std::vector<VkPipelineShaderStageCreateInfo> mShaderStages;
         std::vector<VkVertexInputBindingDescription>  mVertexInputBindingDescs;
         std::vector<VkVertexInputAttributeDescription> mVertexInputAtrribDescs;
-        std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
+        std::vector<VkDynamicState> mDynamicStates;
+
         VkPipelineVertexInputStateCreateInfo mVertexInputStateInfo{};
         VkPipelineInputAssemblyStateCreateInfo mInputAssemblyInfo{};
-        std::vector<VkDynamicState> mDynamicStates;
         VkPipelineDynamicStateCreateInfo mDynamicStateInfo{};
         VkViewport mViewport{};
         VkRect2D mViewportScissor{};
@@ -290,5 +295,6 @@ namespace ascen
         VkPipelineLayoutCreateInfo mLayoutInfo{};
         VkGraphicsPipelineCreateInfo mCreateInfo{};
 
+        friend class GraphicsPipelineFactory;
     };
 }
