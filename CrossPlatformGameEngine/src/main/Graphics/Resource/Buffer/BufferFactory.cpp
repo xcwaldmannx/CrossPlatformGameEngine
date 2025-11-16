@@ -11,14 +11,25 @@ BufferPtr BufferFactory::createVertex(
 	const CommandPoolPtr& commandPool,
 	const std::vector<float>& vertices) const
 {
-	BufferPtr ptr = std::make_shared<Buffer>(
-		Buffer::createVertexBuffer(
-			mPhysicalDevice,
-			mDevice,
-			queueFamilyIndex,
-			commandPool,
-			vertices));
-	return ptr;
+	return std::make_shared<VertexBuffer>(
+		mPhysicalDevice,
+		mDevice,
+		queueFamilyIndex,
+		commandPool,
+		vertices);
+}
+
+BufferPtr BufferFactory::createIndex(
+	uint32_t queueFamilyIndex,
+	const CommandPoolPtr& commandPool,
+	const std::vector<uint32_t>& indices) const
+{
+	return std::make_shared<IndexBuffer>(
+		mPhysicalDevice,
+		mDevice,
+		queueFamilyIndex,
+		commandPool,
+		indices);
 }
 
 BufferPtr BufferFactory::createIndirect(
@@ -26,12 +37,10 @@ BufferPtr BufferFactory::createIndirect(
 	const CommandPoolPtr& commandPool,
 	const std::vector<Buffer::DrawCommand>& drawCommands) const
 {
-	BufferPtr ptr = std::make_shared<Buffer>(
-		Buffer::createIndirectBuffer(
-			mPhysicalDevice,
-			mDevice,
-			queueFamilyIndex,
-			commandPool,
-			drawCommands));
-	return ptr;
+	return std::make_shared<IndirectBuffer>(
+		mPhysicalDevice,
+		mDevice,
+		queueFamilyIndex,
+		commandPool,
+		drawCommands);
 }

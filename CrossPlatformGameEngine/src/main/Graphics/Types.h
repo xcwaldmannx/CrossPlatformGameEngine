@@ -29,11 +29,11 @@ namespace ascen
 	class ComputePipeline_I;
 	using ComputePipelinePtr = std::shared_ptr<ComputePipeline_I>;
 
-	class Buffer;
-	using BufferPtr = std::shared_ptr<Buffer>;
+	class Buffer2;
+	using BufferPtr = std::shared_ptr<Buffer2>;
 
-	class Texture;
-	using TexturePtr = std::shared_ptr<Texture>;
+	class Texture2;
+	using TexturePtr = std::shared_ptr<Texture2>;
 
 	class Sampler;
 	using SamplerPtr = std::shared_ptr<Sampler>;

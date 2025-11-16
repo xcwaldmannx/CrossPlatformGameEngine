@@ -12,7 +12,6 @@
 #include "Device/Logical/Device.h"
 #include "QueueFamilies/QueueFamilies.h"
 
-#include "Resource/Buffer/BufferFactory.h"
 
 #include "Resource/Barrier/Barrier.h"
 #include "Resource/Image/Image.h"
@@ -25,6 +24,10 @@
 #include "RenderPass/RenderPassFactory.h"
 #include "Pipeline/GraphicsPipeline/GraphicsPipelineFactory.h"
 #include "Pipeline/ComputePipeline/ComputePipelineFactory.h"
+#include "Resource/Buffer/BufferFactory.h"
+#include "Resource/Texture/TextureFactory.h"
+
+#include "../EcsSystem/EcsSystem.h"
 
 #include <memory>
 
@@ -34,7 +37,7 @@ namespace ascen
 	class Engine
 	{
 	public:
-		Engine(WindowManager* windowManager);
+		Engine(WindowManager& windowManager);
 
 		const CommandPoolFactory& commandPool();
 		const DescriptorFactory& descriptor();
@@ -43,6 +46,9 @@ namespace ascen
 		const GraphicsPipelineFactory& graphicsPipeline();
 		const ComputePipelineFactory& computePipeline();
 		const BufferFactory& buffer();
+		const TextureFactory& texture();
+
+		EcsSystem& ecs();
 
 		template<std::derived_from<Handle_I> T>
 		void destroy(T& handle)
@@ -50,13 +56,11 @@ namespace ascen
 			handle.destroy(mDevice);
 		}
 
-		void destroyBuffer(const std::shared_ptr<Buffer>& buffer) const;
-
 		void resize(
 			const CommandPoolPtr& commandPool,
 			const RenderPassPtr renderPass,
 			SwapchainPtr& swapchain,
-			std::shared_ptr<Texture>& depthTexture);
+			TexturePtr& depthTexture);
 
 		uint32_t getGraphicsFamily() const;
 
@@ -64,19 +68,13 @@ namespace ascen
 
 		// TODO: replace below with factories
 
-		std::shared_ptr<Texture> createTexture(
-			const std::shared_ptr<CommandPool>& commandPool,
-			const std::vector<unsigned char>& pixels,
-			uint32_t width,
-			uint32_t height,
-			uint32_t layers);
-		void destroyTexture(const std::shared_ptr<Texture>& texture) const;
-
 		std::shared_ptr<Sampler> createSampler();
 		void destroySampler(const std::shared_ptr<Sampler>& sampler) const;
 
+		void cleanup() const;
+
 	private:
-		WindowManager* mWindowManager = nullptr;
+		WindowManager& mWindowManager;
 
 		std::vector<const char*> mExtensions;
 		std::vector<const char*> mValidationLayers;
@@ -97,6 +95,9 @@ namespace ascen
 		GraphicsPipelineFactory mGraphicsPipelineFactory;
 		ComputePipelineFactory mComputePipelineFactory;
 		BufferFactory mBufferFactory;
+		TextureFactory mTextureFactory;
+
+		EcsSystem mEcs;
 	};
 
 }

@@ -14,6 +14,9 @@ namespace ascen
 			const std::string& computeShaderFilepath) :
 			mComputeShaderFilepath(computeShaderFilepath) {}
 
+		virtual void create(VkDevice device) override = 0;
+		virtual void destroy(VkDevice device) override = 0;
+
 	protected:
 		const std::string mComputeShaderFilepath;
 	};

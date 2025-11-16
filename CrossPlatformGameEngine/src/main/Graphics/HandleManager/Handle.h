@@ -11,7 +11,14 @@ namespace ascen
 	class Handle : public Handle_I
 	{
 	public:
+		Handle() noexcept = default;
 		virtual ~Handle() override = default;
+
+		Handle(const Handle&) = delete;
+		Handle& operator=(const Handle&) = delete;
+
+		//Handle(Handle&& other) noexcept;
+		//Handle& operator=(Handle&& other) noexcept;
 
 		virtual void create(VkDevice device) override = 0;
 		virtual void destroy(VkDevice device) override = 0;

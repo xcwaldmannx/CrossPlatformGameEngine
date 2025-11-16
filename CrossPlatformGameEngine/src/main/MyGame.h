@@ -2,6 +2,7 @@
 
 #include "WindowManager/WindowManager.h"
 #include "Graphics/Engine.h"
+#include "Graphics/Renderer.h"
 
 #include <memory>
 
@@ -63,7 +64,7 @@ public:
 		glm::mat4 mTransform = glm::mat4(1.0);
 	};
 
-	MyGame(WindowManager* windowManager);
+	MyGame(WindowManager& windowManager);
 
 	void run(float delta);
 
@@ -84,6 +85,7 @@ private:
 private:
 	WindowManager mWindowManager;
 	ascen::Engine mEngine;
+	ascen::Renderer mRenderer;
 
 	// buffers
 	std::shared_ptr<ascen::Buffer> mCameraBuffer = nullptr;

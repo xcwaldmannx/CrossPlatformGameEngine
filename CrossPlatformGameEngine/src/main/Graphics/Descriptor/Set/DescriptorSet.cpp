@@ -7,14 +7,12 @@ using namespace ascen;
 DescriptorSet::DescriptorSet(
 	const DescriptorPoolPtr& pool,
 	const DescriptorSetLayoutPtr& layout,
-	const std::vector<Write>& writes) : mWrites(writes)
+	std::vector<Write> writes)
 {
-	VkDescriptorSetLayout& ref = layout->handle();
-
 	mAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	mAllocInfo.descriptorPool = pool->handle();
 	mAllocInfo.descriptorSetCount = 1;
-	mAllocInfo.pSetLayouts = &ref;
+	mAllocInfo.pSetLayouts = &layout->handle();
 }
 
 void DescriptorSet::create(VkDevice device)
@@ -27,10 +25,23 @@ void DescriptorSet::create(VkDevice device)
 	std::vector<VkWriteDescriptorSet> vkWrites;
 	vkWrites.reserve(mWrites.size());
 
-	for (auto& write : mWrites)
+	for (auto& w : mWrites)
 	{
-		write.mWrite.dstSet = mHandle;
-		vkWrites.push_back(write.mWrite);
+		VkWriteDescriptorSet ws = w.mWrite;
+		ws.dstSet = mHandle;
+
+		if (std::holds_alternative<VkDescriptorBufferInfo>(w.mInfo))
+		{
+			ws.pBufferInfo = &std::get<VkDescriptorBufferInfo>(w.mInfo);
+			ws.pImageInfo = nullptr;
+		}
+		else
+		{
+			ws.pImageInfo = &std::get<VkDescriptorImageInfo>(w.mInfo);
+			ws.pBufferInfo = nullptr;
+		}
+
+		vkWrites.push_back(ws);
 	}
 
 	vkUpdateDescriptorSets(device, static_cast<uint32_t>(vkWrites.size()), vkWrites.data(), 0, nullptr);

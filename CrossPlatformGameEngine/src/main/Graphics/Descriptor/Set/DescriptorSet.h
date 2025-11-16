@@ -27,7 +27,7 @@ namespace ascen
 		DescriptorSet(
 			const DescriptorPoolPtr& pool,
 			const DescriptorSetLayoutPtr& layout,
-			const std::vector<Write>& writes);
+			std::vector<Write> writes);
 
 	public:
 		void create(VkDevice device) override;

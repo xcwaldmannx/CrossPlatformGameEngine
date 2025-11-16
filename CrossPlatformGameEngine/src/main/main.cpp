@@ -345,7 +345,7 @@ int main()
 {
 	mWindow.create();
 
-	MyGame game(&mWindow);
+	MyGame game(mWindow);
 
 	while (mWindow.isRunning())
 	{

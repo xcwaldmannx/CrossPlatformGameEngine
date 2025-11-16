@@ -215,39 +215,6 @@ namespace ascen
 			return buffer;
 		}
 
-		template<typename T>
-		static void updateStorageBuffer(
-			VkPhysicalDevice physicalDevice,
-			VkDevice device,
-			uint32_t queueFamilyIndex,
-			const std::shared_ptr<CommandPool>& commandPool,
-			Buffer& buffer,
-			const std::vector<T>& storage)
-		{
-			size_t itemCount = storage.size();
-			size_t itemSize = sizeof(T);
-			size_t bufferSizeBytes = itemCount * itemSize;
-
-			Buffer stagingBuffer(
-				physicalDevice,
-				device,
-				itemCount,
-				itemSize,
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-			void* data;
-			vkMapMemory(device, stagingBuffer.mMemory, 0, bufferSizeBytes, 0, &data);
-			std::memcpy(data, storage.data(), bufferSizeBytes);
-			vkUnmapMemory(device, stagingBuffer.mMemory);
-
-			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
-
-			copy(device, queue, commandPool, stagingBuffer, buffer, false);
-
-			destroy(device, stagingBuffer);
-		}
-
 		static Buffer createIndirectBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
