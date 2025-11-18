@@ -17,6 +17,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 	loadModels();
 	mRenderer.updateModels(mModelData);
 
+	std::cout << "vertices: " << mVertices.size() << "\n";
+	std::cout << "indices: " << mIndices.size() << "\n";
+	std::cout << "transforms: " << mTransforms.size() << "\n";
+
 	mRenderer.createVertexBuffer("vertices", mVertices);
 	mRenderer.createIndexBuffer("indices", mIndices);
 	mRenderer.createUniformBuffer<Camera>("camera");
@@ -24,6 +28,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mRenderer.createSampler("sampler");
 
 	createTextures();
+
+	std::cout << "created resources\n";
 
 	mRenderer.addResourceLayout(
 		{ "set0", "camera", 0x00, sizeof(Camera), ascen::Renderer::UBO_DYNAMIC, ascen::Renderer::VERTEX });
@@ -36,9 +42,13 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mRenderer.finalize();
 
+	std::cout << "created descriptors\n";
+
 	mRenderer.createGraphicsPipeline<Vertex>(
 		"graphics", { "set0" }, "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv");
 	mRenderer.createComputePipeline("compute", { "set0" }, "src/shaders/GPUDrivenCS.spv");
+
+	std::cout << "created pipelines\n";
 
 	ascen::Renderer::Pass pass{};
 	pass.mVertexBuffers = { "vertices" };
@@ -51,6 +61,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 	// mRenderer.finalize(); this should go here at the very end, but doesn't work with pipeline creation yet
 
 	createEntities();
+
+	std::cout << "Done init\n";
 }
 
 void MyGame::run(float delta)
@@ -60,6 +72,7 @@ void MyGame::run(float delta)
 		mRenderer.resize();
 		mWindowManager.setResized(false);
 	}
+
 
 	updateEntities(delta);
 	updateCamera();

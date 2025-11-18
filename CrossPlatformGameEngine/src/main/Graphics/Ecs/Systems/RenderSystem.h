@@ -120,7 +120,6 @@ public:
 
 			firstInstance += static_cast<uint32_t>(instances.size());
 		}
-
 	}
 
 	void updateModels(std::unordered_map<uint32_t, ModelData>& modelData)

@@ -106,19 +106,26 @@ void Renderer::resize()
 
 void Renderer::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
 {
-	auto& renderSystem = mEngine.ecs().getSystem<RenderSystem>();
+	auto renderSystem = mEngine.ecs().getSystem<RenderSystem>();
 	renderSystem->updateModels(modelData);
 }
 
 void Renderer::drawFrame()
 {
 	mEngine.ecs().updateSystem<RenderSystem>(0);
-	auto& renderSystem = mEngine.ecs().getSystem<RenderSystem>();
+	auto renderSystem = mEngine.ecs().getSystem<RenderSystem>();
 	const auto& instances = renderSystem->getInstances();
 	const auto& drawCommands = renderSystem->getDrawCommands();
 
-	mEngine.updateBuffer<GPUInstance>(mBuffers.at("instances"), mCommandPool, instances);
-	mEngine.updateBuffer<IndirectBuffer::DrawCommand>(mIndirectBuffer, mCommandPool, drawCommands);
+	if (!instances.empty())
+	{
+		mEngine.updateBuffer<GPUInstance>(mBuffers.at("instances"), mCommandPool, instances);
+	}
+
+	if (!drawCommands.empty())
+	{
+		mEngine.updateBuffer<IndirectBuffer::DrawCommand>(mIndirectBuffer, mCommandPool, drawCommands);
+	}
 
 	bool isResized = false;
 	mEngine.drawFrame(mCommandPool, mRenderPass, mSwapchain, mRenderGraph, mIndirectBuffer, drawCommands, isResized);

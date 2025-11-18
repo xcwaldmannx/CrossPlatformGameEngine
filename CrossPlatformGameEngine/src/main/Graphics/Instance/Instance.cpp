@@ -26,11 +26,18 @@ VkInstance Instance::create(
     createInfo.ppEnabledExtensionNames = extensions.data();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-    if (ValidationLayers::isEnabled()) 
+    VkValidationFeaturesEXT features{};
+
+    VkValidationFeatureEnableEXT enables[] = {
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+        VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT
+    };
+
+    if (ValidationLayers::isEnabled())
     {
-        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
+        createInfo.enabledLayerCount = (uint32_t)validationLayers.size();
         createInfo.ppEnabledLayerNames = validationLayers.data();
-        createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)&debugCreateInfo;
+
         debugCreateInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
         debugCreateInfo.messageSeverity =
             VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
@@ -40,13 +47,23 @@ VkInstance Instance::create(
             VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
             VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        debugCreateInfo.pfnUserCallback = &DebugMessenger::debugCallback;
+        debugCreateInfo.pfnUserCallback = DebugMessenger::debugCallback;
+
+        // enable for GPU validation
+        //features.sType = VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT;
+        //features.enabledValidationFeatureCount = 2;
+        //features.pEnabledValidationFeatures = enables;
+        //features.pNext = nullptr;
+
+        //debugCreateInfo.pNext = &features;
+        createInfo.pNext = &debugCreateInfo;
     }
     else
     {
         createInfo.enabledLayerCount = 0;
         createInfo.pNext = nullptr;
     }
+
 
     VkInstance instance;
 

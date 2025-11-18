@@ -90,7 +90,7 @@ public:
 	}
 
 	template<typename T>
-	const std::shared_ptr<T>& getSystem()
+	std::shared_ptr<T> getSystem()
 	{
 		return mSystemManager.getSystem<T>();
 	}

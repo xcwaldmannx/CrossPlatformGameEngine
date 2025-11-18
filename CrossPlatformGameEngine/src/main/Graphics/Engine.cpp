@@ -61,6 +61,8 @@ Engine::Engine(WindowManager& windowManager) :
 	auto readSig = mEcs.getSignature<TransformComponent, ModelComponent>();
 	auto writeSig = mEcs.getSignature<ModelComponent>();
 	mEcs.registerSystem<RenderSystem>(readSig, writeSig, &modelData);
+
+	std::cout << "ecs init!\n";
 }
 
 const CommandPoolFactory& Engine::commandPool()
