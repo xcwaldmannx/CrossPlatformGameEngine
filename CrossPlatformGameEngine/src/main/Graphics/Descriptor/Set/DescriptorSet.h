@@ -25,6 +25,7 @@ namespace ascen
 
 	private:
 		DescriptorSet(
+			VkDevice device,
 			const DescriptorPoolPtr& pool,
 			const DescriptorSetLayoutPtr& layout,
 			std::vector<Write> writes);
@@ -34,9 +35,6 @@ namespace ascen
 		void destroy(VkDevice device) override;
 
 	private:
-		VkDescriptorSetAllocateInfo mAllocInfo{};
-		std::vector<Write> mWrites;
-
 		friend class DescriptorFactory;
 	};
 

@@ -12,11 +12,9 @@
 #include "Device/Logical/Device.h"
 #include "QueueFamilies/QueueFamilies.h"
 
+#include "RenderGraph/RenderGraph.h"
 
 #include "Resource/Barrier/Barrier.h"
-#include "Resource/Image/Image.h"
-#include "Resource/Texture/Texture.h"
-#include "Resource/Sampler/Sampler.h"
 
 #include "CommandPool/CommandPoolFactory.h"
 #include "Descriptor/DescriptorFactory.h"
@@ -26,8 +24,12 @@
 #include "Pipeline/ComputePipeline/ComputePipelineFactory.h"
 #include "Resource/Buffer/BufferFactory.h"
 #include "Resource/Texture/TextureFactory.h"
+#include "Resource/Sampler/SamplerFactory.h"
 
 #include "../EcsSystem/EcsSystem.h"
+#include "Ecs/Components/TransformComponent.h"
+#include "Ecs/Components/ModelComponent.h"
+#include "Ecs/Systems/RenderSystem.h"
 
 #include <memory>
 
@@ -47,6 +49,7 @@ namespace ascen
 		const ComputePipelineFactory& computePipeline();
 		const BufferFactory& buffer();
 		const TextureFactory& texture();
+		const SamplerFactory& sampler();
 
 		EcsSystem& ecs();
 
@@ -56,22 +59,46 @@ namespace ascen
 			handle.destroy(mDevice);
 		}
 
+		template<typename T>
+		void updateBuffer(const BufferPtr& buffer, const CommandPoolPtr& commandPool, const std::vector<T>& data)
+		{
+			buffer->update<T>(mPhysicalDevice, mDevice, mGraphicsFamily.value(), commandPool, data);
+		}
+
+		template<typename T>
+		void updateUniformBuffer(const BufferPtr& buffer, const T& data)
+		{
+			size_t offset = mCurrentFrame * sizeof(T);
+			uint8_t* target = reinterpret_cast<uint8_t*>(buffer->getMappedMemory());
+			memcpy(target + offset, &data, sizeof(T));
+		}
+
 		void resize(
 			const CommandPoolPtr& commandPool,
 			const RenderPassPtr renderPass,
 			SwapchainPtr& swapchain,
 			TexturePtr& depthTexture);
 
+		void drawFrame(
+			const CommandPoolPtr& commandPool,
+			const RenderPassPtr& renderPass,
+			const SwapchainPtr& swapchain,
+			RenderGraph& renderGraph,
+			const BufferPtr& indirectBuffer,
+			const std::vector<IndirectBuffer::DrawCommand> drawCommands,
+			bool& isResized);
+
 		uint32_t getGraphicsFamily() const;
 
 		uint32_t getPresentFamily() const;
 
-		// TODO: replace below with factories
+		void wait();
 
-		std::shared_ptr<Sampler> createSampler();
-		void destroySampler(const std::shared_ptr<Sampler>& sampler) const;
+		void cleanup();
 
-		void cleanup() const;
+	private:
+		void createSyncObjects();
+		void destroySyncObjects();
 
 	private:
 		WindowManager& mWindowManager;
@@ -87,6 +114,14 @@ namespace ascen
 		QueueFamily mPresentFamily{};
 		VkDevice mDevice = VK_NULL_HANDLE;
 
+		std::vector<VkSemaphore> mImageAvailableSemaphores;
+		std::vector<VkSemaphore> mRenderFinishedSemaphores;
+		std::vector<VkFence> mInFlightFences;
+		
+		uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+		uint32_t mCurrentFrame = 0;
+		uint32_t mCurrentImage = 0;
+
 		// factories
 		CommandPoolFactory mCommandPoolFactory;
 		DescriptorFactory mDescriptorFactory;
@@ -96,6 +131,7 @@ namespace ascen
 		ComputePipelineFactory mComputePipelineFactory;
 		BufferFactory mBufferFactory;
 		TextureFactory mTextureFactory;
+		SamplerFactory mSamplerFactory;
 
 		EcsSystem mEcs;
 	};

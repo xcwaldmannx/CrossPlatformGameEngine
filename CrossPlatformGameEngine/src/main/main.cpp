@@ -339,22 +339,37 @@
 #include "WindowManager/WindowManager.h"
 #include "MyGame.h"
 
+#include "Utility/FrameCounter.h"
+
 WindowManager mWindow;
 
 int main()
 {
+	FrameCounter frameCounter(120);
+	float timePassed = 0;
+
 	mWindow.create();
 
 	MyGame game(mWindow);
 
 	while (mWindow.isRunning())
 	{
+		frameCounter.frame();
+		const float delta = frameCounter.deltaTime();
+
+		timePassed += delta;
+		if (timePassed > 1.0f)
+		{
+			std::cout << frameCounter.fps() << "\n";
+			timePassed = 0.0f;
+		}
+
 		if (mWindow.getInput().isKeyPressed(GLFW_KEY_ESCAPE))
 		{
 			break;
 		}
 
-		game.run(0);
+		game.run(delta);
 	}
 
 	game.destroy();

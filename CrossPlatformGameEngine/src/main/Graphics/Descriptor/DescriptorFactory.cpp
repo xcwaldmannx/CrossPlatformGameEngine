@@ -14,16 +14,14 @@ DescriptorFactory::DescriptorFactory(VkDevice device) : mDevice(device) {}
 DescriptorPoolPtr DescriptorFactory::createPool(
 	const std::vector<DescriptorPool::Size>& sizes) const
 {
-	DescriptorPoolPtr ptr(new DescriptorPool(sizes));
-	ptr->create(mDevice);
+	DescriptorPoolPtr ptr(new DescriptorPool(mDevice, sizes));
 	return ptr;
 }
 
-DescriptorSetLayoutPtr DescriptorFactory::createLayout(
+DescriptorSetLayoutPtr DescriptorFactory::createSetLayout(
 	const std::vector<DescriptorSetLayout::Binding>& bindings) const
 {
-	DescriptorSetLayoutPtr ptr(new DescriptorSetLayout(bindings));
-	ptr->create(mDevice);
+	DescriptorSetLayoutPtr ptr(new DescriptorSetLayout(mDevice, bindings));
 	return ptr;
 }
 
@@ -32,8 +30,7 @@ DescriptorSetPtr DescriptorFactory::createSet(
 	const DescriptorSetLayoutPtr& layout,
 	std::vector<DescriptorSet::Write>& writes) const
 {
-	DescriptorSetPtr ptr(new DescriptorSet(pool, layout, writes));
-	ptr->create(mDevice);
+	DescriptorSetPtr ptr(new DescriptorSet(mDevice, pool, layout, writes));
 	return ptr;
 }
 

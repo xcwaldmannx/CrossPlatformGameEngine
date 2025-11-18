@@ -5,20 +5,23 @@
 using namespace ascen;
 
 DescriptorSetLayout::DescriptorSetLayout(
+	VkDevice device,
 	const std::vector<Binding>& bindings)
 {
-	mCreateInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	mCreateInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	mCreateInfo.pBindings = bindings.data();
+	VkDescriptorSetLayoutCreateInfo createInfo{};
+	createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	createInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	createInfo.pBindings = bindings.data();
+
+	if (vkCreateDescriptorSetLayout(device, &createInfo, nullptr, &mHandle) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
 }
 
 void DescriptorSetLayout::create(VkDevice device)
 {
-	if (vkCreateDescriptorSetLayout(
-		device, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
+	// remove later
 }
 
 void DescriptorSetLayout::destroy(VkDevice device)

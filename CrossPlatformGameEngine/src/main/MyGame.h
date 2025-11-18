@@ -9,6 +9,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <Mass.h>
+
 class MyGame
 {
 public:
@@ -53,15 +55,10 @@ public:
 		}
 	};
 
-	struct GPUCamera
+	struct Camera
 	{
 		glm::mat4 mView;
 		glm::mat4 mProj;
-	};
-
-	struct GPUInstance
-	{
-		glm::mat4 mTransform = glm::mat4(1.0);
 	};
 
 	MyGame(WindowManager& windowManager);
@@ -71,51 +68,43 @@ public:
 	void destroy();
 
 private:
-	void createCommandPool();
-
-	void createBuffers();
 	void createTextures();
-	void createSamplers();
 
-	void createDescriptor();
-	void createSwapchain();
-	void createRenderPass();
-	void createPipelines();
+	void loadModels();
+
+	void createEntities();
+	void updateEntities(float delta);
+
+	void updateCamera();
 
 private:
 	WindowManager mWindowManager;
 	ascen::Engine mEngine;
 	ascen::Renderer mRenderer;
 
-	// buffers
-	std::shared_ptr<ascen::Buffer> mCameraBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mVertexBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mIndexBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mTransformBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mInstanceBuffer = nullptr;
-	std::shared_ptr<ascen::Buffer> mIndirectBuffer = nullptr;
+	std::unordered_map<uint32_t, ModelData> mModelData;
 
-	// textures
-	std::shared_ptr<ascen::Texture> mDepthTexture = nullptr;
-	std::shared_ptr<ascen::Texture> mTexture = nullptr;
+	std::vector<float> mVertices;
+	std::vector<uint32_t> mIndices;
+	std::vector<float> mTransforms;
 
-	// samplers
-	std::shared_ptr<ascen::Sampler> mSampler = nullptr;
+	enum MyModels : uint32_t
+	{
+		NONE       = 0,
+		PRISM      = 1,
+		SHAPES     = 2,
+		WINDMILL   = 3,
+		HELICOPTER = 4,
+		FROSTY     = 5,
+	};
 
-	// command pools
-	ascen::CommandPoolPtr mCommandPool = nullptr;
-
-	// descriptors
-	ascen::DescriptorPoolPtr mDescriptorPool = nullptr;
-	ascen::DescriptorSetLayoutPtr mDescriptorSetLayout = nullptr;
-	ascen::DescriptorSetPtr mDescriptorSet = nullptr;
-
-	// graphics pipelines
-	ascen::SwapchainPtr mSwapchain = nullptr;
-	ascen::RenderPassPtr mRenderPass = nullptr;
-	ascen::GraphicsPipelinePtr mGraphicsPipeline = nullptr;
-
-	// compute pipelines
-	ascen::ComputePipelinePtr mComputePipeline = nullptr;
+	std::vector<std::pair<uint32_t, std::string>> mModelFilepaths =
+	{
+		{ PRISM,      "res/models/prism.model"      },
+		{ SHAPES,     "res/models/shapes.model"     },
+		{ WINDMILL,   "res/models/windmill.model"   },
+		{ HELICOPTER, "res/models/helicopter.model" },
+		{ FROSTY,     "res/models/frosty.model"     },
+	};
 
 };

@@ -24,16 +24,19 @@ namespace ascen
     {
     private:
         ComputePipeline(
+            VkDevice device,
             const std::string& computeShaderFilepath,
-            const DescriptorSetLayoutPtr& descriptorSetLayout) :
+            const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts) :
             ComputePipeline_I(computeShaderFilepath)
         {
-            handlePipeline(descriptorSetLayout->handle());
-        }
+            std::vector<VkDescriptorSetLayout> vkLayouts;
+            for (const auto& layout : descriptorSetLayouts)
+            {
+                vkLayouts.push_back(layout->handle());
+            }
 
-    public:
-        void create(VkDevice device) override
-        {
+            handlePipeline(vkLayouts);
+
             auto computeShaderCode = FileIO::readFile(mComputeShaderFilepath);
 
             VkShaderModuleCreateInfo computeShaderModuleInfo{};
@@ -74,6 +77,12 @@ namespace ascen
             vkDestroyShaderModule(device, computeShaderModule, nullptr);
         }
 
+    public:
+        void create(VkDevice device) override
+        {
+            // remove later
+        }
+
         void destroy(VkDevice device) override
         {
             vkDestroyPipeline(device, mHandle, nullptr);
@@ -81,12 +90,12 @@ namespace ascen
         }
 
     private:
-        void handlePipeline(VkDescriptorSetLayout& descriptorSetLayout)
+        void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts)
         {
             // pipeline layout creation
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = 1;
-            mLayoutInfo.pSetLayouts = &descriptorSetLayout;
+            mLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+            mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 
             // pipeline creation
             mCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;

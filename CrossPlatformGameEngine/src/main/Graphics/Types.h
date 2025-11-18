@@ -35,7 +35,7 @@ namespace ascen
 	class Texture2;
 	using TexturePtr = std::shared_ptr<Texture2>;
 
-	class Sampler;
-	using SamplerPtr = std::shared_ptr<Sampler>;
+	class Sampler2;
+	using SamplerPtr = std::shared_ptr<Sampler2>;
 
 }

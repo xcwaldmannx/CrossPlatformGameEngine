@@ -5,27 +5,28 @@
 using namespace ascen;
 
 DescriptorSet::DescriptorSet(
+	VkDevice device,
 	const DescriptorPoolPtr& pool,
 	const DescriptorSetLayoutPtr& layout,
 	std::vector<Write> writes)
 {
-	mAllocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	mAllocInfo.descriptorPool = pool->handle();
-	mAllocInfo.descriptorSetCount = 1;
-	mAllocInfo.pSetLayouts = &layout->handle();
-}
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = pool->handle();
+	allocInfo.descriptorSetCount = 1;
 
-void DescriptorSet::create(VkDevice device)
-{
-	if (vkAllocateDescriptorSets(device, &mAllocInfo, &mHandle) != VK_SUCCESS)
+	allocInfo.pSetLayouts = &layout->handle();
+	
+	VkResult res = vkAllocateDescriptorSets(device, &allocInfo, &mHandle);
+	if (res != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to allocate descriptor sets!");
 	}
 
 	std::vector<VkWriteDescriptorSet> vkWrites;
-	vkWrites.reserve(mWrites.size());
+	vkWrites.reserve(writes.size());
 
-	for (auto& w : mWrites)
+	for (auto& w : writes)
 	{
 		VkWriteDescriptorSet ws = w.mWrite;
 		ws.dstSet = mHandle;
@@ -45,6 +46,10 @@ void DescriptorSet::create(VkDevice device)
 	}
 
 	vkUpdateDescriptorSets(device, static_cast<uint32_t>(vkWrites.size()), vkWrites.data(), 0, nullptr);
+}
+
+void DescriptorSet::create(VkDevice device)
+{
 }
 
 void DescriptorSet::destroy(VkDevice device)

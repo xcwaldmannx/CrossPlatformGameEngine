@@ -7,63 +7,50 @@
 
 #include "Graphics/Ecs/Systems/RenderSystem.h"
 
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 MyGame::MyGame(WindowManager& windowManager) :
 	mEngine(windowManager),
 	mRenderer(windowManager, mEngine)
 {
-	std::vector<float> vertices;
-	vertices.resize(1);
-	mRenderer.createVertexBuffer("vertices", vertices);
+	loadModels();
+	mRenderer.updateModels(mModelData);
 
-	std::vector<uint32_t> indices;
-	indices.resize(1);
-	mRenderer.createIndexBuffer("indices", indices);
+	mRenderer.createVertexBuffer("vertices", mVertices);
+	mRenderer.createIndexBuffer("indices", mIndices);
+	mRenderer.createUniformBuffer<Camera>("camera");
+	mRenderer.createStorageBuffer<float>("transforms", mTransforms);
+	mRenderer.createSampler("sampler");
 
-	mRenderer.createUniformBuffer<GPUCamera>("camera");
+	createTextures();
 
-	std::vector<float> transforms;
-	transforms.resize(1);
-	mRenderer.createStorageBuffer<float>("transforms", transforms);
+	mRenderer.addResourceLayout(
+		{ "set0", "camera", 0x00, sizeof(Camera), ascen::Renderer::UBO_DYNAMIC, ascen::Renderer::VERTEX });
+	mRenderer.addResourceLayout(
+		{ "set0", "transforms", 0x01, VK_WHOLE_SIZE, ascen::Renderer::SSBO, ascen::Renderer::VERTEX });
+	mRenderer.addResourceLayout(
+		{ "set0", "sampler", 0x10, 0, ascen::Renderer::SAMPLER, ascen::Renderer::PIXEL });
+	mRenderer.addResourceLayout(
+		{ "set0", "textures", 0x11, 0, ascen::Renderer::IMAGE, ascen::Renderer::PIXEL });
 
-	std::vector<GPUInstance> instances;
-	instances.resize(1);
-	mRenderer.createStorageBuffer<GPUInstance>("instances", instances);
+	mRenderer.finalize();
 
-	mRenderer.createImageTexture("textures", { 0 }, 1, 1, 1);
+	mRenderer.createGraphicsPipeline<Vertex>(
+		"graphics", { "set0" }, "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv");
+	mRenderer.createComputePipeline("compute", { "set0" }, "src/shaders/GPUDrivenCS.spv");
 
-	std::vector<ascen::Renderer::ResourceLayout> resources =
-	{
-		{ "camera", 0x00, sizeof(GPUCamera), ascen::Renderer::ResourceType::UBO_DYNAMIC, ascen::Renderer::ResourceStage::VERTEX },
-		{ "transforms", 0x01, VK_WHOLE_SIZE, ascen::Renderer::ResourceType::SSBO, ascen::Renderer::ResourceStage::VERTEX },
-		{ "instances", 0x02, VK_WHOLE_SIZE, ascen::Renderer::ResourceType::SSBO, ascen::Renderer::ResourceStage::VERTEX },
-		{ "textures", 0x10, sizeof(GPUCamera), ascen::Renderer::ResourceType::IMAGE, ascen::Renderer::ResourceStage::PIXEL }
-	};
+	ascen::Renderer::Pass pass{};
+	pass.mVertexBuffers = { "vertices" };
+	pass.mIndexBuffer = "indices";
+	pass.mGraphicsPipeline = "graphics";
+	pass.mDescriptorSets = { "set0" };
 
-	mRenderer.createResourceLayouts(resources);
+	mRenderer.createRenderPass("scene", pass);
 
-	// mRenderer.createGraphicsPipeline<Vertex>("graphics", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv");
+	// mRenderer.finalize(); this should go here at the very end, but doesn't work with pipeline creation yet
 
-	//createCommandPool();
-
-	//createBuffers();
-	//createTextures();
-	//createSamplers();
-
-	//createDescriptor();
-	//createSwapchain();
-	//createRenderPass();
-	//createPipelines();
-
-	//mEngine.resize(mCommandPool, mRenderPass, mSwapchain, mDepthTexture);
-
-	mEngine.ecs().registerComponent<TransformComponent>();
-	mEngine.ecs().registerComponent<ModelComponent>();
-
-	std::unordered_map<uint32_t, ModelData> modelData;
-
-	auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
-	auto writeSig = mEngine.ecs().getSignature<ModelComponent>();
-	mEngine.ecs().registerSystem<RenderSystem>(readSig, writeSig, &modelData);
+	createEntities();
 }
 
 void MyGame::run(float delta)
@@ -73,85 +60,11 @@ void MyGame::run(float delta)
 		mRenderer.resize();
 		mWindowManager.setResized(false);
 	}
-}
 
-void MyGame::createCommandPool()
-{
-	mCommandPool = mEngine.commandPool().create(mEngine.getGraphicsFamily());
-}
+	updateEntities(delta);
+	updateCamera();
 
-void MyGame::createDescriptor()
-{
-	//const std::vector<ascen::DescriptorPool::Size> poolSizes =
-	//{
-	//	ascen::DescriptorPool::Size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
-	//	ascen::DescriptorPool::Size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2),
-	//	ascen::DescriptorPool::Size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
-	//};
-
-	//mDescriptorPool = mEngine.descriptor().createPool(poolSizes);
-
-	//auto bindingCamera     = mEngine.descriptor().createBinding(
-	//	0x00, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT);
-	//auto bindingTransforms = mEngine.descriptor().createBinding(
-	//	0x01, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-	//auto bindingInstances  = mEngine.descriptor().createBinding(
-	//	0x02, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_VERTEX_BIT);
-	//auto bindingTextures   = mEngine.descriptor().createBinding(
-	//	0x10, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	//const std::vector<ascen::DescriptorSetLayout::Binding> bindings =
-	//{
-	//	bindingCamera,
-	//	bindingTransforms,
-	//	bindingInstances,
-	//	bindingTextures,
-	//};
-
-	//mDescriptorSetLayout = mEngine.descriptor().createLayout(bindings);
-
-	//auto writeCamera = mEngine.descriptor().createBufferWrite(
-	//	VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, mCameraBuffer->getBuffer(), 0, sizeof(GPUCamera), 0x00);
-	//auto writeTransforms = mEngine.descriptor().createBufferWrite(
-	//	VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, mTransformBuffer->getBuffer(), 0, VK_WHOLE_SIZE, 0x01);
-	//auto writeInstances = mEngine.descriptor().createBufferWrite(
-	//	VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, mInstanceBuffer->getBuffer(), 0, VK_WHOLE_SIZE, 0x02);
-	//auto writeTextures = mEngine.descriptor().createImageWrite(
-	//	VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, mTexture->getView(), mSampler->getSampler(), 0x10);
-
-	//std::vector<ascen::DescriptorSet::Write> writes =
-	//{
-	//	writeCamera,
-	//	writeTransforms,
-	//	writeInstances,
-	//	writeTextures,
-	//};
-
-	//mDescriptorSet = mEngine.descriptor().createSet(mDescriptorPool, mDescriptorSetLayout, writes);
-}
-
-void MyGame::createSwapchain()
-{
-	mSwapchain = mEngine.swapchain().create(
-		mWindowManager.getWindow(), mEngine.getGraphicsFamily(), mEngine.getPresentFamily());
-}
-
-void MyGame::createRenderPass()
-{
-	mRenderPass = mEngine.renderPass().create(VK_FORMAT_R8G8B8A8_SRGB);
-}
-
-void MyGame::createPipelines()
-{
-	const std::string vertex = "src/shaders/GPUDrivenVS.spv";
-	const std::string pixel = "src/shaders/GPUDrivenPS.spv";
-
-	mGraphicsPipeline = mEngine.graphicsPipeline().create<MyGame::Vertex>(
-		vertex, pixel, mDescriptorSetLayout, mSwapchain, mRenderPass);
-
-	const std::string compute = "src/shaders/GPUDrivenCS.spv";
-
-	mComputePipeline = mEngine.computePipeline().create(compute, mDescriptorSetLayout);
+	mRenderer.drawFrame();
 }
 
 void MyGame::destroy()
@@ -160,53 +73,6 @@ void MyGame::destroy()
 	mRenderer.cleanup();
 	mEngine.cleanup();
 
-	/*
-	mEngine.destroy<ascen::ComputePipeline_I>(*mComputePipeline);
-	mEngine.destroy<ascen::GraphicsPipeline_I>(*mGraphicsPipeline);
-	mEngine.destroy<ascen::RenderPass>(*mRenderPass);
-	mEngine.destroy<ascen::Swapchain>(*mSwapchain);
-
-	mEngine.destroySampler(mSampler);
-	mEngine.destroyTexture(mTexture);
-
-	mEngine.destroyBuffer(mIndirectBuffer);
-	mEngine.destroyBuffer(mInstanceBuffer);
-	mEngine.destroyBuffer(mTransformBuffer);
-	mEngine.destroyBuffer(mIndexBuffer);
-	mEngine.destroyBuffer(mVertexBuffer);
-	mEngine.destroyBuffer(mCameraBuffer);
-
-	mEngine.destroy<ascen::DescriptorSetLayout>(*mDescriptorSetLayout);
-	mEngine.destroy<ascen::DescriptorPool>(*mDescriptorPool);
-	mEngine.destroy<ascen::CommandPool>(*mCommandPool);
-	*/
-}
-
-void MyGame::createBuffers()
-{
-	/*
-	mCameraBuffer = mEngine.buffer().createUniform<GPUCamera>(2);
-
-	std::vector<float> vertices;
-	vertices.resize(300);
-	mVertexBuffer = mEngine.buffer().createVertex(0, mCommandPool, vertices);
-
-	std::vector<uint32_t> indices;
-	indices.resize(300);
-	mIndexBuffer = mEngine.buffer().createIndex<uint32_t>(0, mCommandPool, indices);
-
-	std::vector<float> transforms;
-	transforms.resize(10);
-	mTransformBuffer = mEngine.buffer().createStorage<float>(0, mCommandPool, transforms);
-
-	std::vector<GPUInstance> dummyInstanceData{};
-	dummyInstanceData.resize(1000);
-	mInstanceBuffer = mEngine.buffer().createStorage<GPUInstance>(0, mCommandPool, dummyInstanceData);
-
-	std::vector<VkDrawIndexedIndirectCommand> dummyIndirectData{};
-	dummyIndirectData.resize(1000);
-	mIndirectBuffer = mEngine.buffer().createIndirect(0, mCommandPool, dummyIndirectData);
-	*/
 }
 
 void MyGame::createTextures()
@@ -234,10 +100,115 @@ void MyGame::createTextures()
 		pixels.insert(pixels.end(), raw.mPixels.begin(), raw.mPixels.end());
 	}
 
-	// mTexture = mEngine.createTexture(mCommandPool, pixels, width, height, mTextureFilepaths.size());
+	mRenderer.createImageTexture("textures", pixels, width, height, mTextureFilepaths.size());
 }
 
-void MyGame::createSamplers()
+void MyGame::loadModels()
 {
-	mSampler = mEngine.createSampler();
+	mass::Configuration config{};
+	config.mVertexLayout.mAttributes =
+	{
+		{ 3, sizeof(float), 0 },
+		{ 3, sizeof(float), sizeof(float) * 3 },
+		{ 2, sizeof(float), sizeof(float) * 6 },
+	};
+	config.mHasNormals = true;
+	config.mHasTexCoords = true;
+	config.mHasTransforms = true;
+
+	std::vector<std::pair<uint32_t, std::string>> modelFilepaths =
+	{
+		{ PRISM,      "res/models/prism.model"      },
+		{ SHAPES,     "res/models/shapes.model"     },
+		{ WINDMILL,   "res/models/windmill.model"   },
+		{ HELICOPTER, "res/models/helicopter.model" },
+		{ FROSTY,     "res/models/frosty.model"     },
+	};
+
+	uint32_t globalVertexOffset = 0;
+	uint32_t globalIndexOffset = 0;
+	uint32_t globalTransformOffset = 0;
+
+	for (const auto& path : modelFilepaths)
+	{
+		mass::ModelLayout modelLayout = mass::deserialize(config, path.second);
+
+		uint32_t floatsPerVertex = modelLayout.mVertexLayout.mStride / sizeof(float);
+
+		assert(modelLayout.mVertices.size() % (modelLayout.mVertexLayout.mStride / sizeof(float)) == 0);
+		assert(modelLayout.mTransforms.size() % 16 == 0);
+
+		ModelData info{};
+
+		for (const auto& mesh : modelLayout.mMeshLayouts)
+		{
+			info.mMeshCount++;
+			info.mVertexOffsets.push_back(globalVertexOffset);
+			info.mIndexOffsets.push_back(globalIndexOffset + mesh.mIndexOffset);
+			info.mIndexCounts.push_back(mesh.mIndexCount);
+			info.mTransformOffsets.push_back(globalTransformOffset + mesh.mTransformOffset);
+		}
+
+		mModelData.emplace(path.first, std::move(info));
+
+		mVertices.insert(mVertices.end(), modelLayout.mVertices.begin(), modelLayout.mVertices.end());
+		mIndices.insert(mIndices.end(), modelLayout.mIndices.begin(), modelLayout.mIndices.end());
+		mTransforms.insert(mTransforms.end(), modelLayout.mTransforms.begin(), modelLayout.mTransforms.end());
+
+		globalVertexOffset = mVertices.size() / floatsPerVertex;
+		globalIndexOffset = mIndices.size();
+		globalTransformOffset = mTransforms.size() / 16;
+	}
 }
+
+void MyGame::createEntities()
+{
+	{
+		auto e = mEngine.ecs().addEntity();
+
+		TransformComponent t{};
+		t.mPosition = { 0, 0, -10 };
+		t.mRotation = { 0.25, 0, 0 };
+		t.mScale    = { 1, 1, 1 };
+
+		ModelComponent m{};
+		m.mModelId = HELICOPTER;
+		m.mTextureId = 0;
+		m.mIsHidden = false;
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // main
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // tail
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+
+		mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
+		mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
+	}
+}
+
+void MyGame::updateEntities(float delta)
+{
+	{ // helicopter
+		auto& t = mEngine.ecs().getComponent<TransformComponent>(0);
+		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
+	
+		auto& m = mEngine.ecs().getComponent<ModelComponent>(0);
+		m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
+		m.mMeshTransforms[2].mRotation += glm::vec3(40.0f, 0, 0) * delta; // tail
+	}
+}
+
+void MyGame::updateCamera()
+{
+	glm::mat4 transform = glm::mat4(1.0);
+
+	Camera ubo{};
+	ubo.mView = glm::inverse(transform);
+	ubo.mProj = glm::perspective(glm::radians(90.0f),
+		mRenderer.getWidth() / (float) mRenderer.getHeight(), 0.01f, 100.0f);
+
+	ubo.mProj[1][1] *= -1;
+
+	mRenderer.updateUniformBuffer<Camera>("camera", ubo);
+}
+

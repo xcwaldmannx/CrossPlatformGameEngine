@@ -11,6 +11,8 @@
 #include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
 #include "../Pipeline/ComputePipeline/ComputePipeline_I.h"
 
+#include "../RenderGraph/RenderGraph.h"
+
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -42,13 +44,14 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
-			VkBuffer vertexBuffer,
-			VkBuffer indexBuffer,
+			const RenderGraph renderGraph,
+			// VkBuffer vertexBuffer,
+			// VkBuffer indexBuffer,
 			VkBuffer indirectBuffer,
-			const DescriptorSetPtr& descriptorSet,
+			// const DescriptorSetPtr& descriptorSet,
 			const RenderPassPtr& renderPass,
 			const SwapchainPtr& swapchain,
-			const GraphicsPipelinePtr& pipeline,
+			// const GraphicsPipelinePtr& pipeline,
 			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
 
 		VkCommandBuffer beginSingle(VkDevice device);

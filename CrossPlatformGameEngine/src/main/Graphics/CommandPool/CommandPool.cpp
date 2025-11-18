@@ -43,13 +43,14 @@ void CommandPool::record(
     VkPhysicalDevice physicalDevice,
     uint32_t currentFrame,
     uint32_t currentImage,
-    VkBuffer vertexBuffer,
-    VkBuffer indexBuffer,
+    const RenderGraph renderGraph,
+    // VkBuffer vertexBuffer,
+    // VkBuffer indexBuffer,
     VkBuffer indirectBuffer,
-    const DescriptorSetPtr& descriptorSet,
+    // const DescriptorSetPtr& descriptorSet,
     const RenderPassPtr& renderPass,
     const SwapchainPtr& swapchain,
-    const GraphicsPipelinePtr& pipeline,
+    // const GraphicsPipelinePtr& pipeline,
     const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
 {
     vkResetCommandBuffer(mCommandBuffers[currentFrame], 0);
@@ -66,24 +67,7 @@ void CommandPool::record(
 
     const VkExtent2D& renderArea = swapchain->getExtent();
 
-    VkRenderPassBeginInfo renderPassInfo{};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass->handle();
-    renderPassInfo.framebuffer = swapchain->getFramebuffers()[currentImage];
-    renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = renderArea;
-
-    std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-    clearValues[1].depthStencil = { 1.0f, 0 };
-
-    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-    renderPassInfo.pClearValues = clearValues.data();
-
     auto& currentCommandBuffer = mCommandBuffers[currentFrame];
-
-    vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-    vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle());
 
     VkViewport viewport{};
     viewport.x = 0.0f;
@@ -99,46 +83,69 @@ void CommandPool::record(
     scissor.extent = renderArea;
     vkCmdSetScissor(currentCommandBuffer, 0, 1, &scissor);
 
-    VkBuffer vertexBuffers[] = { vertexBuffer };
-    VkDeviceSize vertexOffsets[] = { 0 };
-    vkCmdBindVertexBuffers(
-        currentCommandBuffer,
-        0,
-        1,
-        vertexBuffers,
-        vertexOffsets);
+    
+    auto& passes = renderGraph.getExecutions();
 
-    vkCmdBindIndexBuffer(
-        currentCommandBuffer,
-        indexBuffer,
-        0,
-        VK_INDEX_TYPE_UINT32);
-
-    std::vector<uint32_t> dynamicOffets =
+    for (auto& pass : passes)
     {
-        currentFrame * 64 * 2 // camera UBO, 2 mat4s, 64 bytes each
-    };
+        VkRenderPassBeginInfo renderPassInfo{};
+        renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        renderPassInfo.renderPass = renderPass->handle();
+        renderPassInfo.framebuffer = swapchain->getFramebuffers()[currentImage];
+        renderPassInfo.renderArea.offset = { 0, 0 };
+        renderPassInfo.renderArea.extent = renderArea;
 
-    VkDescriptorSet set = descriptorSet->handle();
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+        clearValues[1].depthStencil = { 1.0f, 0 };
 
-    vkCmdBindDescriptorSets(
-        currentCommandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipeline->getLayout(),
-        0,
-        1,
-        &set,
-        static_cast<uint32_t>(dynamicOffets.size()),
-        &dynamicOffets[0]);
+        renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        renderPassInfo.pClearValues = clearValues.data();
 
-    vkCmdDrawIndexedIndirect(
-        currentCommandBuffer,
-        indirectBuffer,
-        0,
-        static_cast<uint32_t>(drawCommands.size()),
-        sizeof(VkDrawIndexedIndirectCommand));
+        vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-    vkCmdEndRenderPass(currentCommandBuffer);
+        vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.mPipeline);
+        
+        std::vector<VkDeviceSize> vertexOffsets(pass.mVertexBuffers.size(), 0);
+        vkCmdBindVertexBuffers(
+            currentCommandBuffer,
+            0,
+            pass.mVertexBuffers.size(),
+            pass.mVertexBuffers.data(),
+            vertexOffsets.data());
+
+        vkCmdBindIndexBuffer(
+            currentCommandBuffer,
+            pass.mIndexBuffer,
+            0,
+            VK_INDEX_TYPE_UINT32);
+
+        // TODO: create dynamic offsets for dynamic buffers. This is currently hard-coded
+        std::vector<uint32_t> dynamicOffets =
+        {
+            currentFrame * 64 * 2 // camera UBO, 2 mat4s, 64 bytes each
+        };
+
+        vkCmdBindDescriptorSets(
+            currentCommandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pass.mPipelineLayout,
+            0,
+            pass.mDescriptorSets.size(),
+            pass.mDescriptorSets.data(),
+            static_cast<uint32_t>(dynamicOffets.size()),
+            &dynamicOffets[0]);
+
+        vkCmdDrawIndexedIndirect(
+            currentCommandBuffer,
+            indirectBuffer,
+            0,
+            static_cast<uint32_t>(drawCommands.size()),
+            sizeof(VkDrawIndexedIndirectCommand));
+        
+        vkCmdEndRenderPass(currentCommandBuffer);
+    }
+
 
     if (vkEndCommandBuffer(currentCommandBuffer) != VK_SUCCESS)
     {

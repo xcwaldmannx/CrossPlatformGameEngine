@@ -13,9 +13,14 @@ namespace ascen
 		virtual void create(VkDevice device) override = 0;
 		virtual void destroy(VkDevice device) override = 0;
 
-		VkDeviceMemory getMemory()
+		VkDeviceMemory getMemory() const
 		{
 			return mMemory;
+		}
+
+		void* getMappedMemory() const
+		{
+			return mMappedMemory;
 		}
 
 	protected:

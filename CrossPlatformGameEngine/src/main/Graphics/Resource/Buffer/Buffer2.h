@@ -34,7 +34,6 @@ namespace ascen
 			VkDevice device,
 			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			Buffer2& dst,
 			const std::vector<T>& items)
 		{
 			Buffer2 stagingBuffer(
@@ -53,7 +52,7 @@ namespace ascen
 			vkUnmapMemory(device, stagingBuffer.mMemory);
 
 			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
-			copy(device, queue, commandPool, stagingBuffer, dst, false);
+			copy(device, queue, commandPool, stagingBuffer, *this, false);
 
 			stagingBuffer.destroy(device);
 		}

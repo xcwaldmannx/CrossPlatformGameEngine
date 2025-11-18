@@ -10,12 +10,12 @@ struct InstanceData {
     uint pad[2];
 };
 
-layout(std140, set = 0, binding = 0x00) uniform Camera {
+layout(std140, set = 1, binding = 0x00) uniform Camera {
     mat4 view;
     mat4 proj;
 } camera;
 
-layout(std430, set = 0, binding = 0x01) readonly buffer Transforms {
+layout(std430, set = 1, binding = 0x01) readonly buffer Transforms {
     mat4 transforms[];
 };
 

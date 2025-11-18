@@ -21,14 +21,15 @@ namespace ascen
 		GraphicsPipelinePtr create(
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath,
-			const DescriptorSetLayoutPtr& descriptorSetLayout,
+			const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts,
 			const SwapchainPtr& swapchain,
 			const RenderPassPtr& renderPass) const
 		{
 			GraphicsPipelinePtr ptr(new GraphicsPipeline<T>(
+				mDevice,
 				vertexShaderFilepath,
 				pixelShaderFilepath,
-				descriptorSetLayout,
+				descriptorSetLayouts,
 				swapchain,
 				renderPass));
 			ptr->create(mDevice);

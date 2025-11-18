@@ -7,6 +7,8 @@
 #include <concepts>
 #include <memory>
 
+#include <vector>
+
 #include <vulkan/vulkan.h>
 
 namespace ascen
@@ -19,7 +21,7 @@ namespace ascen
 
 		ComputePipelinePtr create(
 			const std::string& computeShaderFilepath,
-			const DescriptorSetLayoutPtr& descriptorSetLayout) const;
+			const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayout) const;
 
 	private:
 		VkDevice mDevice = VK_NULL_HANDLE;

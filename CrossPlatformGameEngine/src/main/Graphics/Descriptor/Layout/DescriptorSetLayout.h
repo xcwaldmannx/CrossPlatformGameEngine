@@ -17,6 +17,7 @@ namespace ascen
 
 	private:
 		DescriptorSetLayout(
+			VkDevice device,
 			const std::vector<Binding>& bindings);
 
 	public:
@@ -24,8 +25,6 @@ namespace ascen
 		void destroy(VkDevice device) override;
 
 	private:
-		VkDescriptorSetLayoutCreateInfo mCreateInfo{};
-
 		friend class DescriptorFactory;
 	};
 

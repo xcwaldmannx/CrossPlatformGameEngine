@@ -26,9 +26,10 @@ namespace ascen
     {
     private:
         GraphicsPipeline(
+            VkDevice device,
             const std::string& vertexShaderFilepath,
             const std::string& pixelShaderFilepath,
-            const DescriptorSetLayoutPtr& descriptorSetLayout,
+            const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts,
             const SwapchainPtr& swapchain,
             const RenderPassPtr& renderPass) :
             GraphicsPipeline_I(
@@ -43,12 +44,15 @@ namespace ascen
             handleMultisample();
             handleColorBlend();
             handleDepthStencil();
-            handlePipeline(descriptorSetLayout->handle(), renderPass->handle());
-        }
 
-    public:
-        void create(VkDevice device) override
-        {
+            std::vector<VkDescriptorSetLayout> vkLayouts;
+            for (const auto& layout : descriptorSetLayouts)
+            {
+                vkLayouts.push_back(layout->handle());
+            }
+
+            handlePipeline(vkLayouts, renderPass->handle());
+
             // create vertex shader
             auto vertexShaderCode = FileIO::readFile(mVertexShaderFilepath);
 
@@ -105,8 +109,8 @@ namespace ascen
 
             mCreateInfo.layout = mLayout;
 
-            if (vkCreateGraphicsPipelines(
-                device, nullptr, 1, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
+            VkResult res = vkCreateGraphicsPipelines(device, nullptr, 1, &mCreateInfo, nullptr, &mHandle);
+            if (res != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create graphics pipeline!");
             }
@@ -116,6 +120,12 @@ namespace ascen
             {
                 vkDestroyShaderModule(device, stage.module, nullptr);
             }
+        }
+
+    public:
+        void create(VkDevice device) override
+        {
+            // remove later
         }
 
         void destroy(VkDevice device) override
@@ -252,11 +262,11 @@ namespace ascen
             mDepthStencilStateInfo.back = {}; // Optional
         }
 
-        void handlePipeline(VkDescriptorSetLayout& descriptorSetLayout, VkRenderPass renderPass)
+        void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts, VkRenderPass renderPass)
         {
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = 1;
-            mLayoutInfo.pSetLayouts = &descriptorSetLayout;
+            mLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+            mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
             mLayoutInfo.pushConstantRangeCount = 0; // Optional
             mLayoutInfo.pPushConstantRanges = nullptr; // Optional
 

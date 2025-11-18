@@ -21,7 +21,7 @@ namespace ascen
 		DescriptorPoolPtr createPool(
 			const std::vector<DescriptorPool::Size>& sizes) const;
 
-		DescriptorSetLayoutPtr createLayout(
+		DescriptorSetLayoutPtr createSetLayout(
 			const std::vector<DescriptorSetLayout::Binding>& bindings) const;
 
 		DescriptorSetPtr createSet(

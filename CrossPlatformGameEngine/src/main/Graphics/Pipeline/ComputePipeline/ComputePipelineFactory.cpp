@@ -6,11 +6,12 @@ ComputePipelineFactory::ComputePipelineFactory(VkDevice device) : mDevice(device
 
 ComputePipelinePtr ComputePipelineFactory::create(
 	const std::string& computeShaderFilepath,
-	const DescriptorSetLayoutPtr& descriptorSetLayout) const
+	const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts) const
 {
 	ComputePipelinePtr ptr(new ComputePipeline(
+		mDevice,
 		computeShaderFilepath,
-		descriptorSetLayout));
+		descriptorSetLayouts));
 	ptr->create(mDevice);
 	return ptr;
 }
