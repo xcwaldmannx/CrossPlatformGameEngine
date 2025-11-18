@@ -18,6 +18,9 @@ namespace ascen
 			mVertexShaderFilepath(vertexShaderFilepath),
 			mPixelShaderFilepath(pixelShaderFilepath) {}
 
+		virtual void create(VkDevice device) override = 0;
+		virtual void destroy(VkDevice device) override = 0;
+
 	protected:
 		const std::string mVertexShaderFilepath;
 		const std::string mPixelShaderFilepath;

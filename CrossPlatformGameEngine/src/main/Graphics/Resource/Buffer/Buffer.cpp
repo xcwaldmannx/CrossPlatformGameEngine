@@ -10,7 +10,7 @@ using namespace ascen;
 void Buffer::copy(
 	VkDevice device,
 	VkQueue graphicsQueue,
-	const std::shared_ptr<CommandPool>& commandPool,
+	const CommandPoolPtr& commandPool,
 	Buffer& src,
 	Buffer& dest,
 	bool insertBarrier)
@@ -29,10 +29,12 @@ void Buffer::copy(
 		Barrier::buffer(
 		commandBuffer,
 		dest.mBuffer,
-		VK_ACCESS_TRANSFER_WRITE_BIT,
-		VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-		VK_PIPELINE_STAGE_TRANSFER_BIT,
-		VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+		VK_ACCESS_2_TRANSFER_WRITE_BIT,
+		VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+		VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+		VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | 
+			VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+			VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT);
 	}
 
 	commandPool->endSingle(device, graphicsQueue, commandBuffer);
@@ -91,15 +93,15 @@ void* Buffer::getMappedMemory() const
 Buffer::Buffer(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
-	size_t itemCount,
-	size_t itemSize,
+	uint64_t itemCount,
+	uint64_t itemSize,
 	VkBufferUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryFlags)
 	: mItemCount(itemCount), mItemSize(itemSize)
 {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = itemCount * itemSize;
+	bufferInfo.size = static_cast<VkDeviceSize>(itemCount * itemSize);
 	bufferInfo.usage = usageFlags;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 

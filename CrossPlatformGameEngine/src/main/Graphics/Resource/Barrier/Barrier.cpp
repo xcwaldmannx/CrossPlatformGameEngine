@@ -2,33 +2,62 @@
 
 using namespace ascen;
 
+void Barrier::memory(
+	VkCommandBuffer commandBuffer,
+	VkAccessFlags2 srcAccess,
+	VkPipelineStageFlags2 srcStage,
+	VkAccessFlags2 dstAccess,
+	VkPipelineStageFlags2 dstStage)
+{
+	VkMemoryBarrier2 barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+	barrier.srcAccessMask = srcAccess;
+	barrier.dstAccessMask = dstAccess;
+	barrier.srcStageMask = srcStage;
+	barrier.dstStageMask = dstStage;
+
+	VkDependencyInfo dep{};
+	dep.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	dep.memoryBarrierCount = 1;
+	dep.pMemoryBarriers = &barrier;
+
+	vkCmdPipelineBarrier2(
+		commandBuffer,
+		&dep);
+}
+
 void Barrier::buffer(
 	VkCommandBuffer commandBuffer,
 	VkBuffer buffer,
-	VkAccessFlags srcAccess,
-	VkAccessFlags dstAccess,
-	VkPipelineStageFlags srcStage,
-	VkPipelineStageFlags dstStage,
+	VkAccessFlags2 srcAccess,
+	VkPipelineStageFlags2 srcStage,
+	VkAccessFlags2 dstAccess,
+	VkPipelineStageFlags2 dstStage,
 	VkDeviceSize size)
 {
-	VkBufferMemoryBarrier barrier{};
-	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+	VkBufferMemoryBarrier2 barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2;
+
 	barrier.srcAccessMask = srcAccess;
-	barrier.dstAccessMask = dstAccess;
+	barrier.srcStageMask = srcStage;
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+	barrier.dstAccessMask = dstAccess;
+	barrier.dstStageMask = dstStage;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
 	barrier.buffer = buffer;
 	barrier.offset = 0;
 	barrier.size = size;
 
-	vkCmdPipelineBarrier(
+	VkDependencyInfo dep{};
+	dep.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	dep.bufferMemoryBarrierCount = 1;
+	dep.pBufferMemoryBarriers = &barrier;
+
+	vkCmdPipelineBarrier2(
 		commandBuffer,
-		srcStage,
-		dstStage,
-		0,
-		0, nullptr,
-		1, &barrier,
-		0, nullptr);
+		&dep);
 }
 
 void Barrier::image(
@@ -37,18 +66,26 @@ void Barrier::image(
 	uint32_t layers,
 	VkImageLayout oldLayout,
 	VkImageLayout newLayout,
-	VkPipelineStageFlags srcStage,
-	VkPipelineStageFlags dstStage,
-	VkAccessFlags srcAccess,
-	VkAccessFlags dstAccess,
+	VkAccessFlags2 srcAccess,
+	VkPipelineStageFlags2 srcStage,
+	VkAccessFlags2 dstAccess,
+	VkPipelineStageFlags2 dstStage,
 	VkImageAspectFlags aspectFlags)
 {
-	VkImageMemoryBarrier barrier{};
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+	VkImageMemoryBarrier2 barrier{};
+	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+
 	barrier.oldLayout = oldLayout;
 	barrier.newLayout = newLayout;
+
+	barrier.srcAccessMask = srcAccess;
+	barrier.srcStageMask = srcStage;
 	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+	barrier.dstAccessMask = dstAccess;
+	barrier.dstStageMask = dstStage;
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = aspectFlags;
 	barrier.subresourceRange.baseMipLevel = 0;
@@ -56,12 +93,12 @@ void Barrier::image(
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = layers;
 
-	vkCmdPipelineBarrier(
+	VkDependencyInfo dep{};
+	dep.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+	dep.imageMemoryBarrierCount = 1;
+	dep.pImageMemoryBarriers = &barrier;
+
+	vkCmdPipelineBarrier2(
 		commandBuffer,
-		srcStage, dstStage,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier
-	);
+		&dep);
 }

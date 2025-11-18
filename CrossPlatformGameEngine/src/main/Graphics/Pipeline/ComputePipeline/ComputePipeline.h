@@ -1,10 +1,16 @@
 #pragma once
 
-#include "ComputePipeline_I.h"
+#include "../../Types.h"
+
 #include "../../../Utility/FileIO/FileIO.h"
+
+#include "ComputePipeline_I.h"
+#include "../../Descriptor/Layout/DescriptorSetLayout.h"
 
 #include <concepts>
 #include <stdexcept>
+
+#include <memory>
 
 #include <string>
 #include <vector>
@@ -16,19 +22,21 @@ namespace ascen
 
     class ComputePipeline : public ComputePipeline_I
     {
-    public:
+    private:
         ComputePipeline(
+            VkDevice device,
             const std::string& computeShaderFilepath,
-            VkDescriptorSetLayout descriptorSetLayout) :
+            const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts) :
             ComputePipeline_I(computeShaderFilepath)
         {
-            mDescriptorSetLayouts = { descriptorSetLayout };
+            std::vector<VkDescriptorSetLayout> vkLayouts;
+            for (const auto& layout : descriptorSetLayouts)
+            {
+                vkLayouts.push_back(layout->handle());
+            }
 
-            handlePipeline();
-        }
+            handlePipeline(vkLayouts);
 
-        void create(VkDevice device) override
-        {
             auto computeShaderCode = FileIO::readFile(mComputeShaderFilepath);
 
             VkShaderModuleCreateInfo computeShaderModuleInfo{};
@@ -48,7 +56,7 @@ namespace ascen
             computeShaderStageInfo.module = computeShaderModule;
             computeShaderStageInfo.pName = "main";
 
-            mShaderStage = computeShaderStageInfo;
+            mCreateInfo.stage = computeShaderStageInfo;
 
             // create pipeline layout and pipeline
             if (vkCreatePipelineLayout(
@@ -69,6 +77,12 @@ namespace ascen
             vkDestroyShaderModule(device, computeShaderModule, nullptr);
         }
 
+    public:
+        void create(VkDevice device) override
+        {
+            // remove later
+        }
+
         void destroy(VkDevice device) override
         {
             vkDestroyPipeline(device, mHandle, nullptr);
@@ -76,23 +90,23 @@ namespace ascen
         }
 
     private:
-        void handlePipeline()
+        void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts)
         {
             // pipeline layout creation
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = static_cast<uint32_t>(mDescriptorSetLayouts.size());
-            mLayoutInfo.pSetLayouts = mDescriptorSetLayouts.data();
+            mLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+            mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 
             // pipeline creation
-            mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+            mCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
             mCreateInfo.stage = mShaderStage;
         }
 
     protected:
-        VkPipelineShaderStageCreateInfo mShaderStage;
-        std::vector<VkDescriptorSetLayout> mDescriptorSetLayouts;
+        VkPipelineShaderStageCreateInfo mShaderStage{};
         VkPipelineLayoutCreateInfo mLayoutInfo{};
         VkComputePipelineCreateInfo mCreateInfo{};
 
+        friend class ComputePipelineFactory;
     };
 }

@@ -23,7 +23,7 @@ namespace ascen
 
 	class Swapchain : public Handle<VkSwapchainKHR>
 	{
-	public:
+	private:
 		Swapchain(
 			GLFWwindow* window,
 			VkPhysicalDevice physicalDevice,
@@ -31,6 +31,7 @@ namespace ascen
 			uint32_t graphicsFamily,
 			uint32_t presentFamily);
 
+	public:
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
@@ -76,6 +77,7 @@ namespace ascen
 		VkFormat mImageFormat{};
 		VkExtent2D mExtent{};
 
+		friend class SwapchainFactory;
 	};
 
 }

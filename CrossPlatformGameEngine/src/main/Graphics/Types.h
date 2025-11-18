@@ -1,0 +1,41 @@
+#pragma once
+
+#include <memory>
+
+namespace ascen
+{
+
+	class CommandPool;
+	using CommandPoolPtr = std::shared_ptr<CommandPool>;
+
+	class DescriptorPool;
+	using DescriptorPoolPtr = std::shared_ptr<DescriptorPool>;
+
+	class DescriptorSetLayout;
+	using DescriptorSetLayoutPtr = std::shared_ptr<DescriptorSetLayout>;
+
+	class DescriptorSet;
+	using DescriptorSetPtr = std::shared_ptr<DescriptorSet>;
+
+	class Swapchain;
+	using SwapchainPtr = std::shared_ptr<Swapchain>;
+
+	class RenderPass;
+	using RenderPassPtr = std::shared_ptr<RenderPass>;
+
+	class GraphicsPipeline_I;
+	using GraphicsPipelinePtr = std::shared_ptr<GraphicsPipeline_I>;
+
+	class ComputePipeline_I;
+	using ComputePipelinePtr = std::shared_ptr<ComputePipeline_I>;
+
+	class Buffer2;
+	using BufferPtr = std::shared_ptr<Buffer2>;
+
+	class Texture2;
+	using TexturePtr = std::shared_ptr<Texture2>;
+
+	class Sampler2;
+	using SamplerPtr = std::shared_ptr<Sampler2>;
+
+}

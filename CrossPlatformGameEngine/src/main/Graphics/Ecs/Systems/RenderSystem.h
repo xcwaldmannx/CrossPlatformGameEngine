@@ -123,6 +123,11 @@ public:
 
 	}
 
+	void updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
+	{
+		mModelData = &modelData;
+	}
+
 	const std::vector<GPUInstance>& getInstances() const
 	{
 		return mInstances;
