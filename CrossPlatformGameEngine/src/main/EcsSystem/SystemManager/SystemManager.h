@@ -72,7 +72,7 @@ public:
 	}
 
 	template<typename T>
-	const std::shared_ptr<T>& getSystem()
+	std::shared_ptr<T> getSystem()
 	{
 		std::type_index id = typeid(T);
 		assert(mSystems.find(id) != mSystems.end() && "System is not registered. Cannot get.");

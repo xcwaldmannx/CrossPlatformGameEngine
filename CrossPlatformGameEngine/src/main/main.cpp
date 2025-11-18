@@ -345,7 +345,7 @@ WindowManager mWindow;
 
 int main()
 {
-	FrameCounter frameCounter(120);
+	FrameCounter frameCounter(1000);
 	float timePassed = 0;
 
 	mWindow.create();
