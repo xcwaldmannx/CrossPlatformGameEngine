@@ -28,16 +28,17 @@ namespace ascen
 	{
 		std::string mName;
 		std::string mComputeShader;
+		std::vector<std::string> mDescriptorSetLayouts;
 	};
 
 	class PipelineRegistry : public Registry_I
 	{
 	public:
 		PipelineRegistry(
-			VulkanContext& vulkanContext,
-			RenderContext& renderContext,
-			VertexRegistry& vertexRegistry,
-			DescriptorRegistry& descriptorRegistry);
+			const VulkanContext& vulkanContext,
+			const RenderContext& renderContext,
+			const VertexRegistry& vertexRegistry,
+			const DescriptorRegistry& descriptorRegistry);
 
 		void registerGraphicsPipeline(GraphicsPipelineEntry entry);
 		void registerComputePipeline(ComputePipelineEntry entry);
@@ -48,6 +49,8 @@ namespace ascen
 
 	private:
 		bool isRegistered(const std::string& name) const;
+		bool graphicsPipelineExists(const std::string& name) const;
+		bool computePipelineExists(const std::string& name) const;
 
 	private:
 		const VkDevice mDevice;
@@ -55,8 +58,8 @@ namespace ascen
 		const ComputePipelineFactory& mComputePipelineFactory;
 		const SwapchainPtr& mSwapchain;
 		const RenderPassPtr& mRenderPass;
-		VertexRegistry& mVertexRegistry;
-		DescriptorRegistry& mDescriptorRegistry;
+		const VertexRegistry& mVertexRegistry;
+		const DescriptorRegistry& mDescriptorRegistry;
 
 		std::vector<std::string> mRegisteredNames;
 
@@ -65,6 +68,8 @@ namespace ascen
 
 		std::unordered_map<std::string, GraphicsPipelinePtr> mGraphicsPipelines;
 		std::unordered_map<std::string, ComputePipelinePtr> mComputePipelines;
+
+		friend class PipelineRegistryBackend;
 	};
 
 }

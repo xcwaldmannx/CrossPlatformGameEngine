@@ -8,7 +8,7 @@ namespace ascen
 	class VertexRegistryBackend
 	{
 	public:
-		static const VertexPtr& getVertex(VertexRegistry& registry, const std::string& name);
+		static const VertexPtr& getVertex(const VertexRegistry& registry, const std::string& name);
 	};
 
 }

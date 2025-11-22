@@ -27,3 +27,17 @@ const TexturePtr& ResourceRegistryBackend::getTexture(
 		throw std::runtime_error("Texture does not exist!");
 	}
 }
+
+const SamplerPtr& ResourceRegistryBackend::getSampler(
+	const ResourceRegistry& registry, const std::string& name)
+{
+	if (registry.samplerExists(name))
+	{
+		return registry.mSamplers.at(name);
+	}
+	else
+	{
+		throw std::runtime_error("Sampler does not exist!");
+	}
+}
+

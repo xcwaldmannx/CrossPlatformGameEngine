@@ -2,11 +2,20 @@
 
 using namespace ascen;
 
-const DescriptorSetLayoutPtr& DescriptorRegistryBackend::getDescriptorLayout(
-	DescriptorRegistry& registry, const std::string& name)
+const DescriptorSetLayoutPtr& DescriptorRegistryBackend::getDescriptorSetLayout(
+	const DescriptorRegistry& registry, const std::string& name)
 {
 	if (registry.exists(name))
 	{
 		return registry.mDescriptorSetLayouts.at(name);
+	}
+}
+
+const DescriptorSetPtr& DescriptorRegistryBackend::getDescriptorSet(
+	const DescriptorRegistry& registry, const std::string& name)
+{
+	if (registry.exists(name))
+	{
+		return registry.mDescriptorSets.at(name);
 	}
 }

@@ -73,7 +73,7 @@ namespace ascen
 
 		void updateBuffer(
 			const std::string& name,
-			void* items,
+			const void* items,
 			uint32_t itemCount,
 			uint32_t itemSize);
 

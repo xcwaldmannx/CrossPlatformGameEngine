@@ -49,11 +49,11 @@ void CommandPool::record(
     VkPhysicalDevice physicalDevice,
     uint32_t currentFrame,
     uint32_t currentImage,
-    const RenderGraph renderGraph,
+    const FrameGraph frameGraph,
     VkBuffer indirectBuffer,
     const RenderPassPtr& renderPass,
     const SwapchainPtr& swapchain,
-    const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
+    uint32_t drawCommandCount)
 {
     vkResetCommandBuffer(mCommandBuffers[currentFrame], 0);
 
@@ -86,7 +86,7 @@ void CommandPool::record(
     vkCmdSetScissor(currentCommandBuffer, 0, 1, &scissor);
 
     
-    auto& passes = renderGraph.getExecutions();
+    auto& passes = frameGraph.getExecutions();
 
     for (auto& pass : passes)
     {
@@ -142,7 +142,7 @@ void CommandPool::record(
             currentCommandBuffer,
             indirectBuffer,
             0,
-            static_cast<uint32_t>(drawCommands.size()),
+            drawCommandCount,
             sizeof(VkDrawIndexedIndirectCommand));
         
         vkCmdEndRenderPass(currentCommandBuffer);

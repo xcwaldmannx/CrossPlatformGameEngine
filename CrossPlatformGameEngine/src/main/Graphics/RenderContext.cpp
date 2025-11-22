@@ -3,16 +3,16 @@
 using namespace ascen;
 
 RenderContext::RenderContext(
-	WindowManager& windowManager,
-	VulkanContext& context) :
+	const WindowManager& windowManager,
+	const VulkanContext& vulkanContext) :
 	mWindowManager(windowManager),
-	mDevice(context.getDevice()),
-	mGraphicsFamilyIndex(context.getGraphicsFamilyIndex()),
-	mPresentFamilyIndex(context.getPresentFamilyIndex()),
-	mCommandPoolFactory(context.getCommandPoolFactory()),
-	mSwapchainFactory(context.getSwapchainFactory()),
-	mRenderPassFactory(context.getRenderPassFactory()),
-	mTextureFactory(context.getTextureFactory())
+	mDevice(vulkanContext.getDevice()),
+	mGraphicsFamilyIndex(vulkanContext.getGraphicsFamilyIndex()),
+	mPresentFamilyIndex(vulkanContext.getPresentFamilyIndex()),
+	mCommandPoolFactory(vulkanContext.getCommandPoolFactory()),
+	mSwapchainFactory(vulkanContext.getSwapchainFactory()),
+	mRenderPassFactory(vulkanContext.getRenderPassFactory()),
+	mTextureFactory(vulkanContext.getTextureFactory())
 {
 	mCommandPool = mCommandPoolFactory.create(mGraphicsFamilyIndex);
 
@@ -65,17 +65,17 @@ void RenderContext::cleanup()
 	mCommandPool->destroy(mDevice);
 }
 
-const CommandPoolPtr& RenderContext::getCommandPool()
+const CommandPoolPtr& RenderContext::getCommandPool() const
 {
 	return mCommandPool;
 }
 
-const SwapchainPtr& RenderContext::getSwapchain()
+const SwapchainPtr& RenderContext::getSwapchain() const
 {
 	return mSwapchain;
 }
 
-const RenderPassPtr& RenderContext::getRenderPass()
+const RenderPassPtr& RenderContext::getRenderPass() const
 {
 	return mRenderPass;
 }

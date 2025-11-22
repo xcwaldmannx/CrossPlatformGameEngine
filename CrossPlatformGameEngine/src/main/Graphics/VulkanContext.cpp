@@ -84,47 +84,47 @@ VkQueue VulkanContext::getPresentQueue() const
 	return mPresentQueue;
 }
 
-const CommandPoolFactory& VulkanContext::getCommandPoolFactory()
+const CommandPoolFactory& VulkanContext::getCommandPoolFactory() const
 {
 	return mCommandPoolFactory;
 }
 
-const DescriptorFactory& VulkanContext::getDescriptorFactory()
+const DescriptorFactory& VulkanContext::getDescriptorFactory() const
 {
 	return mDescriptorFactory;
 }
 
-const SwapchainFactory& VulkanContext::getSwapchainFactory()
+const SwapchainFactory& VulkanContext::getSwapchainFactory() const
 {
 	return mSwapchainFactory;
 }
 
-const RenderPassFactory& VulkanContext::getRenderPassFactory()
+const RenderPassFactory& VulkanContext::getRenderPassFactory() const
 {
 	return mRenderPassFactory;
 }
 
-const GraphicsPipelineFactory& VulkanContext::getGraphicsPipelineFactory()
+const GraphicsPipelineFactory& VulkanContext::getGraphicsPipelineFactory() const
 {
 	return mGraphicsPipelineFactory;
 }
 
-const ComputePipelineFactory& VulkanContext::getComputePipelineFactory()
+const ComputePipelineFactory& VulkanContext::getComputePipelineFactory() const
 {
 	return mComputePipelineFactory;
 }
 
-const BufferFactory& VulkanContext::getBufferFactory()
+const BufferFactory& VulkanContext::getBufferFactory() const
 {
 	return mBufferFactory;
 }
 
-const TextureFactory& VulkanContext::getTextureFactory()
+const TextureFactory& VulkanContext::getTextureFactory() const
 {
 	return mTextureFactory;
 }
 
-const SamplerFactory& VulkanContext::getSamplerFactory()
+const SamplerFactory& VulkanContext::getSamplerFactory() const
 {
 	return mSamplerFactory;
 }

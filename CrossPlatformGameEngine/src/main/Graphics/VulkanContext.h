@@ -38,15 +38,15 @@ namespace ascen
 		VkQueue getGraphicsQueue() const;
 		VkQueue getPresentQueue() const;
 
-		const CommandPoolFactory& getCommandPoolFactory();
-		const DescriptorFactory& getDescriptorFactory();
-		const SwapchainFactory& getSwapchainFactory();
-		const RenderPassFactory& getRenderPassFactory();
-		const GraphicsPipelineFactory& getGraphicsPipelineFactory();
-		const ComputePipelineFactory& getComputePipelineFactory();
-		const BufferFactory& getBufferFactory();
-		const TextureFactory& getTextureFactory();
-		const SamplerFactory& getSamplerFactory();
+		const CommandPoolFactory& getCommandPoolFactory() const;
+		const DescriptorFactory& getDescriptorFactory() const;
+		const SwapchainFactory& getSwapchainFactory() const;
+		const RenderPassFactory& getRenderPassFactory() const;
+		const GraphicsPipelineFactory& getGraphicsPipelineFactory() const;
+		const ComputePipelineFactory& getComputePipelineFactory() const;
+		const BufferFactory& getBufferFactory() const;
+		const TextureFactory& getTextureFactory() const;
+		const SamplerFactory& getSamplerFactory() const;
 
 		void waitIdle() const;
 

@@ -31,9 +31,9 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 	mEngine.resource().reconstruct();
 
 	mEngine.descriptor().registerDescriptor(
-		{ "set0", "camera", 0x00, 0, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX });
+		{ "set0", "camera", 0x00, sizeof(Camera), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
 	mEngine.descriptor().registerDescriptor(
-		{ "set0", "transform", 0x01, 0, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX });
+		{ "set0", "transform", 0x01, sizeof(float), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
 	mEngine.descriptor().registerDescriptor(
 		{ "set0", "sampler", 0x10, 0, ascen::DescriptorType::SSBO, ascen::DescriptorStage::PIXEL });
 	mEngine.descriptor().registerDescriptor(
@@ -41,11 +41,17 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 
 	mEngine.descriptor().reconstruct();
 
-	// pipelines
+	mEngine.pipeline().registerGraphicsPipeline(
+		{ "pipeline", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv", "simpleVertex", { "set0" }});
 
+	mEngine.pipeline().reconstruct();
 
+	mEngine.frame().registerFramePass(
+		{
+			"frame", { "vertex" }, "index", {}, {}, {}, {}, { "set0" }, "", ascen::FramePassType::GRAPHICS
+		});
 
-	// rendergraph passes
+	mEngine.frame().reconstruct();
 
 	loadModels();
 

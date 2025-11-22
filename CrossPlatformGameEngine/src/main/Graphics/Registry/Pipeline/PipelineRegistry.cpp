@@ -6,10 +6,10 @@
 using namespace ascen;
 
 PipelineRegistry::PipelineRegistry(
-	VulkanContext& vulkanContext,
-	RenderContext& renderContext,
-	VertexRegistry& vertexRegistry,
-	DescriptorRegistry& descriptorRegistry) :
+	const VulkanContext& vulkanContext,
+	const RenderContext& renderContext,
+	const VertexRegistry& vertexRegistry,
+	const DescriptorRegistry& descriptorRegistry) :
 	mDevice(vulkanContext.getDevice()),
 	mGraphicsPipelineFactory(vulkanContext.getGraphicsPipelineFactory()),
 	mComputePipelineFactory(vulkanContext.getComputePipelineFactory()),
@@ -22,7 +22,7 @@ void PipelineRegistry::registerGraphicsPipeline(GraphicsPipelineEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("Pipeline name already registered!");
+		throw std::runtime_error("A pipeline with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -33,7 +33,7 @@ void PipelineRegistry::registerComputePipeline(ComputePipelineEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("Pipeline name already registered!");
+		throw std::runtime_error("A pipeline with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -48,6 +48,9 @@ void PipelineRegistry::reconstruct()
 	{
 		std::vector<DescriptorSetLayoutPtr> layouts;
 
+		auto& engineLayout = DescriptorRegistryBackend::getDescriptorLayout(mDescriptorRegistry, "engine");
+		layouts.push_back(engineLayout);
+
 		for (const auto& layoutName : entry.mDescriptorSetLayouts)
 		{
 			auto& layout = DescriptorRegistryBackend::getDescriptorLayout(mDescriptorRegistry, layoutName);
@@ -56,7 +59,21 @@ void PipelineRegistry::reconstruct()
 
 		auto& vertex = VertexRegistryBackend::getVertex(mVertexRegistry, entry.mVertex);
 
-		mGraphicsPipelineFactory.create(entry.mVertexShader, entry.mPixelShader, vertex, layouts, mSwapchain, mRenderPass);
+		mGraphicsPipelines[entry.mName] = mGraphicsPipelineFactory.create(
+			entry.mVertexShader, entry.mPixelShader, vertex, layouts, mSwapchain, mRenderPass);
+	}
+
+	for (auto& entry : mComputeEntries)
+	{
+		std::vector<DescriptorSetLayoutPtr> layouts;
+
+		for (const auto& layoutName : entry.mDescriptorSetLayouts)
+		{
+			auto& layout = DescriptorRegistryBackend::getDescriptorLayout(mDescriptorRegistry, layoutName);
+			layouts.push_back(layout);
+		}
+
+		mComputePipelines[entry.mName] = mComputePipelineFactory.create(entry.mComputeShader, layouts);
 	}
 }
 
@@ -86,4 +103,14 @@ bool PipelineRegistry::isRegistered(const std::string& name) const
 	}
 
 	return false;
+}
+
+bool PipelineRegistry::graphicsPipelineExists(const std::string& name) const
+{
+	return (mGraphicsPipelines.find(name) != mGraphicsPipelines.end());
+}
+
+bool PipelineRegistry::computePipelineExists(const std::string& name) const
+{
+	return (mComputePipelines.find(name) != mComputePipelines.end());
 }

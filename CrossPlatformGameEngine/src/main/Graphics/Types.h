@@ -41,4 +41,7 @@ namespace ascen
 	class Vertex;
 	using VertexPtr = std::shared_ptr<Vertex>;
 
+	class FramePass;
+	using FramePassPtr = std::shared_ptr<FramePass>;
+
 }

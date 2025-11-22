@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../HandleManager/Handle.h"
+#include "../../Handle/Handle.h"
 
 #include <vulkan/vulkan.h>
 

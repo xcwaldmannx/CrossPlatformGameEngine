@@ -21,7 +21,7 @@ void ResourceRegistry::registerBuffer(BufferEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("Buffer name already registered!");
+		throw std::runtime_error("A buffer with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -32,7 +32,7 @@ void ResourceRegistry::registerTexture(TextureEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("Texture name already registered!");
+		throw std::runtime_error("A texture with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -43,7 +43,7 @@ void ResourceRegistry::registerSampler(SamplerEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("Sampler name already registered!");
+		throw std::runtime_error("A sampler with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -112,7 +112,7 @@ void ResourceRegistry::reconstruct()
 
 void ResourceRegistry::updateBuffer(
 	const std::string& name,
-	void* items,
+	const void* items,
 	uint32_t itemCount,
 	uint32_t itemSize)
 {

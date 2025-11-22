@@ -8,8 +8,11 @@ namespace ascen
 	class DescriptorRegistryBackend
 	{
 	public:
-		static const DescriptorSetLayoutPtr& getDescriptorLayout(
-			DescriptorRegistry& registry, const std::string& name);
+		static const DescriptorSetLayoutPtr& getDescriptorSetLayout(
+			const DescriptorRegistry& registry, const std::string& name);
+
+		static const DescriptorSetPtr& getDescriptorSet(
+			const DescriptorRegistry& registry, const std::string& name);
 	};
 
 }

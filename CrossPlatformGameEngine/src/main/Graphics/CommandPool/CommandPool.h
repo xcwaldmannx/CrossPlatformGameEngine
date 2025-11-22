@@ -2,7 +2,7 @@
 
 #include "../Types.h"
 
-#include "../HandleManager/Handle_I.h"
+#include "../Handle/Handle_I.h"
 
 #include "../Device/Physical/PhysicalDevice.h"
 #include "../Descriptor/Set/DescriptorSet.h"
@@ -11,7 +11,7 @@
 #include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
 #include "../Pipeline/ComputePipeline/ComputePipeline_I.h"
 
-#include "../RenderGraph/RenderGraph.h"
+#include "../FrameGraph/FrameGraph.h"
 
 #include <vector>
 
@@ -46,11 +46,11 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
-			const RenderGraph renderGraph,
+			const FrameGraph frameGraph,
 			VkBuffer indirectBuffer,
 			const RenderPassPtr& renderPass,
 			const SwapchainPtr& swapchain,
-			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
+			uint32_t drawCommandCount);
 
 		VkCommandBuffer beginSingle(VkDevice device);
 		void endSingle(VkDevice device, VkQueue queue, VkCommandBuffer buffer);

@@ -2,7 +2,7 @@
 
 using namespace ascen;
 
-const VertexPtr& VertexRegistryBackend::getVertex(VertexRegistry& registry, const std::string& name)
+const VertexPtr& VertexRegistryBackend::getVertex(const VertexRegistry& registry, const std::string& name)
 {
 	if (registry.exists(name))
 	{

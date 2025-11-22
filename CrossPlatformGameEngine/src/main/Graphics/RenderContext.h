@@ -3,6 +3,8 @@
 #include "../WindowManager/WindowManager.h"
 #include "VulkanContext.h"
 
+#include "Types.h"
+
 namespace ascen
 {
 
@@ -10,8 +12,8 @@ namespace ascen
 	{
 	public:
 		RenderContext(
-			WindowManager& windowManager,
-			VulkanContext& context);
+			const WindowManager& windowManager,
+			const VulkanContext& vulkanContext);
 
 		void resize(
 			const CommandPoolPtr& commandPool,
@@ -21,9 +23,9 @@ namespace ascen
 
 		void cleanup();
 
-		const CommandPoolPtr& getCommandPool();
-		const SwapchainPtr& getSwapchain();
-		const RenderPassPtr& getRenderPass();
+		const CommandPoolPtr& getCommandPool() const;
+		const SwapchainPtr& getSwapchain() const;
+		const RenderPassPtr& getRenderPass() const;
 
 	private:
 		const WindowManager& mWindowManager;
