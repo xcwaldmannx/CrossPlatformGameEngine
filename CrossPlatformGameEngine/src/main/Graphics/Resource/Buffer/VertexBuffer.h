@@ -15,9 +15,9 @@ namespace ascen
 		VertexBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<float>& vertices);
+			uint32_t itemCount,
+			uint32_t itemSize);
 	};
 
 }

@@ -6,36 +6,42 @@
 
 using namespace ascen;
 
-CommandPool::CommandPool(uint32_t queueFamilyIndex)
+CommandPool::CommandPool(
+    VkDevice device,
+    uint32_t queueFamilyIndex)
 {
-    mCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    mCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    mCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    VkCommandPoolCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    createInfo.queueFamilyIndex = queueFamilyIndex;
 
     mCommandBuffers.resize(2);
 
     VkCommandBufferAllocateInfo allocInfo{};
-    mAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    mAllocInfo.commandBufferCount = (uint32_t) mCommandBuffers.size();
-}
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t) mCommandBuffers.size();
 
-void CommandPool::create(VkDevice device)
-{
-    if (vkCreateCommandPool(device, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
+    if (vkCreateCommandPool(device, &createInfo, nullptr, &mHandle) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool!");
     }
 
-    mAllocInfo.commandPool = mHandle;
+    allocInfo.commandPool = mHandle;
 
-    if (vkAllocateCommandBuffers(device, &mAllocInfo, mCommandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(device, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 }
 
-void CommandPool::destroy(VkDevice device) {
+void CommandPool::create(VkDevice device)
+{
+    // remove later
+}
+
+void CommandPool::destroy(VkDevice device)
+{
     vkDestroyCommandPool(device, mHandle, nullptr);
 }
 
@@ -44,13 +50,9 @@ void CommandPool::record(
     uint32_t currentFrame,
     uint32_t currentImage,
     const RenderGraph renderGraph,
-    // VkBuffer vertexBuffer,
-    // VkBuffer indexBuffer,
     VkBuffer indirectBuffer,
-    // const DescriptorSetPtr& descriptorSet,
     const RenderPassPtr& renderPass,
     const SwapchainPtr& swapchain,
-    // const GraphicsPipelinePtr& pipeline,
     const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
 {
     vkResetCommandBuffer(mCommandBuffers[currentFrame], 0);

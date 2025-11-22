@@ -17,17 +17,22 @@ Image2::Image2(
 	VkImageTiling tiling,
 	VkImageUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryFlags,
-	VkImageAspectFlags aspectFlags)
+	VkImageAspectFlags aspectFlags) :
+	mWidth(width),
+	mHeight(height),
+	mLayers(layers),
+	mFormat(format),
+	mAspectFlags(aspectFlags)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageInfo.extent.width = static_cast<uint32_t>(width);
-	imageInfo.extent.height = static_cast<uint32_t>(height);
+	imageInfo.extent.width = mWidth;
+	imageInfo.extent.height = mHeight;
 	imageInfo.extent.depth = 1;
 	imageInfo.mipLevels = 1;
-	imageInfo.arrayLayers = layers;
-	imageInfo.format = format;
+	imageInfo.arrayLayers = mLayers;
+	imageInfo.format = mFormat;
 	imageInfo.tiling = tiling;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	imageInfo.usage = usageFlags;
@@ -57,14 +62,9 @@ void Image2::update(
 	VkDevice device,
 	VkQueue queue,
 	const CommandPoolPtr& commandPool,
-	const std::vector<unsigned char>& pixels,
-	uint32_t width,
-	uint32_t height,
-	uint32_t layers,
-	VkFormat format,
-	VkImageAspectFlags aspectFlags)
+	const std::vector<unsigned char>& pixels)
 {
-	VkDeviceSize pixelCount = static_cast<VkDeviceSize>(width * height * layers);
+	VkDeviceSize pixelCount = static_cast<VkDeviceSize>(mWidth * mHeight * mLayers);
 	size_t pixelSize = 4;
 	VkDeviceSize imageSizeBytes = static_cast<VkDeviceSize>(pixelCount * pixelSize);
 
@@ -86,20 +86,16 @@ void Image2::update(
 		queue,
 		commandPool,
 		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		layers,
-		aspectFlags);
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	copy(device, queue, commandPool, stagingBuffer, *this, format, width, height, layers, aspectFlags);
+	copy(device, queue, commandPool, stagingBuffer, *this);
 
 	transitionLayout(
 		device,
 		queue,
 		commandPool,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		layers,
-		aspectFlags);
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	stagingBuffer.destroy(device);
 }
@@ -120,9 +116,7 @@ void Image2::transitionLayout(
 	VkQueue queue,
 	const CommandPoolPtr& commandPool,
 	VkImageLayout oldLayout,
-	VkImageLayout newLayout,
-	uint32_t layers,
-	VkImageAspectFlags aspectFlags)
+	VkImageLayout newLayout)
 {
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 
@@ -158,11 +152,11 @@ void Image2::transitionLayout(
 	}
 
 	Barrier::image(
-		commandBuffer, mHandle, layers,
+		commandBuffer, mHandle, mLayers,
 		oldLayout, newLayout,
 		srcAccess, srcStage,
 		dstAccess, dstStage,
-		aspectFlags);
+		mAspectFlags);
 
 	commandPool->endSingle(device, queue, commandBuffer);
 }
@@ -172,29 +166,24 @@ void Image2::copy(
 	VkQueue queue,
 	const CommandPoolPtr& commandPool,
 	Buffer2& buffer,
-	Image2& image,
-	VkFormat format,
-	uint32_t width,
-	uint32_t height,
-	uint32_t layers,
-	VkImageAspectFlags aspectFlags)
+	Image2& image)
 {
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 
-	VkDeviceSize layerSize = static_cast<VkDeviceSize>(width * height * 4);
+	VkDeviceSize layerSize = static_cast<VkDeviceSize>(mWidth * mHeight * 4);
 
-	std::vector<VkBufferImageCopy> regions(layers);
+	std::vector<VkBufferImageCopy> regions(mLayers);
 
-	for (uint32_t layer = 0; layer < layers; layer++)
+	for (uint32_t layer = 0; layer < mLayers; layer++)
 	{
 		VkBufferImageCopy& region = regions[layer];
 		region.bufferOffset = layer * layerSize;
 		region.bufferRowLength = 0;
 		region.bufferImageHeight = 0;
 
-		region.imageSubresource.aspectMask = aspectFlags;
+		region.imageSubresource.aspectMask = mAspectFlags;
 
-		if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
+		if (mFormat == VK_FORMAT_D32_SFLOAT_S8_UINT || mFormat == VK_FORMAT_D24_UNORM_S8_UINT)
 		{
 			region.imageSubresource.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		}
@@ -206,8 +195,8 @@ void Image2::copy(
 		region.imageOffset = { 0, 0, 0 };
 		region.imageExtent =
 		{
-			width,
-			height,
+			mWidth,
+			mHeight,
 			1
 		};
 	}

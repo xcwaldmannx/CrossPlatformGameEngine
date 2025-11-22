@@ -34,12 +34,7 @@ namespace ascen
 			VkDevice device,
 			VkQueue queue,
 			const CommandPoolPtr& commandPool,
-			const std::vector<unsigned char>& pixels,
-			uint32_t width,
-			uint32_t height,
-			uint32_t layers,
-			VkFormat format,
-			VkImageAspectFlags aspectFlags);
+			const std::vector<unsigned char>& pixels);
 
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
@@ -50,27 +45,27 @@ namespace ascen
 			VkQueue queue,
 			const CommandPoolPtr& commandPool,
 			VkImageLayout oldLayout,
-			VkImageLayout newLayout,
-			uint32_t layers,
-			VkImageAspectFlags aspectFlags);
+			VkImageLayout newLayout);
 
 		void copy(
 			VkDevice device,
 			VkQueue queue,
 			const CommandPoolPtr& commandPool,
 			Buffer2& buffer,
-			Image2& image,
-			VkFormat format,
-			uint32_t width,
-			uint32_t height,
-			uint32_t layers,
-			VkImageAspectFlags aspectFlags);
+			Image2& image);
 
 		Memory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkImage image,
 			VkMemoryPropertyFlags memoryFlags);
+
+	private:
+		uint32_t mWidth;
+		uint32_t mHeight;
+		uint32_t mLayers;
+		VkFormat mFormat;
+		VkImageAspectFlags mAspectFlags;
 	};
 
 }

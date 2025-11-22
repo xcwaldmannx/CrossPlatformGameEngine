@@ -34,7 +34,9 @@ namespace ascen
 	class CommandPool : public Handle<VkCommandPool>
 	{
 	private:
-		CommandPool(uint32_t queueFamilyIndex);
+		CommandPool(
+			VkDevice device,
+			uint32_t queueFamilyIndex);
 
 	public:
 		void create(VkDevice device) override;
@@ -45,13 +47,9 @@ namespace ascen
 			uint32_t frameIndex,
 			uint32_t imageIndex,
 			const RenderGraph renderGraph,
-			// VkBuffer vertexBuffer,
-			// VkBuffer indexBuffer,
 			VkBuffer indirectBuffer,
-			// const DescriptorSetPtr& descriptorSet,
 			const RenderPassPtr& renderPass,
 			const SwapchainPtr& swapchain,
-			// const GraphicsPipelinePtr& pipeline,
 			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
 
 		VkCommandBuffer beginSingle(VkDevice device);
@@ -60,8 +58,6 @@ namespace ascen
 		const VkCommandBuffer* getBufferIndex(size_t index) const;
 
 	private:
-		VkCommandPoolCreateInfo mCreateInfo{};
-		VkCommandBufferAllocateInfo mAllocInfo{};
 		std::vector<VkCommandBuffer> mCommandBuffers;
 
 		friend class CommandPoolFactory;

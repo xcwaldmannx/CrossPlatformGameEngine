@@ -7,40 +7,62 @@ BufferFactory::BufferFactory(
 	VkDevice device) : mPhysicalDevice(physicalDevice), mDevice(device) {}
 
 BufferPtr BufferFactory::createVertex(
-	uint32_t queueFamilyIndex,
 	const CommandPoolPtr& commandPool,
-	const std::vector<float>& vertices) const
+	uint32_t itemCount,
+	uint32_t itemSize) const
 {
 	return std::make_shared<VertexBuffer>(
 		mPhysicalDevice,
 		mDevice,
-		queueFamilyIndex,
 		commandPool,
-		vertices);
+		itemCount,
+		itemSize);
 }
 
 BufferPtr BufferFactory::createIndex(
-	uint32_t queueFamilyIndex,
 	const CommandPoolPtr& commandPool,
-	const std::vector<uint32_t>& indices) const
+	uint32_t itemCount,
+	uint32_t itemSize) const
 {
 	return std::make_shared<IndexBuffer>(
 		mPhysicalDevice,
 		mDevice,
-		queueFamilyIndex,
 		commandPool,
-		indices);
+		itemCount,
+		itemSize);
+}
+
+BufferPtr BufferFactory::createUniform(
+	uint32_t itemCount,
+	uint32_t itemSize) const
+{
+	return std::make_shared<UniformBuffer>(
+		mPhysicalDevice,
+		mDevice,
+		itemCount,
+		itemSize);
+}
+
+BufferPtr BufferFactory::createStorage(
+	const CommandPoolPtr& commandPool,
+	uint32_t itemCount,
+	uint32_t itemSize) const
+{
+	return std::make_shared<StorageBuffer>(
+		mPhysicalDevice,
+		mDevice,
+		commandPool,
+		itemCount,
+		itemSize);
 }
 
 BufferPtr BufferFactory::createIndirect(
-	uint32_t queueFamilyIndex,
 	const CommandPoolPtr& commandPool,
-	const std::vector<Buffer::DrawCommand>& drawCommands) const
+	uint32_t itemCount) const
 {
 	return std::make_shared<IndirectBuffer>(
 		mPhysicalDevice,
 		mDevice,
-		queueFamilyIndex,
 		commandPool,
-		drawCommands);
+		itemCount);
 }

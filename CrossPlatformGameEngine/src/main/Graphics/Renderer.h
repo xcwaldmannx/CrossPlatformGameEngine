@@ -353,12 +353,6 @@ namespace ascen
 
 		const int MAX_FRAMES_IN_FLIGHT = 2;
 
-		CommandPoolPtr mCommandPool = nullptr;
-		SwapchainPtr mSwapchain = nullptr;
-		RenderPassPtr mRenderPass = nullptr;
-
-		TexturePtr mDepthTexture = nullptr;
-
 		BufferPtr mInstanceBuffer = nullptr;
 		BufferPtr mIndirectBuffer = nullptr;
 

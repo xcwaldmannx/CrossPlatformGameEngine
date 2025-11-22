@@ -12,7 +12,6 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			const CommandPoolPtr& commandPool,
-
 			uint32_t width,
 			uint32_t height,
 			uint32_t layers,
@@ -21,6 +20,13 @@ namespace ascen
 			VkImageUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryFlags,
 			VkImageAspectFlags aspectFlags);
+
+		void update(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkQueue queue,
+			const CommandPoolPtr& commandPool,
+			const std::vector<unsigned char>& pixels);
 
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;

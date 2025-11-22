@@ -38,4 +38,7 @@ namespace ascen
 	class Sampler2;
 	using SamplerPtr = std::shared_ptr<Sampler2>;
 
+	class Vertex;
+	using VertexPtr = std::shared_ptr<Vertex>;
+
 }

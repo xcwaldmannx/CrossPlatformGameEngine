@@ -52,6 +52,35 @@ void Buffer2::destroy(VkDevice device)
 	vkFreeMemory(device, mMemory, nullptr);
 }
 
+void Buffer2::update(
+	VkPhysicalDevice physicalDevice,
+	VkDevice device,
+	VkQueue queue,
+	const CommandPoolPtr& commandPool,
+	void* items,
+	uint32_t itemCount,
+	uint32_t itemSize)
+{
+	Buffer2 stagingBuffer(
+		physicalDevice,
+		device,
+		itemCount,
+		itemSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	VkDeviceSize sizeBytes = itemCount * itemSize;
+
+	void* data = nullptr;
+	vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
+	std::memcpy(data, items, sizeBytes);
+	vkUnmapMemory(device, stagingBuffer.mMemory);
+
+	copy(device, queue, commandPool, stagingBuffer, *this, false);
+
+	stagingBuffer.destroy(device);
+}
+
 void Buffer2::copy(
 	VkDevice device,
 	VkQueue queue,

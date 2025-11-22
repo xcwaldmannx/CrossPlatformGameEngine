@@ -27,6 +27,7 @@ namespace ascen
 		Swapchain(
 			GLFWwindow* window,
 			VkPhysicalDevice physicalDevice,
+			VkDevice device,
 			VkSurfaceKHR surface,
 			uint32_t graphicsFamily,
 			uint32_t presentFamily);
@@ -64,9 +65,6 @@ namespace ascen
 		void createImageViews(VkDevice device);
 
 		void destroyImageViews(VkDevice device);
-
-	protected:
-		VkSwapchainCreateInfoKHR mCreateInfo{};
 
 	private:
 		std::vector<VkImage> mImages;

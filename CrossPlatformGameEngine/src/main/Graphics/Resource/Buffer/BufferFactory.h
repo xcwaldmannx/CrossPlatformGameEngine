@@ -24,58 +24,29 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device);
 
-		//template<std::derived_from<Vertex_I> T>
-		//BufferPtr createVertex(
-		//	uint32_t queueFamilyIndex,
-		//	const CommandPoolPtr& commandPool,
-		//	const std::vector<T>& vertices) const
-		//{
-		//	BufferPtr ptr = std::make_shared<VertexBuffer>(
-		//			mPhysicalDevice,
-		//			mDevice,
-		//			queueFamilyIndex,
-		//			commandPool,
-		//			vertices);
-		//	return ptr;
-		//}
-
 		BufferPtr createVertex(
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<float>& vertices) const;
+			uint32_t itemCount,
+			uint32_t itemSize) const;
 
 		BufferPtr createIndex(
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<uint32_t>& indices) const;
+			uint32_t itemCount,
+			uint32_t itemSize) const;
 
-		template<typename T>
-		BufferPtr createUniform(uint64_t size) const
-		{
-			return std::make_shared<UniformBuffer<T>>(
-					mPhysicalDevice,
-					mDevice,
-					size);
-		}
 
-		template<typename T>
+		BufferPtr createUniform(
+			uint32_t itemCount,
+			uint32_t itemSize) const;
+
 		BufferPtr createStorage(
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<T>& storage) const
-		{
-			return std::make_shared<StorageBuffer<T>>(
-				mPhysicalDevice,
-				mDevice,
-				queueFamilyIndex,
-				commandPool,
-				storage);
-		}
+			uint32_t itemCount,
+			uint32_t itemSize) const;
 
 		BufferPtr createIndirect(
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<Buffer::DrawCommand>& drawCommands) const;
+			uint32_t itemCount) const;
 
 	private:
 		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;

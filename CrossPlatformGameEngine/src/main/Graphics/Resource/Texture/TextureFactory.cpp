@@ -8,9 +8,7 @@ TextureFactory::TextureFactory(
 }
 
 TexturePtr TextureFactory::createImage(
-	uint32_t queueFamilyIndex,
 	const CommandPoolPtr& commandPool,
-	const std::vector<unsigned char>& pixels,
 	uint32_t width,
 	uint32_t height,
 	uint32_t layers) const
@@ -18,16 +16,13 @@ TexturePtr TextureFactory::createImage(
 	return std::make_shared<ImageTexture>(
 		mPhysicalDevice,
 		mDevice,
-		queueFamilyIndex,
 		commandPool,
-		pixels,
 		width,
 		height,
 		layers);
 }
 
 TexturePtr TextureFactory::createDepth(
-	uint32_t queueFamilyIndex,
 	const CommandPoolPtr& commandPool,
 	uint32_t width,
 	uint32_t height) const
@@ -35,7 +30,6 @@ TexturePtr TextureFactory::createDepth(
 	return std::make_shared<DepthTexture>(
 		mPhysicalDevice,
 		mDevice,
-		queueFamilyIndex,
 		commandPool,
 		width,
 		height);

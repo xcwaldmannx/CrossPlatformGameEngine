@@ -17,9 +17,8 @@ namespace ascen
 		IndirectBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<DrawCommand>& drawCommands);
+			uint32_t itemCount);
 	};
 
 }
