@@ -10,6 +10,7 @@ using namespace ascen;
 Swapchain::Swapchain(
 	GLFWwindow* window,
 	VkPhysicalDevice physicalDevice,
+    VkDevice device,
 	VkSurfaceKHR surface,
 	uint32_t graphicsFamily,
 	uint32_t presentFamily)
@@ -30,40 +31,37 @@ Swapchain::Swapchain(
         mImageCount = swapChainSupport.mCapabilities.maxImageCount;
     }
 
-    mCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    mCreateInfo.surface = surface;
-    mCreateInfo.minImageCount = mImageCount;
-    mCreateInfo.imageFormat = mImageFormat;
-    mCreateInfo.imageColorSpace = surfaceFormat.colorSpace;
-    mCreateInfo.imageExtent = mExtent;
-    mCreateInfo.imageArrayLayers = 1;
-    mCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    mCreateInfo.preTransform = swapChainSupport.mCapabilities.currentTransform;
-    mCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    mCreateInfo.presentMode = presentMode;
-    mCreateInfo.clipped = VK_TRUE;
-    mCreateInfo.oldSwapchain = nullptr;
+    VkSwapchainCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = surface;
+    createInfo.minImageCount = mImageCount;
+    createInfo.imageFormat = mImageFormat;
+    createInfo.imageColorSpace = surfaceFormat.colorSpace;
+    createInfo.imageExtent = mExtent;
+    createInfo.imageArrayLayers = 1;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.preTransform = swapChainSupport.mCapabilities.currentTransform;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = presentMode;
+    createInfo.clipped = VK_TRUE;
+    createInfo.oldSwapchain = nullptr;
 
     uint32_t queueFamilyIndices[] = { graphicsFamily, presentFamily };
 
     if (graphicsFamily != presentFamily)
     {
-        mCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-        mCreateInfo.queueFamilyIndexCount = 2;
-        mCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        createInfo.queueFamilyIndexCount = 2;
+        createInfo.pQueueFamilyIndices = queueFamilyIndices;
     }
     else
     {
-        mCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-        mCreateInfo.queueFamilyIndexCount = 0; // Optional
-        mCreateInfo.pQueueFamilyIndices = nullptr; // Optional
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        createInfo.queueFamilyIndexCount = 0; // Optional
+        createInfo.pQueueFamilyIndices = nullptr; // Optional
     }
 
-}
-
-void Swapchain::create(VkDevice device)
-{
-    if (vkCreateSwapchainKHR(device, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &mHandle) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create swap chain!");
     }
@@ -75,28 +73,10 @@ void Swapchain::create(VkDevice device)
     createImageViews(device);
 }
 
-//void Swapchain::recreate(VkDevice device)
-//{
-//    int width = 0, height = 0;
-//    glfwGetFramebufferSize(window, &width, &height);
-//    while (width == 0 || height == 0) {
-//        glfwGetFramebufferSize(window, &width, &height);
-//        glfwWaitEvents();
-//    }
-//
-//    vkDeviceWaitIdle(logicalDevice.mDevice);
-//
-//    destroy(device);
-//
-//    create(
-//        window,
-//        physicalDevice,
-//        logicalDevice,
-//        surface,
-//        graphicsFamily,
-//        presentFamily,
-//        swapchain);
-//}
+void Swapchain::create(VkDevice device)
+{
+    // remove later
+}
 
 void Swapchain::destroy(VkDevice device)
 {

@@ -2,7 +2,6 @@
 
 #include "Buffer_I.h"
 
-#include "../../QueueFamilies/QueueFamilies.h"
 #include "../../CommandPool/CommandPool.h"
 
 namespace ascen
@@ -28,34 +27,15 @@ namespace ascen
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
-		template<typename T>
 		void update(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			uint32_t queueFamilyIndex,
+			VkQueue queue,
 			const CommandPoolPtr& commandPool,
-			const std::vector<T>& items)
-		{
-			Buffer2 stagingBuffer(
-				physicalDevice,
-				device,
-				items.size(),
-				sizeof(T),
-				VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-			VkDeviceSize sizeBytes = items.size() * sizeof(T);
-
-			void* data = nullptr;
-			vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
-			std::memcpy(data, items.data(), sizeBytes);
-			vkUnmapMemory(device, stagingBuffer.mMemory);
-
-			VkQueue queue = QueueFamilies::getDeviceQueue(device, queueFamilyIndex);
-			copy(device, queue, commandPool, stagingBuffer, *this, false);
-
-			stagingBuffer.destroy(device);
-		}
+			const void* items,
+			uint32_t itemCount,
+			uint32_t itemSize,
+			uint32_t offset = 0);
 
 	private:
 		void copy(
@@ -69,11 +49,11 @@ namespace ascen
 		Memory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkBuffer buffer,
-			VkMemoryPropertyFlags memoryFlags);
+			VkBuffer buffer);
 
 		size_t mItemCount = 0;      // number of items
 		size_t mItemSize = 0;       // byte size of item
+		VkMemoryPropertyFlags mMemoryFlags;
 	};
 
 }

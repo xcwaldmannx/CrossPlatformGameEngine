@@ -1,41 +1,51 @@
 #include "CommandPool.h"
 
+#include "../RenderPass/RenderPass.h"
+#include "../Swapchain/Swapchain.h"
+#include "../FrameGraph/FrameGraph.h"
+
 #include <stdexcept>
 
 #include <array>
 
 using namespace ascen;
 
-CommandPool::CommandPool(uint32_t queueFamilyIndex)
+CommandPool::CommandPool(
+    VkDevice device,
+    uint32_t queueFamilyIndex)
 {
-    mCreateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    mCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    mCreateInfo.queueFamilyIndex = queueFamilyIndex;
+    VkCommandPoolCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    createInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    createInfo.queueFamilyIndex = queueFamilyIndex;
 
     mCommandBuffers.resize(2);
 
     VkCommandBufferAllocateInfo allocInfo{};
-    mAllocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    mAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    mAllocInfo.commandBufferCount = (uint32_t) mCommandBuffers.size();
-}
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = (uint32_t) mCommandBuffers.size();
 
-void CommandPool::create(VkDevice device)
-{
-    if (vkCreateCommandPool(device, &mCreateInfo, nullptr, &mHandle) != VK_SUCCESS)
+    if (vkCreateCommandPool(device, &createInfo, nullptr, &mHandle) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create command pool!");
     }
 
-    mAllocInfo.commandPool = mHandle;
+    allocInfo.commandPool = mHandle;
 
-    if (vkAllocateCommandBuffers(device, &mAllocInfo, mCommandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(device, &allocInfo, mCommandBuffers.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to allocate command buffers!");
     }
 }
 
-void CommandPool::destroy(VkDevice device) {
+void CommandPool::create(VkDevice device)
+{
+    // remove later
+}
+
+void CommandPool::destroy(VkDevice device)
+{
     vkDestroyCommandPool(device, mHandle, nullptr);
 }
 
@@ -43,15 +53,11 @@ void CommandPool::record(
     VkPhysicalDevice physicalDevice,
     uint32_t currentFrame,
     uint32_t currentImage,
-    const RenderGraph renderGraph,
-    // VkBuffer vertexBuffer,
-    // VkBuffer indexBuffer,
+    const FrameGraph& frameGraph,
     VkBuffer indirectBuffer,
-    // const DescriptorSetPtr& descriptorSet,
     const RenderPassPtr& renderPass,
     const SwapchainPtr& swapchain,
-    // const GraphicsPipelinePtr& pipeline,
-    const std::vector<VkDrawIndexedIndirectCommand>& drawCommands)
+    uint32_t drawCommandCount)
 {
     vkResetCommandBuffer(mCommandBuffers[currentFrame], 0);
 
@@ -84,7 +90,7 @@ void CommandPool::record(
     vkCmdSetScissor(currentCommandBuffer, 0, 1, &scissor);
 
     
-    auto& passes = renderGraph.getExecutions();
+    auto& passes = frameGraph.getExecutions();
 
     for (auto& pass : passes)
     {
@@ -104,19 +110,19 @@ void CommandPool::record(
 
         vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.mPipeline);
+        vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pass->mPipeline);
         
-        std::vector<VkDeviceSize> vertexOffsets(pass.mVertexBuffers.size(), 0);
+        std::vector<VkDeviceSize> vertexOffsets(pass->mVertexBuffers.size(), 0);
         vkCmdBindVertexBuffers(
             currentCommandBuffer,
             0,
-            pass.mVertexBuffers.size(),
-            pass.mVertexBuffers.data(),
+            pass->mVertexBuffers.size(),
+            pass->mVertexBuffers.data(),
             vertexOffsets.data());
 
         vkCmdBindIndexBuffer(
             currentCommandBuffer,
-            pass.mIndexBuffer,
+            pass->mIndexBuffer,
             0,
             VK_INDEX_TYPE_UINT32);
 
@@ -129,10 +135,10 @@ void CommandPool::record(
         vkCmdBindDescriptorSets(
             currentCommandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pass.mPipelineLayout,
+            pass->mPipelineLayout,
             0,
-            pass.mDescriptorSets.size(),
-            pass.mDescriptorSets.data(),
+            pass->mDescriptorSets.size(),
+            pass->mDescriptorSets.data(),
             static_cast<uint32_t>(dynamicOffets.size()),
             &dynamicOffets[0]);
 
@@ -140,7 +146,7 @@ void CommandPool::record(
             currentCommandBuffer,
             indirectBuffer,
             0,
-            static_cast<uint32_t>(drawCommands.size()),
+            drawCommandCount,
             sizeof(VkDrawIndexedIndirectCommand));
         
         vkCmdEndRenderPass(currentCommandBuffer);

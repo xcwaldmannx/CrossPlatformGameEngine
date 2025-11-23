@@ -15,9 +15,9 @@ namespace ascen
 		IndexBuffer(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<uint32_t>& indices);
+			uint32_t itemCount,
+			uint32_t itemSize);
 	};
 
 }

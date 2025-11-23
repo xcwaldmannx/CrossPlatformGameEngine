@@ -15,7 +15,6 @@ SwapchainPtr SwapchainFactory::create(
 	uint32_t graphicsFamily,
 	uint32_t presentFamily) const
 {
-	SwapchainPtr ptr(new Swapchain(window, mPhysicalDevice, mSurface, graphicsFamily, presentFamily));
-	ptr->create(mDevice);
+	SwapchainPtr ptr(new Swapchain(window, mPhysicalDevice, mDevice, mSurface, graphicsFamily, presentFamily));
 	return ptr;
 }

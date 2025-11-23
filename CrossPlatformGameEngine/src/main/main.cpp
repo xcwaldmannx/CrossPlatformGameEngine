@@ -337,20 +337,21 @@
 //}
 
 #include "WindowManager/WindowManager.h"
-#include "MyGame.h"
+#include "MyGame2.h"
 
 #include "Utility/FrameCounter.h"
 
 WindowManager mWindow;
+MyGame2* mGame = nullptr;
 
 int main()
 {
-	FrameCounter frameCounter(1000);
+	FrameCounter frameCounter(1'000);
 	float timePassed = 0;
 
 	mWindow.create();
 
-	MyGame game(mWindow);
+	mGame = new MyGame2(mWindow);
 
 	while (mWindow.isRunning())
 	{
@@ -369,11 +370,13 @@ int main()
 			break;
 		}
 
-		game.run(delta);
+		mGame->run(delta);
 	}
 
-	game.destroy();
+	mGame->cleanup();
 	mWindow.destroy();
+
+	delete mGame;
 
 	return 0;
 }

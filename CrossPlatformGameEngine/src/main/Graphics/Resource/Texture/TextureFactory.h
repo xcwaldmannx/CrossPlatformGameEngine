@@ -20,15 +20,12 @@ namespace ascen
 			VkDevice device);
 
 		TexturePtr createImage(
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
-			const std::vector<unsigned char>& pixels,
 			uint32_t width,
 			uint32_t height,
 			uint32_t layers) const;
 
 		TexturePtr createDepth(
-			uint32_t queueFamilyIndex,
 			const CommandPoolPtr& commandPool,
 			uint32_t width,
 			uint32_t height) const;

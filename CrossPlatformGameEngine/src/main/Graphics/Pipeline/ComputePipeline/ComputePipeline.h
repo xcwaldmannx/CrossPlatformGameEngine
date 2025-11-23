@@ -94,7 +94,7 @@ namespace ascen
         {
             // pipeline layout creation
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+            mLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
             mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
 
             // pipeline creation

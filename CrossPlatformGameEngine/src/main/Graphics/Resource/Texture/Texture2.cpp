@@ -39,6 +39,16 @@ Texture2::Texture2(
 	}
 }
 
+void Texture2::update(
+	VkPhysicalDevice physicalDevice,
+	VkDevice device,
+	VkQueue queue,
+	const CommandPoolPtr& commandPool,
+	const std::vector<unsigned char>& pixels)
+{
+	mImage.update(physicalDevice, device, queue, commandPool, pixels);
+}
+
 void Texture2::create(VkDevice device)
 {
 	// remove later

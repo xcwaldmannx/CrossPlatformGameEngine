@@ -1,17 +1,7 @@
 #pragma once
 
 #include "../Types.h"
-
-#include "../HandleManager/Handle_I.h"
-
-#include "../Device/Physical/PhysicalDevice.h"
-#include "../Descriptor/Set/DescriptorSet.h"
-#include "../Swapchain/Swapchain.h"
-#include "../RenderPass/RenderPass.h"
-#include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
-#include "../Pipeline/ComputePipeline/ComputePipeline_I.h"
-
-#include "../RenderGraph/RenderGraph.h"
+#include "../Handle/Handle.h"
 
 #include <vector>
 
@@ -21,6 +11,9 @@ namespace ascen
 {
 
 	class CommandPoolFactory;
+	class RenderPass;
+	class Swapchain;
+	class FrameGraph;
 
 	struct CommandDrawData
 	{
@@ -34,7 +27,9 @@ namespace ascen
 	class CommandPool : public Handle<VkCommandPool>
 	{
 	private:
-		CommandPool(uint32_t queueFamilyIndex);
+		CommandPool(
+			VkDevice device,
+			uint32_t queueFamilyIndex);
 
 	public:
 		void create(VkDevice device) override;
@@ -44,15 +39,11 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
-			const RenderGraph renderGraph,
-			// VkBuffer vertexBuffer,
-			// VkBuffer indexBuffer,
+			const FrameGraph& frameGraph,
 			VkBuffer indirectBuffer,
-			// const DescriptorSetPtr& descriptorSet,
 			const RenderPassPtr& renderPass,
 			const SwapchainPtr& swapchain,
-			// const GraphicsPipelinePtr& pipeline,
-			const std::vector<VkDrawIndexedIndirectCommand>& drawCommands);
+			uint32_t drawCommandCount);
 
 		VkCommandBuffer beginSingle(VkDevice device);
 		void endSingle(VkDevice device, VkQueue queue, VkCommandBuffer buffer);
@@ -60,8 +51,6 @@ namespace ascen
 		const VkCommandBuffer* getBufferIndex(size_t index) const;
 
 	private:
-		VkCommandPoolCreateInfo mCreateInfo{};
-		VkCommandBufferAllocateInfo mAllocInfo{};
 		std::vector<VkCommandBuffer> mCommandBuffers;
 
 		friend class CommandPoolFactory;

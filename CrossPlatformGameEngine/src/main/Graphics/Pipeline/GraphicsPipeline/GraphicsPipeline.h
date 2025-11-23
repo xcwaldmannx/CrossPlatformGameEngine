@@ -5,7 +5,7 @@
 #include "../../../Utility/FileIO/FileIO.h"
 
 #include "GraphicsPipeline_I.h"
-#include "../../Vertex/Vertex_I.h"
+#include "../../Vertex/Vertex.h"
 #include "../../Descriptor/Layout/DescriptorSetLayout.h"
 #include "../../Swapchain/Swapchain.h"
 #include "../../RenderPass/RenderPass.h"
@@ -21,7 +21,6 @@
 namespace ascen
 {
 
-    template<std::derived_from<Vertex_I> T>
     class GraphicsPipeline : public GraphicsPipeline_I
     {
     private:
@@ -29,6 +28,7 @@ namespace ascen
             VkDevice device,
             const std::string& vertexShaderFilepath,
             const std::string& pixelShaderFilepath,
+            const VertexPtr& vertex,
             const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts,
             const SwapchainPtr& swapchain,
             const RenderPassPtr& renderPass) :
@@ -36,7 +36,7 @@ namespace ascen
                 vertexShaderFilepath,
                 pixelShaderFilepath)
         {
-            handleVertexInput();
+            handleVertexInput(vertex);
             handleInputAssembly();
             handleDynamic();
             handleViewport(swapchain->getExtent());
@@ -135,29 +135,24 @@ namespace ascen
         }
 
     private:
-        void handleVertexInput()
+        void handleVertexInput(const VertexPtr& vertex)
         {
-            auto vertexBindingDescription = T::getBindingDescription();
-            auto vertexAttributeDescriptions = T::getAttributeDescriptions();
+            auto& vertexBindingDescription = vertex->getBinding();
+            auto& vertexAttributeDescriptions = vertex->getAttributes();
 
             mVertexInputBindingDescs.push_back(vertexBindingDescription);
-
-            mVertexInputAtrribDescs.insert(mVertexInputAtrribDescs.end(),
-                vertexAttributeDescriptions.begin(), vertexAttributeDescriptions.end());
 
             mVertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
             mVertexInputStateInfo.vertexBindingDescriptionCount =
                 static_cast<uint32_t>(mVertexInputBindingDescs.size());
-
-            mVertexInputStateInfo.pVertexBindingDescriptions =
-                mVertexInputBindingDescs.data();
+            mVertexInputStateInfo.pVertexBindingDescriptions = &vertexBindingDescription;
 
             mVertexInputStateInfo.vertexAttributeDescriptionCount =
-                static_cast<uint32_t>(mVertexInputAtrribDescs.size());
+                static_cast<uint32_t>(vertexAttributeDescriptions.size());
 
             mVertexInputStateInfo.pVertexAttributeDescriptions =
-                mVertexInputAtrribDescs.data();
+                vertexAttributeDescriptions.data();
         }
 
         void handleInputAssembly()
@@ -265,7 +260,7 @@ namespace ascen
         void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts, VkRenderPass renderPass)
         {
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+            mLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
             mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
             mLayoutInfo.pushConstantRangeCount = 0; // Optional
             mLayoutInfo.pPushConstantRanges = nullptr; // Optional

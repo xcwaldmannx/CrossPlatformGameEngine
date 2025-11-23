@@ -1,192 +1,200 @@
 #include "Renderer.h"
 
+#include "../WindowManager/WindowManager.h"
+#include "../EcsSystem/EcsSystem.h"
+#include "VulkanContext.h"
+#include "RenderContext.h"
+#include "Registry/Resource/ResourceRegistry.h"
+#include "Registry/Descriptor/DescriptorRegistry.h"
+#include "Registry/FramePass/FramePassRegistry.h"
+
 using namespace ascen;
 
-Renderer::Renderer(WindowManager& windowManager, Engine& engine) :
+Renderer::Renderer(
+	WindowManager& windowManager,
+	EcsSystem& ecsSystem,
+	VulkanContext& vulkanContext,
+	RenderContext& renderContext,
+	ResourceRegistry& resourceRegistry,
+	DescriptorRegistry& descriptorRegistry,
+	FramePassRegistry& framePassRegistry) :
 	mWindowManager(windowManager),
-	mEngine(engine)
+	mEcsSystem(ecsSystem),
+	mPhysicalDevice(vulkanContext.getPhysicalDevice()),
+	mGraphicsQueue(vulkanContext.getGraphicsQueue()),
+	mPresentQueue(vulkanContext.getPresentQueue()),
+	mDevice(vulkanContext.getDevice()),
+	mRenderContext(renderContext),
+	mResourceRegistry(resourceRegistry),
+	mDescriptorRegistry(descriptorRegistry),
+	mFrameGraph(framePassRegistry)
 {
-	mCommandPool = mEngine.commandPool().create(mEngine.getGraphicsFamily());
+	mResourceRegistry.registerBuffer({ "instance", ascen::BufferType::STORAGE, 1'000'000, sizeof(GPUInstance)});
 
-	mSwapchain = mEngine.swapchain().create(
-		mWindowManager.getWindow(), mEngine.getGraphicsFamily(), mEngine.getPresentFamily());
+	mDescriptorRegistry.registerDescriptor(
+		{ "instance", "engine", 0x00, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
 
-	mRenderPass = mEngine.renderPass().create(VK_FORMAT_R8G8B8A8_SRGB);
+	mIndirectBuffer = vulkanContext.getBufferFactory().createIndirect(renderContext.getCommandPool(), 1'000'000);
 
-	mEngine.resize(mCommandPool, mRenderPass, mSwapchain, mDepthTexture);
-
-	std::vector<GPUInstance> dummmyInstances(1000);
-	createStorageBuffer<GPUInstance>("instances", dummmyInstances);
-	addResourceLayout({ "engine", "instances", 0x02, VK_WHOLE_SIZE, ResourceType::SSBO, ResourceStage::VERTEX });
-
-	std::vector<IndirectBuffer::DrawCommand> dummyDrawCommands(1000);
-	mIndirectBuffer = mEngine.buffer().createIndirect(
-		mEngine.getGraphicsFamily(), mCommandPool, dummyDrawCommands);
+	createSyncObjects();
 }
 
-void Renderer::finalize()
+void Renderer::updateRenderSystem()
 {
-	createDescriptorSetLayouts();
-}
-
-void Renderer::createComputePipeline(
-	const std::string& name,
-	const std::vector<std::string>& descriptors,
-	const std::string& computeShaderFilepath)
-{
-	if (mComputePipelines.find(name) == mComputePipelines.end())
-	{
-		std::vector<DescriptorSetLayoutPtr> descriptorSetLayouts;
-		descriptorSetLayouts.push_back(mDescriptorSetLayouts.at("engine"));
-
-		for (const auto& descriptor : descriptors)
-		{
-			if (mDescriptorSetLayouts.find(descriptor) != mDescriptorSetLayouts.end())
-			{
-				descriptorSetLayouts.push_back(mDescriptorSetLayouts.at(descriptor));
-			}
-		}
-
-		mComputePipelines[name] = mEngine.computePipeline().create(
-			computeShaderFilepath, descriptorSetLayouts);
-	}
-	else
-	{
-		throw std::runtime_error("A compute pipeline with that name already exists!");
-	}
-}
-
-void Renderer::createRenderPass(const std::string& name, const Pass& pass)
-{
-	RenderGraph::Pass renderGraphPass{};
-
-	for (const auto& buffer : pass.mVertexBuffers)
-	{
-		if (mBuffers.find(buffer) != mBuffers.end())
-		{
-			renderGraphPass.mVertexBuffers.push_back(mBuffers[buffer]->handle());
-		}
-	}
-
-	if (mBuffers.find(pass.mIndexBuffer) != mBuffers.end())
-	{
-		renderGraphPass.mIndexBuffer = mBuffers[pass.mIndexBuffer]->handle();
-	}
-
-	renderGraphPass.mDescriptorSets.push_back(mDescriptorSets["engine"]->handle());
-
-	for (const auto& descriptorSet : pass.mDescriptorSets)
-	{
-		if (mDescriptorSets.find(descriptorSet) != mDescriptorSets.end())
-		{
-		 renderGraphPass.mDescriptorSets.push_back(mDescriptorSets[descriptorSet]->handle());
-		}
-	}
-
-	if (!pass.mGraphicsPipeline.empty() &&
-		mGraphicsPipelines.find(pass.mGraphicsPipeline) != mGraphicsPipelines.end())
-	{
-		renderGraphPass.mPipeline = mGraphicsPipelines[pass.mGraphicsPipeline]->handle();
-		renderGraphPass.mPipelineLayout = mGraphicsPipelines[pass.mGraphicsPipeline]->getLayout();
-	}
-	else if (!pass.mComputePipeline.empty() &&
-		mComputePipelines.find(pass.mComputePipeline) != mComputePipelines.end())
-	{
-		renderGraphPass.mPipeline = mComputePipelines[pass.mComputePipeline]->handle();
-		renderGraphPass.mPipelineLayout = mComputePipelines[pass.mComputePipeline]->getLayout();
-	}
-
-	mRenderGraph.addPass(renderGraphPass);
-}
-
-void Renderer::resize()
-{
-	mEngine.resize(mCommandPool, mRenderPass, mSwapchain, mDepthTexture);
-}
-
-void Renderer::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
-{
-	auto renderSystem = mEngine.ecs().getSystem<RenderSystem>();
-	renderSystem->updateModels(modelData);
-}
-
-void Renderer::drawFrame()
-{
-	mEngine.ecs().updateSystem<RenderSystem>(0);
-	auto renderSystem = mEngine.ecs().getSystem<RenderSystem>();
+	mEcsSystem.updateSystem<RenderSystem>(0);
+	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
 	const auto& instances = renderSystem->getInstances();
 	const auto& drawCommands = renderSystem->getDrawCommands();
 
+	mDrawCommandCount = drawCommands.size();
+
 	if (!instances.empty())
 	{
-		mEngine.updateBuffer<GPUInstance>(mBuffers.at("instances"), mCommandPool, instances);
+		mResourceRegistry.updateBuffer(
+			"instance", instances.data(), instances.size(), sizeof(GPUInstance));
 	}
 
 	if (!drawCommands.empty())
 	{
-		mEngine.updateBuffer<IndirectBuffer::DrawCommand>(mIndirectBuffer, mCommandPool, drawCommands);
+		mIndirectBuffer->update(
+			mPhysicalDevice, mDevice, mGraphicsQueue, mRenderContext.getCommandPool(),
+			drawCommands.data(), drawCommands.size(), sizeof(IndirectBuffer::DrawCommand));
+	}
+}
+
+void Renderer::drawFrame()
+{
+	updateRenderSystem();
+
+	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
+
+	VkResult nextImageResult = vkAcquireNextImageKHR(
+		mDevice,
+		mRenderContext.getSwapchain()->handle(),
+		UINT64_MAX,
+		mImageAvailableSemaphores[mCurrentFrame],
+		VK_NULL_HANDLE,
+		&mCurrentImage);
+
+	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		mRenderContext.resize();
+		return;
+	}
+	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
+	{
+		throw std::runtime_error("failed to acquire swapchain image!");
 	}
 
-	bool isResized = false;
-	mEngine.drawFrame(mCommandPool, mRenderPass, mSwapchain, mRenderGraph, mIndirectBuffer, drawCommands, isResized);
+	vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
-	if (isResized)
+	mFrameGraph.compile();
+
+	mRenderContext.getCommandPool()->record(
+		mPhysicalDevice,
+		mCurrentFrame,
+		mCurrentImage,
+		mFrameGraph,
+		mIndirectBuffer->handle(),
+		mRenderContext.getRenderPass(),
+		mRenderContext.getSwapchain(),
+		mDrawCommandCount);
+
+	VkSubmitInfo submitInfo{};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+	VkSemaphore waitSemaphores[] = { mImageAvailableSemaphores[mCurrentFrame] };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = waitSemaphores;
+	submitInfo.pWaitDstStageMask = waitStages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = mRenderContext.getCommandPool()->getBufferIndex(mCurrentFrame);
+
+	VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphores[mCurrentFrame] };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signalSemaphores;
+
+	if (vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]) != VK_SUCCESS)
 	{
-		mEngine.resize(mCommandPool, mRenderPass, mSwapchain, mDepthTexture);
+		throw std::runtime_error("failed to submit draw command buffer!");
+	}
+
+	VkPresentInfoKHR presentInfo{};
+	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	presentInfo.waitSemaphoreCount = 1;
+	presentInfo.pWaitSemaphores = signalSemaphores;
+
+	VkSwapchainKHR swapchains[] = { mRenderContext.getSwapchain()->handle() };
+	presentInfo.swapchainCount = 1;
+	presentInfo.pSwapchains = swapchains;
+	presentInfo.pImageIndices = &mCurrentImage;
+	presentInfo.pResults = nullptr;
+
+	VkResult queuePresentResult = vkQueuePresentKHR(mPresentQueue, &presentInfo);
+
+	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR)
+	{
+		mRenderContext.resize();
+		return;
+	}
+	else if (queuePresentResult != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to present swap chain image!");
+	}
+
+	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
+{
+	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
+	renderSystem->updateModels(modelData);
+}
+
+void Renderer::createSyncObjects()
+{
+	mImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	mRenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	mInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]) != VK_SUCCESS ||
+			vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFences[i]) != VK_SUCCESS)
+		{
+
+			throw std::runtime_error("failed to create synchronization objects for a frame!");
+		}
+	}
+}
+
+void Renderer::destroySyncObjects()
+{
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+	{
+		vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
+		vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
+		vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
 	}
 }
 
 void Renderer::cleanup()
 {
-	mEngine.wait();
-
-	for (const auto& [name, pipeline] : mGraphicsPipelines)
-	{
-		if (pipeline) mEngine.destroy<GraphicsPipeline_I>(*pipeline);
-	}
-
-	for (const auto& [name, pipeline] : mComputePipelines)
-	{
-		if (pipeline) mEngine.destroy<ComputePipeline_I>(*pipeline);
-	}
-
-	if (mRenderPass) mEngine.destroy<RenderPass>(*mRenderPass);
-	if (mSwapchain) mEngine.destroy<Swapchain>(*mSwapchain);
-	if (mDepthTexture) mEngine.destroy<Texture2>(*mDepthTexture);
-
-	if (mIndirectBuffer) mEngine.destroy<Buffer2>(*mIndirectBuffer);
-
-	for (const auto& [name, buffer] : mBuffers)
-	{
-		if (buffer) mEngine.destroy<Buffer2>(*buffer);
-	}
-
-	for (const auto& [name, texture] : mTextures)
-	{
-		if (texture) mEngine.destroy<Texture2>(*texture);
-	}
-
-	for (const auto& [name, sampler] : mSamplers)
-	{
-		if (sampler) mEngine.destroy<Sampler2>(*sampler);
-	}
-
-	if (mDescriptorPool) mEngine.destroy<DescriptorPool>(*mDescriptorPool);
-
-	for (const auto& [name, descriptorSetLayout] : mDescriptorSetLayouts)
-	{
-		if (descriptorSetLayout) mEngine.destroy<DescriptorSetLayout>(*descriptorSetLayout);
-	}
-
-	if (mCommandPool) mEngine.destroy<CommandPool>(*mCommandPool);
+	mIndirectBuffer->destroy(mDevice);
+	destroySyncObjects();
 }
 
-uint32_t Renderer::getWidth() const
+uint32_t Renderer::getCurrentFrame() const
 {
-	return mSwapchain->getExtent().width;
-}
-
-uint32_t Renderer::getHeight() const
-{
-	return mSwapchain->getExtent().height;
+	return mCurrentFrame;
 }
