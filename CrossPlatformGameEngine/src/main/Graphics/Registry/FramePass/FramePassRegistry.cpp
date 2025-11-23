@@ -80,6 +80,9 @@ void FramePassRegistry::reconstruct()
 
 		std::vector<VkDescriptorSet> descriptorSetHandles;
 
+		const auto& engineSet = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, "engine");
+		descriptorSetHandles.push_back(engineSet->handle());
+
 		for (auto& descriptorSet : entry.mDescriptorSets)
 		{
 			const auto& set = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);

@@ -1,11 +1,15 @@
 #pragma once
 
-#include "WindowManager/WindowManager.h"
 #include "Graphics/Engine.h"
+
+#include <glm/glm.hpp>
+
+class WindowManager;
 
 struct Camera
 {
-
+	glm::mat4 mView;
+	glm::mat4 mProj;
 };
 
 class MyGame2

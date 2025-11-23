@@ -342,6 +342,7 @@
 #include "Utility/FrameCounter.h"
 
 WindowManager mWindow;
+MyGame2* mGame = nullptr;
 
 int main()
 {
@@ -350,7 +351,7 @@ int main()
 
 	mWindow.create();
 
-	MyGame2 game(mWindow);
+	mGame = new MyGame2(mWindow);
 
 	while (mWindow.isRunning())
 	{
@@ -369,11 +370,13 @@ int main()
 			break;
 		}
 
-		game.run(delta);
+		mGame->run(delta);
 	}
 
-	game.cleanup();
+	mGame->cleanup();
 	mWindow.destroy();
+
+	delete mGame;
 
 	return 0;
 }

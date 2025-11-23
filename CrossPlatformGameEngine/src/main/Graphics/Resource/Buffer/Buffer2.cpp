@@ -19,7 +19,7 @@ Buffer2::Buffer2(
 {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferInfo.size = static_cast<VkDeviceSize>(itemCount * itemSize);
+	bufferInfo.size = static_cast<VkDeviceSize>(mItemCount * mItemSize);
 	bufferInfo.usage = usageFlags;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -57,7 +57,7 @@ void Buffer2::update(
 	VkDevice device,
 	VkQueue queue,
 	const CommandPoolPtr& commandPool,
-	void* items,
+	const void* items,
 	uint32_t itemCount,
 	uint32_t itemSize)
 {

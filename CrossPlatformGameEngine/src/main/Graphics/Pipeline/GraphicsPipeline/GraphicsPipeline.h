@@ -137,27 +137,22 @@ namespace ascen
     private:
         void handleVertexInput(const VertexPtr& vertex)
         {
-            auto vertexBindingDescription = vertex->getBinding();
-            auto vertexAttributeDescriptions = vertex->getAttributes();
+            auto& vertexBindingDescription = vertex->getBinding();
+            auto& vertexAttributeDescriptions = vertex->getAttributes();
 
             mVertexInputBindingDescs.push_back(vertexBindingDescription);
-
-            mVertexInputAtrribDescs.insert(mVertexInputAtrribDescs.end(),
-                vertexAttributeDescriptions.begin(), vertexAttributeDescriptions.end());
 
             mVertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
             mVertexInputStateInfo.vertexBindingDescriptionCount =
                 static_cast<uint32_t>(mVertexInputBindingDescs.size());
-
-            mVertexInputStateInfo.pVertexBindingDescriptions =
-                mVertexInputBindingDescs.data();
+            mVertexInputStateInfo.pVertexBindingDescriptions = &vertexBindingDescription;
 
             mVertexInputStateInfo.vertexAttributeDescriptionCount =
-                static_cast<uint32_t>(mVertexInputAtrribDescs.size());
+                static_cast<uint32_t>(vertexAttributeDescriptions.size());
 
             mVertexInputStateInfo.pVertexAttributeDescriptions =
-                mVertexInputAtrribDescs.data();
+                vertexAttributeDescriptions.data();
         }
 
         void handleInputAssembly()
@@ -265,7 +260,7 @@ namespace ascen
         void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts, VkRenderPass renderPass)
         {
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-            mLayoutInfo.setLayoutCount = descriptorSetLayouts.size();
+            mLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
             mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
             mLayoutInfo.pushConstantRangeCount = 0; // Optional
             mLayoutInfo.pPushConstantRanges = nullptr; // Optional

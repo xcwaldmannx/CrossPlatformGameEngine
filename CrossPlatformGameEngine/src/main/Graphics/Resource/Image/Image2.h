@@ -52,7 +52,8 @@ namespace ascen
 			VkQueue queue,
 			const CommandPoolPtr& commandPool,
 			Buffer2& buffer,
-			Image2& image);
+			Image2& image,
+			uint32_t layers);
 
 		Memory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,

@@ -48,12 +48,12 @@ void PipelineRegistry::reconstruct()
 	{
 		std::vector<DescriptorSetLayoutPtr> layouts;
 
-		auto& engineLayout = DescriptorRegistryBackend::getDescriptorLayout(mDescriptorRegistry, "engine");
+		auto& engineLayout = DescriptorRegistryBackend::getDescriptorSetLayout(mDescriptorRegistry, "engine");
 		layouts.push_back(engineLayout);
 
 		for (const auto& layoutName : entry.mDescriptorSetLayouts)
 		{
-			auto& layout = DescriptorRegistryBackend::getDescriptorLayout(mDescriptorRegistry, layoutName);
+			auto& layout = DescriptorRegistryBackend::getDescriptorSetLayout(mDescriptorRegistry, layoutName);
 			layouts.push_back(layout);
 		}
 
@@ -69,7 +69,7 @@ void PipelineRegistry::reconstruct()
 
 		for (const auto& layoutName : entry.mDescriptorSetLayouts)
 		{
-			auto& layout = DescriptorRegistryBackend::getDescriptorLayout(mDescriptorRegistry, layoutName);
+			auto& layout = DescriptorRegistryBackend::getDescriptorSetLayout(mDescriptorRegistry, layoutName);
 			layouts.push_back(layout);
 		}
 

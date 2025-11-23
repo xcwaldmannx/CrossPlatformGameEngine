@@ -1,5 +1,7 @@
 #include "ResourceRegistryBackend.h"
 
+#include <stdexcept>
+
 using namespace ascen;
 
 const BufferPtr& ResourceRegistryBackend::getBuffer(

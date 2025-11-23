@@ -4,6 +4,7 @@
 #include "../../Types.h"
 
 #include <string>
+#include <unordered_map>
 
 namespace ascen
 {
@@ -12,6 +13,7 @@ namespace ascen
 	{
 	public:
 		static const FramePassPtr& getFramePass(const FramePassRegistry& registry, const std::string& name);
+		static const std::unordered_map<std::string, FramePassPtr>& getFramePasses(const FramePassRegistry& registry);
 	};
 
 }

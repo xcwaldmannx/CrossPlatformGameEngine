@@ -16,3 +16,9 @@ const FramePassPtr& FramePassRegistryBackend::getFramePass(
 		throw std::runtime_error("Frame pass does not exist!");
 	}
 }
+
+const std::unordered_map<std::string, FramePassPtr>& FramePassRegistryBackend::getFramePasses(
+	const FramePassRegistry& registry)
+{
+	return registry.mFramePasses;
+}

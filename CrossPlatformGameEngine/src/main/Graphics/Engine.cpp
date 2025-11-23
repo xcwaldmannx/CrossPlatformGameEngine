@@ -1,5 +1,11 @@
 #include "Engine.h"
 
+#include "../WindowManager/WindowManager.h"
+
+#include "Ecs/Components/TransformComponent.h"
+#include "Ecs/Components/ModelComponent.h"
+#include "Ecs/Systems/RenderSystem.h"
+
 using namespace ascen;
 
 Engine::Engine(WindowManager& windowManager) :
@@ -10,7 +16,7 @@ Engine::Engine(WindowManager& windowManager) :
 	mDescriptorRegistry(mVulkanContext, mResourceRegistry),
 	mPipelineRegistry(mVulkanContext, mRenderContext, mVertexRegistry, mDescriptorRegistry),
 	mFramePassRegistry(mResourceRegistry, mDescriptorRegistry, mPipelineRegistry),
-	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext, mResourceRegistry, mDescriptorRegistry)
+	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext, mResourceRegistry, mDescriptorRegistry, mFramePassRegistry)
 {
 	// initialize ECS
 	mEcs.registerComponent<TransformComponent>();
@@ -43,9 +49,28 @@ PipelineRegistry& Engine::pipeline()
 	return mPipelineRegistry;
 }
 
+FramePassRegistry& Engine::frame()
+{
+	return mFramePassRegistry;
+}
+
 EcsSystem& Engine::ecs()
 {
 	return mEcs;
+}
+
+void Engine::reload()
+{
+	mVertexRegistry.reconstruct();
+	mResourceRegistry.reconstruct();
+	mDescriptorRegistry.reconstruct();
+	mPipelineRegistry.reconstruct();
+	mFramePassRegistry.reconstruct();
+}
+
+void Engine::drawFrame()
+{
+	mRenderer.drawFrame();
 }
 
 void Engine::cleanup()
@@ -53,8 +78,11 @@ void Engine::cleanup()
 	mVulkanContext.waitIdle();
 
 	mRenderer.cleanup();
+	mFramePassRegistry.cleanup();
+	mPipelineRegistry.cleanup();
 	mDescriptorRegistry.cleanup();
 	mResourceRegistry.cleanup();
+	mVertexRegistry.cleanup();
 	mRenderContext.cleanup();
 	mVulkanContext.cleanup();
 }

@@ -1,5 +1,5 @@
 #include "MyGame.h"
-
+/*
 #include "Utility/ImageLoader/ImageLoader.h"
 
 #include "Graphics/Ecs/Components/TransformComponent.h"
@@ -225,3 +225,4 @@ void MyGame::updateCamera()
 	mRenderer.updateUniformBuffer<Camera>("camera", ubo);
 }
 
+*/

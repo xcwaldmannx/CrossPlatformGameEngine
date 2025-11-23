@@ -13,7 +13,7 @@ DescriptorRegistry::DescriptorRegistry(
 
 void DescriptorRegistry::registerDescriptor(DescriptorSetEntry entry)
 {
-	mDescriptorPoolRequirements.at(entry.mType)++;
+	mDescriptorPoolRequirements[entry.mType]++;
 	std::string setName = entry.mSetName;
 	mSetEntries[setName].emplace_back(std::move(entry));
 }

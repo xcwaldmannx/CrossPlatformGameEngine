@@ -1,5 +1,13 @@
 #include "Renderer.h"
 
+#include "../WindowManager/WindowManager.h"
+#include "../EcsSystem/EcsSystem.h"
+#include "VulkanContext.h"
+#include "RenderContext.h"
+#include "Registry/Resource/ResourceRegistry.h"
+#include "Registry/Descriptor/DescriptorRegistry.h"
+#include "Registry/FramePass/FramePassRegistry.h"
+
 using namespace ascen;
 
 Renderer::Renderer(
@@ -8,7 +16,8 @@ Renderer::Renderer(
 	VulkanContext& vulkanContext,
 	RenderContext& renderContext,
 	ResourceRegistry& resourceRegistry,
-	DescriptorRegistry& descriptorRegistry) :
+	DescriptorRegistry& descriptorRegistry,
+	FramePassRegistry& framePassRegistry) :
 	mWindowManager(windowManager),
 	mEcsSystem(ecsSystem),
 	mPhysicalDevice(vulkanContext.getPhysicalDevice()),
@@ -17,12 +26,15 @@ Renderer::Renderer(
 	mDevice(vulkanContext.getDevice()),
 	mRenderContext(renderContext),
 	mResourceRegistry(resourceRegistry),
-	mDescriptorRegistry(descriptorRegistry)
+	mDescriptorRegistry(descriptorRegistry),
+	mFrameGraph(framePassRegistry)
 {
 	mResourceRegistry.registerBuffer({ "instance", ascen::BufferType::STORAGE, 1'000'000, sizeof(GPUInstance)});
 
 	mDescriptorRegistry.registerDescriptor(
-		{ "engine", "instance", 0x00, sizeof(GPUInstance), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+		{ "instance", "engine", 0x00, sizeof(GPUInstance), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+
+	mIndirectBuffer = vulkanContext.getBufferFactory().createIndirect(renderContext.getCommandPool(), 1'000'000);
 
 	createSyncObjects();
 }
@@ -51,6 +63,8 @@ void Renderer::updateRenderSystem()
 
 void Renderer::drawFrame()
 {
+	updateRenderSystem();
+
 	bool isResized = false;
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
@@ -74,13 +88,13 @@ void Renderer::drawFrame()
 
 	vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
 
-	mRenderGraph.compile();
+	mFrameGraph.compile();
 
 	mRenderContext.getCommandPool()->record(
 		mPhysicalDevice,
 		mCurrentFrame,
 		mCurrentImage,
-		mRenderGraph,
+		mFrameGraph,
 		mIndirectBuffer->handle(),
 		mRenderContext.getRenderPass(),
 		mRenderContext.getSwapchain(),
@@ -176,47 +190,5 @@ void Renderer::destroySyncObjects()
 void Renderer::cleanup()
 {
 	destroySyncObjects();
-}
-
-void Renderer::createRenderPass(const std::string& name, const Pass& pass)
-{
-	RenderGraph::Pass renderGraphPass{};
-
-	for (const auto& buffer : pass.mVertexBuffers)
-	{
-		if (mBuffers.find(buffer) != mBuffers.end())
-		{
-			renderGraphPass.mVertexBuffers.push_back(mBuffers[buffer]->handle());
-		}
-	}
-
-	if (mBuffers.find(pass.mIndexBuffer) != mBuffers.end())
-	{
-		renderGraphPass.mIndexBuffer = mBuffers[pass.mIndexBuffer]->handle();
-	}
-
-	renderGraphPass.mDescriptorSets.push_back(mDescriptorSets["engine"]->handle());
-
-	for (const auto& descriptorSet : pass.mDescriptorSets)
-	{
-		if (mDescriptorSets.find(descriptorSet) != mDescriptorSets.end())
-		{
-		 renderGraphPass.mDescriptorSets.push_back(mDescriptorSets[descriptorSet]->handle());
-		}
-	}
-
-	if (!pass.mGraphicsPipeline.empty() &&
-		mGraphicsPipelines.find(pass.mGraphicsPipeline) != mGraphicsPipelines.end())
-	{
-		renderGraphPass.mPipeline = mGraphicsPipelines[pass.mGraphicsPipeline]->handle();
-		renderGraphPass.mPipelineLayout = mGraphicsPipelines[pass.mGraphicsPipeline]->getLayout();
-	}
-	else if (!pass.mComputePipeline.empty() &&
-		mComputePipelines.find(pass.mComputePipeline) != mComputePipelines.end())
-	{
-		renderGraphPass.mPipeline = mComputePipelines[pass.mComputePipeline]->handle();
-		renderGraphPass.mPipelineLayout = mComputePipelines[pass.mComputePipeline]->getLayout();
-	}
-
-	mRenderGraph.addPass(renderGraphPass);
+	mIndirectBuffer->destroy(mDevice);
 }

@@ -1,17 +1,27 @@
 #pragma once
 
-#include "../WindowManager/WindowManager.h"
-#include "Engine.h"
-#include "RenderGraph/RenderGraph.h"
+#include "Ecs/Systems/RenderSystem.h"
+
+#include "FrameGraph/FrameGraph.h"
 
 #include <concepts>
 
 #include <unordered_map>
 
+#include <Mass.h>
 #include <vulkan/vulkan.h>
+
+class EcsSystem;
 
 namespace ascen
 {
+
+	class WindowManager;
+	class VulkanContext;
+	class RenderContext;
+	class ResourceRegistry;
+	class DescriptorRegistry;
+	class FramePassRegistry;
 
 	class Renderer
 	{
@@ -36,7 +46,8 @@ namespace ascen
 			VulkanContext& vulkanContext,
 			RenderContext& renderContext,
 			ResourceRegistry& resourceRegistry,
-			DescriptorRegistry& descriptorRegistry);
+			DescriptorRegistry& descriptorRegistry,
+			FramePassRegistry& framePassRegistry);
 
 		void updateRenderSystem();
 
@@ -49,8 +60,6 @@ namespace ascen
 
 		void cleanup();
 
-		void createRenderPass(const std::string& name, const Pass& renderPass);
-
 	private:
 		WindowManager& mWindowManager;
 		EcsSystem& mEcsSystem;
@@ -62,7 +71,7 @@ namespace ascen
 		ResourceRegistry& mResourceRegistry;
 		DescriptorRegistry& mDescriptorRegistry;
 
-		RenderGraph mRenderGraph;
+		FrameGraph mFrameGraph;
 
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
 		std::vector<VkSemaphore> mRenderFinishedSemaphores;

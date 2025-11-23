@@ -32,7 +32,7 @@ namespace ascen
 			VkDevice device,
 			VkQueue queue,
 			const CommandPoolPtr& commandPool,
-			void* items,
+			const void* items,
 			uint32_t itemCount,
 			uint32_t itemSize);
 

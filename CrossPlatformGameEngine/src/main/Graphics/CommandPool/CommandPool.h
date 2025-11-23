@@ -1,17 +1,7 @@
 #pragma once
 
 #include "../Types.h"
-
-#include "../Handle/Handle_I.h"
-
-#include "../Device/Physical/PhysicalDevice.h"
-#include "../Descriptor/Set/DescriptorSet.h"
-#include "../Swapchain/Swapchain.h"
-#include "../RenderPass/RenderPass.h"
-#include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
-#include "../Pipeline/ComputePipeline/ComputePipeline_I.h"
-
-#include "../FrameGraph/FrameGraph.h"
+#include "../Handle/Handle.h"
 
 #include <vector>
 
@@ -21,6 +11,9 @@ namespace ascen
 {
 
 	class CommandPoolFactory;
+	class RenderPass;
+	class Swapchain;
+	class FrameGraph;
 
 	struct CommandDrawData
 	{
@@ -46,7 +39,7 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
-			const FrameGraph frameGraph,
+			const FrameGraph& frameGraph,
 			VkBuffer indirectBuffer,
 			const RenderPassPtr& renderPass,
 			const SwapchainPtr& swapchain,

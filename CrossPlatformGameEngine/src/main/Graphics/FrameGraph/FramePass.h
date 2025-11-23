@@ -15,8 +15,8 @@ namespace ascen
 			const VkBuffer indexBuffer,
 			const std::vector<VkBuffer> readBuffers,
 			const std::vector<VkBuffer> writeBuffers,
-			const std::vector<VkBuffer> readTextures,
-			const std::vector<VkBuffer> writeTextures,
+			const std::vector<VkImageView> readTextures,
+			const std::vector<VkImageView> writeTextures,
 			const std::vector<VkDescriptorSet> descriptorSets,
 			const VkPipeline pipeline,
 			const VkPipelineLayout pipelineLayout);
@@ -25,8 +25,8 @@ namespace ascen
 		const VkBuffer mIndexBuffer = VK_NULL_HANDLE;
 		const std::vector<VkBuffer> mReadBuffers;
 		const std::vector<VkBuffer> mWriteBuffers;
-		const std::vector<VkBuffer> mReadTextures;
-		const std::vector<VkBuffer> mWriteTextures;
+		const std::vector<VkImageView> mReadTextures;
+		const std::vector<VkImageView> mWriteTextures;
 		const std::vector<VkDescriptorSet> mDescriptorSets;
 		const VkPipeline mPipeline = VK_NULL_HANDLE;
 		const VkPipelineLayout mPipelineLayout = VK_NULL_HANDLE;

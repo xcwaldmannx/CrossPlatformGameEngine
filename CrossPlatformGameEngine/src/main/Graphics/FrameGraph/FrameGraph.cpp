@@ -10,9 +10,16 @@ FrameGraph::FrameGraph(const FramePassRegistry& framePassRegistry) :
 void FrameGraph::compile()
 {
 	mExecutions.clear();
+
+	const auto& framePasses = FramePassRegistryBackend::getFramePasses(mFramePassRegistry);
+
+	for (auto& [name, framePass] : framePasses)
+	{
+		mExecutions.push_back(framePass);
+	}
 }
 
-const std::vector<FramePass>& FrameGraph::getExecutions() const
+const std::vector<FramePassPtr>& FrameGraph::getExecutions() const
 {
 	return mExecutions;
 }

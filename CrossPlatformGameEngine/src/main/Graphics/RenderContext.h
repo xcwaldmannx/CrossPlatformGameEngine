@@ -8,6 +8,11 @@
 namespace ascen
 {
 
+	class CommandPoolFactory;
+	class SwapchainFactory;
+	class RenderPassFactory;
+	class TextureFactory;
+
 	class RenderContext
 	{
 	public:

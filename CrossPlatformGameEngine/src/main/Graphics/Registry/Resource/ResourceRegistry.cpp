@@ -1,5 +1,8 @@
 #include "ResourceRegistry.h"
 
+#include "../../VulkanContext.h"
+#include "../../RenderContext.h"
+
 #include <stdexcept>
 #include <algorithm>
 #include <utility>

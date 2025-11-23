@@ -7,8 +7,8 @@ FramePass::FramePass(
 	const VkBuffer indexBuffer,
 	const std::vector<VkBuffer> readBuffers,
 	const std::vector<VkBuffer> writeBuffers,
-	const std::vector<VkBuffer> readTextures,
-	const std::vector<VkBuffer> writeTextures,
+	const std::vector<VkImageView> readTextures,
+	const std::vector<VkImageView> writeTextures,
 	const std::vector<VkDescriptorSet> descriptorSets,
 	const VkPipeline pipeline,
 	const VkPipelineLayout pipelineLayout) :

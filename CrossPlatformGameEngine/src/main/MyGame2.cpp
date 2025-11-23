@@ -1,5 +1,6 @@
 #include"MyGame2.h"
 
+#include "WindowManager/WindowManager.h"
 #include "Utility/ImageLoader/ImageLoader.h"
 
 #include <Mass.h>
@@ -12,13 +13,11 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 	const std::vector<ascen::VertexAttribute> attributes =
 	{
 		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-		{ 0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
-		{ 0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
+		{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
+		{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
 	};
 
 	mEngine.vertex().registerVertex({ "simpleVertex", binding, attributes });
-
-	mEngine.vertex().reconstruct();
 
 	mEngine.resource().registerBuffer({ "vertex", ascen::BufferType::VERTEX, 1'000'000, 8 * sizeof(float) });
 	mEngine.resource().registerBuffer({ "index", ascen::BufferType::INDEX, 1'000'000, sizeof(uint32_t) });
@@ -28,30 +27,24 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 	mEngine.resource().registerSampler({ "sampler" });
 	mEngine.resource().registerTexture({ "texture", ascen::TextureType::IMAGE, 1024, 1024, 16 });
 
-	mEngine.resource().reconstruct();
-
 	mEngine.descriptor().registerDescriptor(
-		{ "set0", "camera", 0x00, sizeof(Camera), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+		{ "camera", "set0", 0x00, sizeof(Camera), ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::VERTEX});
 	mEngine.descriptor().registerDescriptor(
-		{ "set0", "transform", 0x01, sizeof(float), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+		{ "transform", "set0", 0x01, sizeof(float), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
 	mEngine.descriptor().registerDescriptor(
-		{ "set0", "sampler", 0x10, 0, ascen::DescriptorType::SSBO, ascen::DescriptorStage::PIXEL });
+		{ "sampler", "set0", 0x10, 0, ascen::DescriptorType::SAMPLER, ascen::DescriptorStage::PIXEL });
 	mEngine.descriptor().registerDescriptor(
-		{ "set0", "texture", 0x11, 0, ascen::DescriptorType::SSBO, ascen::DescriptorStage::PIXEL });
-
-	mEngine.descriptor().reconstruct();
+		{ "texture", "set0", 0x11, 0, ascen::DescriptorType::IMAGE, ascen::DescriptorStage::PIXEL });
 
 	mEngine.pipeline().registerGraphicsPipeline(
 		{ "pipeline", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv", "simpleVertex", { "set0" }});
 
-	mEngine.pipeline().reconstruct();
-
 	mEngine.frame().registerFramePass(
 		{
-			"frame", { "vertex" }, "index", {}, {}, {}, {}, { "set0" }, "", ascen::FramePassType::GRAPHICS
+			"frame", { "vertex" }, "index", {}, {}, {}, {}, { "set0" }, "pipeline", ascen::FramePassType::GRAPHICS
 		});
 
-	mEngine.frame().reconstruct();
+	mEngine.reload();
 
 	loadModels();
 
@@ -68,10 +61,8 @@ void MyGame2::run(float delta)
 {
 	while (mWindowManager.isRunning())
 	{
-
+		mEngine.drawFrame();
 	}
-
-	cleanup();
 }
 
 void MyGame2::cleanup()

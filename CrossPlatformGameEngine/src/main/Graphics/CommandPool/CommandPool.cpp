@@ -1,5 +1,9 @@
 #include "CommandPool.h"
 
+#include "../RenderPass/RenderPass.h"
+#include "../Swapchain/Swapchain.h"
+#include "../FrameGraph/FrameGraph.h"
+
 #include <stdexcept>
 
 #include <array>
@@ -49,7 +53,7 @@ void CommandPool::record(
     VkPhysicalDevice physicalDevice,
     uint32_t currentFrame,
     uint32_t currentImage,
-    const FrameGraph frameGraph,
+    const FrameGraph& frameGraph,
     VkBuffer indirectBuffer,
     const RenderPassPtr& renderPass,
     const SwapchainPtr& swapchain,
@@ -106,19 +110,19 @@ void CommandPool::record(
 
         vkCmdBeginRenderPass(currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-        vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pass.mPipeline);
+        vkCmdBindPipeline(currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pass->mPipeline);
         
-        std::vector<VkDeviceSize> vertexOffsets(pass.mVertexBuffers.size(), 0);
+        std::vector<VkDeviceSize> vertexOffsets(pass->mVertexBuffers.size(), 0);
         vkCmdBindVertexBuffers(
             currentCommandBuffer,
             0,
-            pass.mVertexBuffers.size(),
-            pass.mVertexBuffers.data(),
+            pass->mVertexBuffers.size(),
+            pass->mVertexBuffers.data(),
             vertexOffsets.data());
 
         vkCmdBindIndexBuffer(
             currentCommandBuffer,
-            pass.mIndexBuffer,
+            pass->mIndexBuffer,
             0,
             VK_INDEX_TYPE_UINT32);
 
@@ -131,10 +135,10 @@ void CommandPool::record(
         vkCmdBindDescriptorSets(
             currentCommandBuffer,
             VK_PIPELINE_BIND_POINT_GRAPHICS,
-            pass.mPipelineLayout,
+            pass->mPipelineLayout,
             0,
-            pass.mDescriptorSets.size(),
-            pass.mDescriptorSets.data(),
+            pass->mDescriptorSets.size(),
+            pass->mDescriptorSets.data(),
             static_cast<uint32_t>(dynamicOffets.size()),
             &dynamicOffets[0]);
 

@@ -1,7 +1,5 @@
 #pragma once
 
-#include "../WindowManager/WindowManager.h"
-
 #include "VulkanContext.h"
 #include "RenderContext.h"
 
@@ -11,21 +9,19 @@
 #include "Registry/Pipeline/PipelineRegistry.h"
 #include "Registry/FramePass/FramePassRegistry.h"
 
+#include "FrameGraph/FrameGraph.h"
 #include "Renderer.h"
-
-#include "RenderGraph/RenderGraph.h"
 
 #include "Resource/Barrier/Barrier.h"
 
 #include "../EcsSystem/EcsSystem.h"
-#include "Ecs/Components/TransformComponent.h"
-#include "Ecs/Components/ModelComponent.h"
-#include "Ecs/Systems/RenderSystem.h"
 
-#include <memory>
+class WindowManager;
 
 namespace ascen
 {
+
+	using ::WindowManager;
 
 	class Engine
 	{
@@ -39,6 +35,10 @@ namespace ascen
 		FramePassRegistry& frame();
 
 		EcsSystem& ecs();
+
+		void reload();
+
+		void drawFrame();
 
 		void cleanup();
 

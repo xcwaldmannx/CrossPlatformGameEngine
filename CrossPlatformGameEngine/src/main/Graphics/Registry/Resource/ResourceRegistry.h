@@ -2,17 +2,30 @@
 
 #include "../Registry_I.h"
 
-#include "../../VulkanContext.h"
-#include "../../RenderContext.h"
+#include "../../Types.h"
 
-#include "../../Resource/Buffer/Buffer2.h"
-#include "../../Resource/Texture/Texture2.h"
+//#include "../../VulkanContext.h"
+//#include "../../RenderContext.h"
+//
+//#include "../../Resource/Buffer/Buffer2.h"
+//#include "../../Resource/Texture/Texture2.h"
 
+#include <string>
 #include <unordered_map>
 #include <vector>
 
+#include <vulkan/vulkan.h>
+
 namespace ascen
 {
+
+	class VulkanContext;
+	class RenderContext;
+
+	class BufferFactory;
+	class TextureFactory;
+	class SamplerFactory;
+
 
 	enum class BufferType
 	{

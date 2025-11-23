@@ -18,12 +18,12 @@ namespace ascen
 
 		void compile();
 
-		const std::vector<FramePass>& getExecutions() const;
+		const std::vector<FramePassPtr>& getExecutions() const;
 
 	private:
 		const FramePassRegistry& mFramePassRegistry;
 
-		std::vector<FramePass> mExecutions;
+		std::vector<FramePassPtr> mExecutions;
 	};
 
 }

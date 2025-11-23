@@ -1,5 +1,16 @@
 #include "VulkanContext.h"
 
+#include "../WindowManager/WindowManager.h"
+
+#include "Extensions/Extensions.h"
+#include "ValidationLayers/ValidationLayers.h"
+#include "Instance/Instance.h"
+#include "Surface/Surface.h"
+#include "DebugMessenger/DebugMessenger.h"
+#include "Device/Physical/PhysicalDevice.h"
+#include "Device/Logical/Device.h"
+#include "QueueFamilies/QueueFamilies.h"
+
 using namespace ascen;
 
 VulkanContext::VulkanContext(WindowManager& windowManager) :
@@ -38,10 +49,11 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	QueueFamilies::updateQueueFamilies(mPhysicalDevice, mSurface, graphicsFamily, presentFamily);
 	mGraphicsFamilyIndex = graphicsFamily.value();
 	mPresentFamilyIndex = presentFamily.value();
-	mGraphicsQueue = QueueFamilies::getDeviceQueue(mDevice, mGraphicsFamilyIndex);
-	mGraphicsQueue = QueueFamilies::getDeviceQueue(mDevice, mPresentFamilyIndex);
 
 	mDevice = Device::create(mPhysicalDevice, graphicsFamily.value(), presentFamily.value());
+
+	mGraphicsQueue = QueueFamilies::getDeviceQueue(mDevice, mGraphicsFamilyIndex);
+	mPresentQueue = QueueFamilies::getDeviceQueue(mDevice, mPresentFamilyIndex);
 
 	mCommandPoolFactory      = CommandPoolFactory(mDevice);
 	mDescriptorFactory       = DescriptorFactory(mDevice);

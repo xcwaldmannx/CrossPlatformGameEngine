@@ -64,20 +64,18 @@ void Image2::update(
 	const CommandPoolPtr& commandPool,
 	const std::vector<unsigned char>& pixels)
 {
-	VkDeviceSize pixelCount = static_cast<VkDeviceSize>(mWidth * mHeight * mLayers);
-	size_t pixelSize = 4;
-	VkDeviceSize imageSizeBytes = static_cast<VkDeviceSize>(pixelCount * pixelSize);
+	uint32_t imageSizeBytes = static_cast<uint32_t>(pixels.size());
 
 	Buffer2 stagingBuffer(
 		physicalDevice,
 		device,
-		pixelCount,
-		pixelSize,
+		imageSizeBytes,
+		sizeof(unsigned char),
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 	void* data = nullptr;
-	vkMapMemory(device, stagingBuffer.getMemory(), 0, imageSizeBytes, 0, &data);
+	vkMapMemory(device, stagingBuffer.getMemory(), 0, static_cast<VkDeviceSize>(imageSizeBytes), 0, &data);
 	memcpy(data, pixels.data(), static_cast<size_t>(imageSizeBytes));
 	vkUnmapMemory(device, stagingBuffer.getMemory());
 
@@ -88,7 +86,8 @@ void Image2::update(
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	copy(device, queue, commandPool, stagingBuffer, *this);
+	uint32_t layerCount = imageSizeBytes / (mWidth * mHeight * 4);
+	copy(device, queue, commandPool, stagingBuffer, *this, layerCount);
 
 	transitionLayout(
 		device,
@@ -166,15 +165,16 @@ void Image2::copy(
 	VkQueue queue,
 	const CommandPoolPtr& commandPool,
 	Buffer2& buffer,
-	Image2& image)
+	Image2& image,
+	uint32_t layers)
 {
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 
 	VkDeviceSize layerSize = static_cast<VkDeviceSize>(mWidth * mHeight * 4);
 
-	std::vector<VkBufferImageCopy> regions(mLayers);
+	std::vector<VkBufferImageCopy> regions(layers);
 
-	for (uint32_t layer = 0; layer < mLayers; layer++)
+	for (uint32_t layer = 0; layer < layers; layer++)
 	{
 		VkBufferImageCopy& region = regions[layer];
 		region.bufferOffset = layer * layerSize;

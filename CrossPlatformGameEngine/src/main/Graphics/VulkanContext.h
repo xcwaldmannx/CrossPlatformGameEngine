@@ -1,16 +1,5 @@
 #pragma once
 
-#include "../WindowManager/WindowManager.h"
-
-#include "Extensions/Extensions.h"
-#include "ValidationLayers/ValidationLayers.h"
-#include "Instance/Instance.h"
-#include "Surface/Surface.h"
-#include "DebugMessenger/DebugMessenger.h"
-#include "Device/Physical/PhysicalDevice.h"
-#include "Device/Logical/Device.h"
-#include "QueueFamilies/QueueFamilies.h"
-
 #include "CommandPool/CommandPoolFactory.h"
 #include "Descriptor/DescriptorFactory.h"
 #include "Swapchain/SwapchainFactory.h"
@@ -23,8 +12,12 @@
 
 #include <vulkan/vulkan.h>
 
+class WindowManager;
+
 namespace ascen
 {
+
+	using ::WindowManager;
 
 	class VulkanContext
 	{
@@ -77,9 +70,6 @@ namespace ascen
 		BufferFactory mBufferFactory;
 		TextureFactory mTextureFactory;
 		SamplerFactory mSamplerFactory;
-
-		friend class Engine;
-		friend class RenderContext;
 	};
 
 }

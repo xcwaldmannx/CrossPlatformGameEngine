@@ -19,7 +19,7 @@ layout(std430, set = 1, binding = 0x01) readonly buffer Transforms {
     mat4 transforms[];
 };
 
-layout(std430, set = 0, binding = 0x02) readonly buffer Instances {
+layout(std430, set = 0, binding = 0x00) readonly buffer Instances {
     InstanceData instances[];
 };
 
