@@ -21,9 +21,18 @@ void WindowManager::destroy()
     }
 }
 
-void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height) {
-    glViewport(0, 0, width, height);
+void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height)
+{
     mIsResized.store(true, std::memory_order_release);
+    mFramebufferWidth.store(width, std::memory_order_release);
+    mFramebufferHeight.store(height, std::memory_order_release);
+}
+
+void WindowManager::iconifyCallback(GLFWwindow* window, int iconified)
+{
+    // iconified == 1, minimized  
+    // iconified == 0, restored
+    mIsMinimized.store(iconified == GLFW_TRUE, std::memory_order_release);
 }
 
 void WindowManager::setResized(bool resized)
@@ -39,6 +48,11 @@ bool WindowManager::isRunning() const
 bool WindowManager::isResized() const
 {
     return mIsResized.load(std::memory_order_acquire);
+}
+
+bool WindowManager::isMinimized() const
+{
+    return mIsMinimized.load(std::memory_order_acquire);
 }
 
 GLFWwindow* WindowManager::getWindow() const
@@ -67,6 +81,12 @@ void WindowManager::windowThread()
         glfwTerminate();
         throw std::runtime_error("Failed to create GLFW window");
     }
+
+    mFramebufferWidth.store(WINDOW_WIDTH, std::memory_order_release);
+    mFramebufferHeight.store(WINDOW_HEIGHT, std::memory_order_release);
+
+    glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
+    glfwSetWindowIconifyCallback(mWindow, iconifyCallback);
 
     mIsRunning.store(true, std::memory_order_release);
     mWindowReady.store(true, std::memory_order_release);

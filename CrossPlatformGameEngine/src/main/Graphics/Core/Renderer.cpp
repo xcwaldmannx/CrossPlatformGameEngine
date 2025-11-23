@@ -66,8 +66,16 @@ void Renderer::updateRenderSystem()
 	}
 }
 
+#include <iostream>
+
 void Renderer::drawFrame()
 {
+	if (mWindowManager.getWidth() == 0 ||
+		mWindowManager.getHeight() == 0)
+	{
+		return;
+	}
+
 	updateRenderSystem();
 
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);

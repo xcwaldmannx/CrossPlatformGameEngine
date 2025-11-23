@@ -32,6 +32,12 @@ RenderContext::RenderContext(
 
 void RenderContext::resize()
 {
+	if (mWindowManager.getWidth() == 0 ||
+		mWindowManager.getHeight() == 0)
+	{
+		return;
+	}
+
 	vkDeviceWaitIdle(mDevice);
 
 	mSwapchain->destroy(mDevice);

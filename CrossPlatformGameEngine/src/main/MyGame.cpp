@@ -256,11 +256,18 @@ void MyGame::updateCamera(float delta)
 	
 	glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), camPosition) * rot;
 	
-	Camera ubo{};
-	ubo.mView = glm::inverse(cameraTransform);
-	ubo.mProj = glm::perspective(glm::radians(90.0f),
-		(float) mEngine.getScreenWidth() / (float) mEngine.getScreenHeight(), 0.01f, 10'000.0f);
-	ubo.mProj[1][1] *= -1;
+	float width = static_cast<float>(mEngine.getScreenWidth());
+	float height = static_cast<float>(mEngine.getScreenHeight());
 
-	mEngine.resource().updateBuffer("camera", &ubo, 1, sizeof(Camera), mEngine.getCurrentFrame());
+	if (width * height > 0)
+	{
+		Camera ubo{};
+		ubo.mView = glm::inverse(cameraTransform);
+		ubo.mProj = glm::perspective(glm::radians(90.0f),
+			width / height, 0.01f, 10'000.0f);
+		ubo.mProj[1][1] *= -1;
+
+		mEngine.resource().updateBuffer("camera", &ubo, 1, sizeof(Camera), mEngine.getCurrentFrame());
+	}
+
 }
