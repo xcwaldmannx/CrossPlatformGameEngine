@@ -33,7 +33,7 @@ namespace ascen
 		std::string mResourceName;
 		std::string mSetName;
 		uint32_t mSlot;
-		uint32_t mSize;
+		uint64_t mSize;
 		DescriptorType mType;
 		DescriptorStage mStage;
 	};

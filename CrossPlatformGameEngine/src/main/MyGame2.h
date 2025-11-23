@@ -3,6 +3,7 @@
 #include "Graphics/Engine.h"
 
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 class WindowManager;
 
@@ -24,6 +25,10 @@ public:
 private:
 	void loadTextures();
 	void loadModels();
+	void createEntities();
+	void createHelicopter(glm::vec3 position);
+	void updateEntities(float delta);
+	void updateCamera(float delta);
 
 private:
 	WindowManager& mWindowManager;
@@ -55,4 +60,9 @@ private:
 		{ HELICOPTER, "res/models/helicopter.model" },
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
+
+	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
+	glm::vec3 camPosition{ 0.0f };
+	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
+	float camSpeed = 10.0f;
 };

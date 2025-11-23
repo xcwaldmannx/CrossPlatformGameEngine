@@ -60,6 +60,8 @@ namespace ascen
 
 		void cleanup();
 
+		uint32_t getCurrentFrame() const;
+
 	private:
 		WindowManager& mWindowManager;
 		EcsSystem& mEcsSystem;

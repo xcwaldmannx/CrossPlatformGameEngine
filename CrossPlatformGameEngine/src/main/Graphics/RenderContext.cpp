@@ -23,38 +23,34 @@ RenderContext::RenderContext(
 
 	mRenderPass = mRenderPassFactory.create(VK_FORMAT_R8G8B8A8_SRGB);
 
-	resize(mCommandPool, mRenderPass, mSwapchain, mDepthTexture);
+	resize();
 }
 
-void RenderContext::resize(
-	const CommandPoolPtr& commandPool,
-	const RenderPassPtr renderPass,
-	SwapchainPtr& swapchain,
-	TexturePtr& depthTexture)
+void RenderContext::resize()
 {
 	vkDeviceWaitIdle(mDevice);
 
-	swapchain->destroy(mDevice);
+	mSwapchain->destroy(mDevice);
 
-	swapchain = mSwapchainFactory.create(
+	mSwapchain = mSwapchainFactory.create(
 		mWindowManager.getWindow(),
 		mGraphicsFamilyIndex,
 		mPresentFamilyIndex);
 
-	if (depthTexture)
+	if (mDepthTexture)
 	{
-		depthTexture->destroy(mDevice);
+		mDepthTexture->destroy(mDevice);
 	}
 
-	depthTexture = mTextureFactory.createDepth(
-		commandPool,
-		swapchain->getExtent().width,
-		swapchain->getExtent().height);
+	mDepthTexture = mTextureFactory.createDepth(
+		mCommandPool,
+		mSwapchain->getExtent().width,
+		mSwapchain->getExtent().height);
 
-	swapchain->createFrameBuffers(
+	mSwapchain->createFrameBuffers(
 		mDevice,
-		renderPass->handle(),
-		depthTexture->handle());
+		mRenderPass->handle(),
+		mDepthTexture->handle());
 }
 
 void RenderContext::cleanup()

@@ -9,7 +9,7 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 	mWindowManager(windowManager),
 	mEngine(windowManager)
 {
-	const ascen::VertexBinding binding { 0, 32, VK_VERTEX_INPUT_RATE_VERTEX };
+	const ascen::VertexBinding binding { 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX};
 	const std::vector<ascen::VertexAttribute> attributes =
 	{
 		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
@@ -19,7 +19,7 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 
 	mEngine.vertex().registerVertex({ "simpleVertex", binding, attributes });
 
-	mEngine.resource().registerBuffer({ "vertex", ascen::BufferType::VERTEX, 1'000'000, 8 * sizeof(float) });
+	mEngine.resource().registerBuffer({ "vertex", ascen::BufferType::VERTEX, 1'000'000, sizeof(float) * 8 });
 	mEngine.resource().registerBuffer({ "index", ascen::BufferType::INDEX, 1'000'000, sizeof(uint32_t) });
 	mEngine.resource().registerBuffer({ "camera", ascen::BufferType::UNIFORM, 2, sizeof(Camera) });
 	mEngine.resource().registerBuffer({ "transform", ascen::BufferType::STORAGE, 1'000'000, sizeof(float) });
@@ -30,7 +30,7 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 	mEngine.descriptor().registerDescriptor(
 		{ "camera", "set0", 0x00, sizeof(Camera), ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::VERTEX});
 	mEngine.descriptor().registerDescriptor(
-		{ "transform", "set0", 0x01, sizeof(float), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+		{ "transform", "set0", 0x01, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
 	mEngine.descriptor().registerDescriptor(
 		{ "sampler", "set0", 0x10, 0, ascen::DescriptorType::SAMPLER, ascen::DescriptorStage::PIXEL });
 	mEngine.descriptor().registerDescriptor(
@@ -55,14 +55,25 @@ MyGame2::MyGame2(WindowManager& windowManager) :
 	loadTextures();
 
 	mEngine.resource().updateTexture("texture", mPixels);
+
+	mEngine.updateModelData(mModelData);
+
+	// createEntities();
+
+	for (int i = 0; i < 10; i++)
+	{
+		for (int j = 0; j < 100; j++)
+		{
+			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
+		}
+	}
 }
 
 void MyGame2::run(float delta)
 {
-	while (mWindowManager.isRunning())
-	{
-		mEngine.drawFrame();
-	}
+	updateCamera(delta);
+	updateEntities(delta);
+	mEngine.drawFrame();
 }
 
 void MyGame2::cleanup()
@@ -151,4 +162,105 @@ void MyGame2::loadModels()
 		globalIndexOffset = mIndices.size();
 		globalTransformOffset = mTransforms.size() / 16;
 	}
+}
+
+void MyGame2::createEntities()
+{
+	{
+		auto e = mEngine.ecs().addEntity();
+
+		TransformComponent t{};
+		t.mPosition = { 0, 0, -10 };
+		t.mRotation = { 0.25, 0, 0 };
+		t.mScale = { 1, 1, 1 };
+
+		ModelComponent m{};
+		m.mModelId = HELICOPTER;
+		m.mTextureId = 0;
+		m.mIsHidden = false;
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // main
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // tail
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+
+		mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
+		mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
+	}
+}
+
+void MyGame2::createHelicopter(glm::vec3 position)
+{
+	auto e = mEngine.ecs().addEntity();
+
+	TransformComponent t{};
+	t.mPosition = position;
+	t.mRotation = { 0, 0, 0 };
+	t.mScale = { 1, 1, 1 };
+
+	ModelComponent m{};
+	m.mModelId = HELICOPTER;
+	m.mTextureId = 0;
+	m.mIsHidden = false;
+	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
+	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // main
+	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // tail
+	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+
+	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
+	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
+}
+
+void MyGame2::updateEntities(float delta)
+{
+	for (int i = 0; i < 1000; i++)
+	{ // helicopters
+		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
+		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
+
+		auto& m = mEngine.ecs().getComponent<ModelComponent>(i);
+		m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
+		m.mMeshTransforms[2].mRotation += glm::vec3(40.0f, 0, 0) * delta; // tail
+	}
+}
+
+void MyGame2::updateCamera(float delta)
+{
+	// --- yaw (Q/E), pitch clamped ---
+	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_Q)) camRotation.y -= camSpeed * 0.25f * delta; // look left
+	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_E)) camRotation.y += camSpeed * 0.25f * delta; // look right
+	camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f); // ±89°
+	
+	// --- derive camera basis (-Z forward, Y up) ---
+	glm::vec3 camForward;
+	camForward.x = std::cos(camRotation.x) * std::sin(camRotation.y);
+	camForward.y = std::sin(camRotation.x);
+	camForward.z = -std::cos(camRotation.x) * std::cos(camRotation.y);
+	camForward = glm::normalize(camForward);
+	
+	glm::vec3 camRight = glm::normalize(glm::cross(camForward, glm::vec3(0, 1, 0)));
+	glm::vec3 camUp = glm::normalize(glm::cross(camRight, camForward));
+	
+	// --- movement ---
+	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_A)) camPosition -= camRight * camSpeed * delta;
+	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_D)) camPosition += camRight * camSpeed * delta;
+	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_W)) camPosition += camForward * camSpeed * delta;
+	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_S)) camPosition -= camForward * camSpeed * delta;
+	
+	// --- build camera transform ---
+	glm::mat4 rot(1.0f);
+	rot[0] = glm::vec4(camRight, 0.0f);
+	rot[1] = glm::vec4(camUp, 0.0f);
+	rot[2] = glm::vec4(-camForward, 0.0f); // note the negative
+	
+	glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), camPosition) * rot;
+	
+	Camera ubo{};
+	ubo.mView = glm::inverse(cameraTransform);
+	ubo.mProj = glm::perspective(glm::radians(90.0f),
+		(float) mEngine.getScreenWidth() / (float) mEngine.getScreenHeight(), 0.01f, 10'000.0f);
+	ubo.mProj[1][1] *= -1;
+
+	mEngine.resource().updateBuffer("camera", &ubo, 1, sizeof(Camera), mEngine.getCurrentFrame());
 }

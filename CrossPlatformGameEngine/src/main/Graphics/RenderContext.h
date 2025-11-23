@@ -20,11 +20,7 @@ namespace ascen
 			const WindowManager& windowManager,
 			const VulkanContext& vulkanContext);
 
-		void resize(
-			const CommandPoolPtr& commandPool,
-			const RenderPassPtr renderPass,
-			SwapchainPtr& swapchain,
-			TexturePtr& depthTexture);
+		void resize();
 
 		void cleanup();
 

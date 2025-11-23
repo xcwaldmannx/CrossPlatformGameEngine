@@ -68,6 +68,11 @@ void Engine::reload()
 	mFramePassRegistry.reconstruct();
 }
 
+void Engine::updateModelData(std::unordered_map<uint32_t, ModelData>& modelData)
+{
+	mRenderer.updateModels(modelData);
+}
+
 void Engine::drawFrame()
 {
 	mRenderer.drawFrame();
@@ -85,4 +90,19 @@ void Engine::cleanup()
 	mVertexRegistry.cleanup();
 	mRenderContext.cleanup();
 	mVulkanContext.cleanup();
+}
+
+uint32_t Engine::getScreenWidth() const
+{
+	return mRenderContext.getSwapchain()->getExtent().width;
+}
+
+uint32_t Engine::getScreenHeight() const
+{
+	return mRenderContext.getSwapchain()->getExtent().height;
+}
+
+uint32_t Engine::getCurrentFrame() const
+{
+	return mRenderer.getCurrentFrame();
 }

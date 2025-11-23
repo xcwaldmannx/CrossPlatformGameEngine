@@ -117,11 +117,12 @@ void ResourceRegistry::updateBuffer(
 	const std::string& name,
 	const void* items,
 	uint32_t itemCount,
-	uint32_t itemSize)
+	uint32_t itemSize,
+	uint32_t offset)
 {
 	if (bufferExists(name))
 	{
-		mBuffers.at(name)->update(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, items, itemCount, itemSize);
+		mBuffers.at(name)->update(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, items, itemCount, itemSize, offset);
 	}
 	else
 	{

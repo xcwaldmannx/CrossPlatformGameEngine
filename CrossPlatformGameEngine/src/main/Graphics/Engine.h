@@ -37,10 +37,15 @@ namespace ascen
 		EcsSystem& ecs();
 
 		void reload();
+		void updateModelData(std::unordered_map<uint32_t, ModelData>& modelData);
 
 		void drawFrame();
 
 		void cleanup();
+
+		uint32_t getScreenWidth() const;
+		uint32_t getScreenHeight() const;
+		uint32_t getCurrentFrame() const;
 
 	private:
 		WindowManager& mWindowManager;

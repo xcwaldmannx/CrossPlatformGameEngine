@@ -14,8 +14,9 @@ Buffer2::Buffer2(
 	uint64_t itemSize,
 	VkBufferUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryFlags) :
-		mItemCount(itemCount),
-		mItemSize(itemSize)
+	mItemCount(itemCount),
+	mItemSize(itemSize),
+	mMemoryFlags(memoryFlags)
 {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -27,7 +28,7 @@ Buffer2::Buffer2(
 		throw std::runtime_error("failed to create buffer!");
 	}
 
-	Memory mem = getMemoryInfo(physicalDevice, device, mHandle, memoryFlags);
+	Memory mem = getMemoryInfo(physicalDevice, device, mHandle);
 
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -59,26 +60,38 @@ void Buffer2::update(
 	const CommandPoolPtr& commandPool,
 	const void* items,
 	uint32_t itemCount,
-	uint32_t itemSize)
+	uint32_t itemSize,
+	uint32_t offset)
 {
-	Buffer2 stagingBuffer(
-		physicalDevice,
-		device,
-		itemCount,
-		itemSize,
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	VkDeviceSize sizeBytes = itemCount * itemSize;
+	if (mMemoryFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+	{
+		size_t size = static_cast<size_t>(itemCount * itemSize);
+		size_t itemOffset = static_cast<size_t>(itemSize * offset);
 
-	void* data = nullptr;
-	vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
-	std::memcpy(data, items, sizeBytes);
-	vkUnmapMemory(device, stagingBuffer.mMemory);
+		std::memcpy(static_cast<uint8_t*>(mMappedMemory) + itemOffset, items, size);
+	}
+	else
+	{
+		Buffer2 stagingBuffer(
+			physicalDevice,
+			device,
+			itemCount,
+			itemSize,
+			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-	copy(device, queue, commandPool, stagingBuffer, *this, false);
+		VkDeviceSize sizeBytes = itemCount * itemSize;
 
-	stagingBuffer.destroy(device);
+		void* data = nullptr;
+		vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
+		std::memcpy(data, items, sizeBytes);
+		vkUnmapMemory(device, stagingBuffer.mMemory);
+
+		copy(device, queue, commandPool, stagingBuffer, *this, false);
+
+		stagingBuffer.destroy(device);
+	}
 }
 
 void Buffer2::copy(
@@ -116,8 +129,7 @@ void Buffer2::copy(
 Buffer2::Memory Buffer2::getMemoryInfo(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
-	VkBuffer buffer,
-	VkMemoryPropertyFlags memoryFlags)
+	VkBuffer buffer)
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
@@ -132,7 +144,7 @@ Buffer2::Memory Buffer2::getMemoryInfo(
 	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
 	{
 		if ((memRequirements.memoryTypeBits & (1 << i)) &&
-			(memProperties.memoryTypes[i].propertyFlags & memoryFlags) == memoryFlags)
+			(memProperties.memoryTypes[i].propertyFlags & mMemoryFlags) == mMemoryFlags)
 		{
 			mem.mTypeIndex = i;
 			break;

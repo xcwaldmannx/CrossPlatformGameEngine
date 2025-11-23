@@ -88,7 +88,8 @@ namespace ascen
 			const std::string& name,
 			const void* items,
 			uint32_t itemCount,
-			uint32_t itemSize);
+			uint32_t itemSize,
+			uint32_t offset = 0);
 
 		void updateTexture(
 			const std::string& name,

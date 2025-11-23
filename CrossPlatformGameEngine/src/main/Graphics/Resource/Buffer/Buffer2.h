@@ -34,7 +34,8 @@ namespace ascen
 			const CommandPoolPtr& commandPool,
 			const void* items,
 			uint32_t itemCount,
-			uint32_t itemSize);
+			uint32_t itemSize,
+			uint32_t offset = 0);
 
 	private:
 		void copy(
@@ -48,11 +49,11 @@ namespace ascen
 		Memory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkBuffer buffer,
-			VkMemoryPropertyFlags memoryFlags);
+			VkBuffer buffer);
 
 		size_t mItemCount = 0;      // number of items
 		size_t mItemSize = 0;       // byte size of item
+		VkMemoryPropertyFlags mMemoryFlags;
 	};
 
 }

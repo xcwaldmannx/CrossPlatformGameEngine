@@ -32,7 +32,7 @@ Renderer::Renderer(
 	mResourceRegistry.registerBuffer({ "instance", ascen::BufferType::STORAGE, 1'000'000, sizeof(GPUInstance)});
 
 	mDescriptorRegistry.registerDescriptor(
-		{ "instance", "engine", 0x00, sizeof(GPUInstance), ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+		{ "instance", "engine", 0x00, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
 
 	mIndirectBuffer = vulkanContext.getBufferFactory().createIndirect(renderContext.getCommandPool(), 1'000'000);
 
@@ -56,8 +56,9 @@ void Renderer::updateRenderSystem()
 
 	if (!drawCommands.empty())
 	{
-		mResourceRegistry.updateBuffer(
-			"drawCommand", drawCommands.data(), drawCommands.size(), sizeof(IndirectBuffer::DrawCommand));
+		mIndirectBuffer->update(
+			mPhysicalDevice, mDevice, mGraphicsQueue, mRenderContext.getCommandPool(),
+			drawCommands.data(), drawCommands.size(), sizeof(IndirectBuffer::DrawCommand));
 	}
 }
 
@@ -65,7 +66,6 @@ void Renderer::drawFrame()
 {
 	updateRenderSystem();
 
-	bool isResized = false;
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
 
 	VkResult nextImageResult = vkAcquireNextImageKHR(
@@ -78,7 +78,7 @@ void Renderer::drawFrame()
 
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		isResized = true;
+		mRenderContext.resize();
 		return;
 	}
 	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
@@ -136,7 +136,8 @@ void Renderer::drawFrame()
 
 	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR)
 	{
-		isResized = true;
+		mRenderContext.resize();
+		return;
 	}
 	else if (queuePresentResult != VK_SUCCESS)
 	{
@@ -189,6 +190,11 @@ void Renderer::destroySyncObjects()
 
 void Renderer::cleanup()
 {
-	destroySyncObjects();
 	mIndirectBuffer->destroy(mDevice);
+	destroySyncObjects();
+}
+
+uint32_t Renderer::getCurrentFrame() const
+{
+	return mCurrentFrame;
 }

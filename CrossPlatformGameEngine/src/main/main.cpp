@@ -346,7 +346,7 @@ MyGame2* mGame = nullptr;
 
 int main()
 {
-	FrameCounter frameCounter(1000);
+	FrameCounter frameCounter(1'000);
 	float timePassed = 0;
 
 	mWindow.create();
