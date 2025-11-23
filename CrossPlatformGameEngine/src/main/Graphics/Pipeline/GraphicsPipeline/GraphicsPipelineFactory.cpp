@@ -1,5 +1,7 @@
 #include "GraphicsPipelineFactory.h"
 
+#include "GraphicsPipeline.h"
+
 using namespace ascen;
 
 GraphicsPipelineFactory::GraphicsPipelineFactory(VkDevice device) : mDevice(device) {}

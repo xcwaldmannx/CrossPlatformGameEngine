@@ -1,5 +1,6 @@
 #include "RenderPassFactory.h"
 
+#include "RenderPass.h"
 #include "../Device/Physical/PhysicalDevice.h"
 
 using namespace ascen;

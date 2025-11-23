@@ -7,10 +7,13 @@
 namespace ascen
 {
 
+	using VertexBinding = VkVertexInputBindingDescription;
+	using VertexAttribute = VkVertexInputAttributeDescription;
+
 	struct Vertex_I
 	{
-		static VkVertexInputBindingDescription getBindingDescription();
-		static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions();
+		virtual const VertexBinding& getBinding() const = 0;
+		virtual const std::vector<VertexAttribute>& getAttributes() const = 0;
 	};
 
 }

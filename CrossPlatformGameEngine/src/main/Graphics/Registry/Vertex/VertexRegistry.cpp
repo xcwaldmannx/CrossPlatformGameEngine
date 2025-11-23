@@ -1,5 +1,7 @@
 #include "VertexRegistry.h"
 
+#include "../../Vertex/Vertex.h"
+
 #include <stdexcept>
 
 using namespace ascen;

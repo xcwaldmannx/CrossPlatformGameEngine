@@ -1,5 +1,7 @@
 #include "ComputePipelineFactory.h"
 
+#include "ComputePipeline.h"
+
 using namespace ascen;
 
 ComputePipelineFactory::ComputePipelineFactory(VkDevice device) : mDevice(device) {}

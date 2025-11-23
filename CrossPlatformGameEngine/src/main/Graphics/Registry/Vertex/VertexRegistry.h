@@ -1,8 +1,7 @@
 #pragma once
 
-#include "../../Vertex/Vertex.h"
 #include "../Registry_I.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
 #include <string>
 #include <unordered_map>

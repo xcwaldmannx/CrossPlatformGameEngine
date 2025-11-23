@@ -1,7 +1,6 @@
 #pragma once
 
-#include "RenderPass.h"
-#include "../Types.h"
+#include "../Core/Types.h"
 
 #include <cstdint>
 #include <memory>

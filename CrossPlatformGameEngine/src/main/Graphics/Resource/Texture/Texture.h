@@ -1,58 +1,38 @@
 #pragma once
 
-#include "../../CommandPool/CommandPool.h"
 #include "../Image/Image.h"
-
-#include <memory>
-
-#include <vector>
-
-#include <vulkan/vulkan.h>
 
 namespace ascen
 {
 
-	class Texture
+	class Texture : public Handle<VkImageView>
 	{
 	public:
-		static Texture create(
-			VkPhysicalDevice physicalDevice,
-			VkDevice device,
-			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
-			VkFormat format,
-			VkImageTiling tiling,
-			const std::vector<unsigned char>& pixels,
-			uint32_t width,
-			uint32_t height,
-			uint32_t layers,
-			VkImageUsageFlags usageFlags,
-			VkMemoryPropertyFlags memoryFlags,
-			VkImageAspectFlags aspectFlags);
-
-		static void destroy(VkDevice device, Texture& texture);
-
-		VkImageView getView() const;
-
-	private:
 		Texture(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
-			VkFormat format,
-			VkImageTiling tiling,
-			const std::vector<unsigned char>& pixels,
+			const CommandPoolPtr& commandPool,
 			uint32_t width,
 			uint32_t height,
 			uint32_t layers,
+			VkFormat format,
+			VkImageTiling tiling,
 			VkImageUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryFlags,
 			VkImageAspectFlags aspectFlags);
 
-	private:
-		Image mImage{};
-		VkImageView mView = VK_NULL_HANDLE;
+		void update(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkQueue queue,
+			const CommandPoolPtr& commandPool,
+			const std::vector<unsigned char>& pixels);
+
+		void create(VkDevice device) override;
+		void destroy(VkDevice device) override;
+
+	protected:
+		Image mImage;
 	};
 
 }

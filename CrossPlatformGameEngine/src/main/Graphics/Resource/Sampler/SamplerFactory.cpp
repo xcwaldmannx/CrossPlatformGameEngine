@@ -1,5 +1,7 @@
 #include "SamplerFactory.h"
 
+#include "Sampler.h"
+
 using namespace ascen;
 
 SamplerFactory::SamplerFactory(VkPhysicalDevice physicalDevice, VkDevice device) :
@@ -7,5 +9,5 @@ SamplerFactory::SamplerFactory(VkPhysicalDevice physicalDevice, VkDevice device)
 
 SamplerPtr SamplerFactory::createSampler() const
 {
-	return std::make_shared<Sampler2>(mPhysicalDevice, mDevice);
+	return std::make_shared<Sampler>(mPhysicalDevice, mDevice);
 }

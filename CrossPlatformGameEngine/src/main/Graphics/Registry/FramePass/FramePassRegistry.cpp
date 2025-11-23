@@ -5,6 +5,10 @@
 #include "../Resource/ResourceRegistryBackend.h"
 #include "../Descriptor/DescriptorRegistryBackend.h"
 #include "../Pipeline/PipelineRegistryBackend.h"
+#include "../../Resource/Buffer/Buffer.h"
+#include "../../Resource/Texture/Texture.h"
+#include "../../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
+#include "../../Pipeline/ComputePipeline/ComputePipeline_I.h"
 
 using namespace ascen;
 

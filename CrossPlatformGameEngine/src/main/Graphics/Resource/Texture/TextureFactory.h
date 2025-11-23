@@ -1,8 +1,6 @@
 #pragma once
 
-#include "ImageTexture.h"
-#include "DepthTexture.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
 #include <cstdint>
 #include <memory>

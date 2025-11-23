@@ -1,5 +1,8 @@
 #include "DescriptorSet.h"
 
+#include "../Pool/DescriptorPool.h"
+#include "../Layout/DescriptorSetLayout.h"
+
 #include <stdexcept>
 
 using namespace ascen;

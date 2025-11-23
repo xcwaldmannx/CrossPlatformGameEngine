@@ -1,6 +1,11 @@
 #include "DescriptorRegistry.h"
 
 #include "../Resource/ResourceRegistryBackend.h"
+#include "../../Resource/Buffer/Buffer.h"
+#include "../../Resource/Texture/Texture.h"
+#include "../../Resource/Sampler/Sampler.h"
+
+#include <stdexcept>
 
 using namespace ascen;
 

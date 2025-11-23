@@ -1,11 +1,12 @@
 #pragma once
 
-#include "GraphicsPipeline.h"
-#include "../../Vertex/Vertex_I.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
 #include <concepts>
 #include <memory>
+
+#include <string>
+#include <vector>
 
 #include <vulkan/vulkan.h>
 

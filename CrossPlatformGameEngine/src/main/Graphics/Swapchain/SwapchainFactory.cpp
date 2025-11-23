@@ -1,5 +1,7 @@
 #include "SwapchainFactory.h"
 
+#include "Swapchain.h"
+
 using namespace ascen;
 
 SwapchainFactory::SwapchainFactory(

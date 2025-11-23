@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Vertex_I.h"
+
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -7,18 +9,15 @@
 namespace ascen
 {
 
-	using VertexBinding = VkVertexInputBindingDescription;
-	using VertexAttribute = VkVertexInputAttributeDescription;
-
-	class Vertex
+	class Vertex : public Vertex_I
 	{
 	public:
 		Vertex(
 			const VertexBinding& binding,
 			const std::vector<VertexAttribute>& attributes);
 
-		const VertexBinding& getBinding() const;
-		const std::vector<VertexAttribute>& getAttributes() const;
+		const VertexBinding& getBinding() const override;
+		const std::vector<VertexAttribute>& getAttributes() const override;
 
 	private:
 		const VertexBinding mBinding;

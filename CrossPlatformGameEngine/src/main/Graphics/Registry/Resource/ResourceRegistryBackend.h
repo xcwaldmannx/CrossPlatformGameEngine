@@ -1,7 +1,7 @@
 #pragma once
 
 #include "ResourceRegistry.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
 namespace ascen
 {

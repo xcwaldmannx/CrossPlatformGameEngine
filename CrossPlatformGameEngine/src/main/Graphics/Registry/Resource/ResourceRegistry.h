@@ -1,14 +1,7 @@
 #pragma once
 
 #include "../Registry_I.h"
-
-#include "../../Types.h"
-
-//#include "../../VulkanContext.h"
-//#include "../../RenderContext.h"
-//
-//#include "../../Resource/Buffer/Buffer2.h"
-//#include "../../Resource/Texture/Texture2.h"
+#include "../../Core/Types.h"
 
 #include <string>
 #include <unordered_map>

@@ -32,6 +32,7 @@ find_package(Vulkan REQUIRED)
 target_link_libraries(CrossPlatformGameEngine PRIVATE Vulkan::Vulkan)
 target_link_directories(CrossPlatformGameEngine PRIVATE Vulkan_INCLUDE_DIRS)
 
+message(STATUS "Vulkan Version: " ${Vulkan_VERSION})
 message(STATUS "Vulkan Lib Path: ${Vulkan_LIBRARIES}")
 message(STATUS "Vulkan Include Path: ${Vulkan_INCLUDE_DIRS}")
 
