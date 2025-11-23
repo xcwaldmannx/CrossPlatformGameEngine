@@ -1,7 +1,10 @@
 #include "ResourceRegistry.h"
 
-#include "../../VulkanContext.h"
-#include "../../RenderContext.h"
+#include "../../Core/VulkanContext.h"
+#include "../../Core/RenderContext.h"
+#include "../../Resource/Buffer/Buffer.h"
+#include "../../Resource/Texture/Texture.h"
+#include "../../Resource/Sampler/Sampler.h"
 
 #include <stdexcept>
 #include <algorithm>

@@ -1,5 +1,11 @@
 #include "BufferFactory.h"
 
+#include "Vertex/VertexBuffer.h"
+#include "Index/IndexBuffer.h"
+#include "Uniform/UniformBuffer.h"
+#include "Storage/StorageBuffer.h"
+#include "Indirect/IndirectBuffer.h"
+
 using namespace ascen;
 
 BufferFactory::BufferFactory(

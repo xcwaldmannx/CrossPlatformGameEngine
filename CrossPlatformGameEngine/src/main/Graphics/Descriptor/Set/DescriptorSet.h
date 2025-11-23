@@ -1,9 +1,7 @@
 #pragma once
 
 #include "../../Handle/Handle.h"
-#include "../../Types.h"
-#include "../Pool/DescriptorPool.h"
-#include "../Layout/DescriptorSetLayout.h"
+#include "../../Core/Types.h"
 
 #include <variant>
 

@@ -1,10 +1,10 @@
 #pragma once
 
 #include "../Registry_I.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
-#include "../../VulkanContext.h"
-#include "../../RenderContext.h"
+#include "../../Core/VulkanContext.h"
+#include "../../Core/RenderContext.h"
 #include "../Vertex/VertexRegistry.h"
 #include "../Descriptor/DescriptorRegistry.h"
 

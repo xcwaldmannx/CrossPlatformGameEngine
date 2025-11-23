@@ -1,11 +1,11 @@
 #pragma once
 
-#include "Swapchain.h"
-#include "../Types.h"
+#include "../Core/Types.h"
 
 #include <cstdint>
 #include <memory>
 
+#include <GLFW/glfw3.h>
 #include <vulkan/vulkan.h>
 
 namespace ascen

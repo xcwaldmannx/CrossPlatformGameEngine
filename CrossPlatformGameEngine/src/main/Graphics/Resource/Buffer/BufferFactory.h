@@ -1,11 +1,6 @@
 #pragma once
 
-#include "VertexBuffer.h"
-#include "IndexBuffer.h"
-#include "UniformBuffer.h"
-#include "StorageBuffer.h"
-#include "IndirectBuffer.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
 #include <concepts>
 #include <cstdint>

@@ -1,95 +1,72 @@
 #pragma once
 
+#include "Image_I.h"
 #include "../Buffer/Buffer.h"
 #include "../../CommandPool/CommandPool.h"
-
-#include <memory>
-
-#include <vector>
-
-#include <vulkan/vulkan.h>
 
 namespace ascen
 {
 
-	struct ImageMemory
-	{
-		VkDeviceSize mSize;
-		uint32_t mTypeIndex;
-	};
-
-	class Image
+	class Image : public Image_I
 	{
 	public:
-		void transition();
+		struct Memory
+		{
+			VkDeviceSize mSize;
+			uint32_t mTypeIndex;
+		};
 
-		static Image create(
+		Image(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
-			VkFormat format,
-			VkImageTiling tiling,
-			const std::vector<unsigned char>& pixels,
+			const CommandPoolPtr& commandPool,
 			uint32_t width,
 			uint32_t height,
 			uint32_t layers,
+			VkFormat format,
+			VkImageTiling tiling,
 			VkImageUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryFlags,
 			VkImageAspectFlags aspectFlags);
 
-		static void destroy(VkDevice device, Image& image);
-
-		static void copy(
+		void update(
+			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
+			VkQueue queue,
+			const CommandPoolPtr& commandPool,
+			const std::vector<unsigned char>& pixels);
+
+		void create(VkDevice device) override;
+		void destroy(VkDevice device) override;
+
+	private:
+		void transitionLayout(
+			VkDevice device,
+			VkQueue queue,
+			const CommandPoolPtr& commandPool,
+			VkImageLayout oldLayout,
+			VkImageLayout newLayout);
+
+		void copy(
+			VkDevice device,
+			VkQueue queue,
+			const CommandPoolPtr& commandPool,
 			Buffer& buffer,
 			Image& image,
-			VkFormat format,
-			uint32_t width,
-			uint32_t height,
-			uint32_t layers,
-			VkImageAspectFlags aspectFlags);
+			uint32_t layers);
 
-		static ImageMemory getMemory(
+		Memory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkImage image,
 			VkMemoryPropertyFlags memoryFlags);
 
 	private:
-		Image() = default;
-
-		Image(
-			VkPhysicalDevice physicalDevice,
-			VkDevice device,
-			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
-			VkFormat format,
-			VkImageTiling tiling,
-			const std::vector<unsigned char>& pixels,
-			uint32_t width,
-			uint32_t height,
-			uint32_t layers,
-			VkImageUsageFlags usageFlags,
-			VkMemoryPropertyFlags memoryFlags,
-			VkImageAspectFlags aspectFlags);
-
-		void transitionLayout(
-			VkDevice device,
-			VkQueue graphicsQueue,
-			std::shared_ptr<CommandPool> commandPool,
-			VkImageLayout oldLayout,
-			VkImageLayout newLayout,
-			uint32_t layers,
-			VkImageAspectFlags aspectFlags);
-
-	private:
-		VkImage mImage = VK_NULL_HANDLE;
-		VkDeviceMemory mMemory = VK_NULL_HANDLE;
-
-		friend class Texture;
+		uint32_t mWidth;
+		uint32_t mHeight;
+		uint32_t mLayers;
+		VkFormat mFormat;
+		VkImageAspectFlags mAspectFlags;
 	};
 
 }

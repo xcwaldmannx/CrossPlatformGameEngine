@@ -1,7 +1,7 @@
 #pragma once
 
 #include "FramePassRegistry.h"
-#include "../../Types.h"
+#include "../../Core/Types.h"
 
 #include <string>
 #include <unordered_map>

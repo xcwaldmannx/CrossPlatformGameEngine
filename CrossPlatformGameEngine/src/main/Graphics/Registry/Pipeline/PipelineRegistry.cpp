@@ -2,6 +2,10 @@
 
 #include "../Vertex/VertexRegistryBackend.h"
 #include "../Descriptor/DescriptorRegistryBackend.h"
+#include "../../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
+#include "../../Pipeline/ComputePipeline/ComputePipeline_I.h"
+
+#include <stdexcept>
 
 using namespace ascen;
 

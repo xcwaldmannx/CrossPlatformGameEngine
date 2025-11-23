@@ -1,5 +1,8 @@
 #include "TextureFactory.h"
 
+#include "Image/ImageTexture.h"
+#include "Depth/DepthTexture.h"
+
 using namespace ascen;
 
 TextureFactory::TextureFactory(

@@ -2,7 +2,7 @@
 
 #include "../Registry_I.h"
 
-#include "../../VulkanContext.h"
+#include "../../Core/VulkanContext.h"
 #include "../Resource/ResourceRegistry.h"
 
 #include <unordered_map>

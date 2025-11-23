@@ -4,21 +4,6 @@
 
 using namespace ascen;
 
-Sampler Sampler::create(VkPhysicalDevice physicalDevice, VkDevice device)
-{
-	return Sampler(physicalDevice, device);
-}
-
-void Sampler::destroy(VkDevice device, Sampler& sampler)
-{
-	vkDestroySampler(device, sampler.mSampler, nullptr);
-}
-
-const VkSampler& Sampler::getSampler() const
-{
-	return mSampler;
-}
-
 Sampler::Sampler(VkPhysicalDevice physicalDevice, VkDevice device)
 {
 	VkSamplerCreateInfo samplerInfo{};
@@ -43,7 +28,17 @@ Sampler::Sampler(VkPhysicalDevice physicalDevice, VkDevice device)
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = 0.0f;
 
-	if (vkCreateSampler(device, &samplerInfo, nullptr, &mSampler) != VK_SUCCESS) {
+	if (vkCreateSampler(device, &samplerInfo, nullptr, &mHandle) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
+}
+
+void Sampler::create(VkDevice device)
+{
+	// not used, remove later
+}
+
+void Sampler::destroy(VkDevice device)
+{
+	vkDestroySampler(device, mHandle, nullptr);
 }
