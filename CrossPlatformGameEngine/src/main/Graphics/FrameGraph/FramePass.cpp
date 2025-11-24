@@ -3,21 +3,19 @@
 using namespace ascen;
 
 FramePass::FramePass(
-	const std::vector<VkBuffer> vertexBuffers,
-	const VkBuffer indexBuffer,
+	const FramePassType type,
+	const std::vector<VkDescriptorSet> descriptorSets,
+	const VkPipeline pipeline,
+	const VkPipelineLayout pipelineLayout,
 	const std::vector<VkBuffer> readBuffers,
 	const std::vector<VkBuffer> writeBuffers,
 	const std::vector<VkImageView> readTextures,
-	const std::vector<VkImageView> writeTextures,
-	const std::vector<VkDescriptorSet> descriptorSets,
-	const VkPipeline pipeline,
-	const VkPipelineLayout pipelineLayout) :
-	mVertexBuffers(vertexBuffers),
-	mIndexBuffer(indexBuffer),
+	const std::vector<VkImageView> writeTextures) :
+	mType(type),
+	mDescriptorSets(descriptorSets),
+	mPipeline(pipeline),
+	mPipelineLayout(pipelineLayout),
 	mReadBuffers(readBuffers),
 	mWriteBuffers(writeBuffers),
 	mReadTextures(readTextures),
-	mWriteTextures(writeTextures),
-	mDescriptorSets(descriptorSets),
-	mPipeline(pipeline),
-	mPipelineLayout(pipelineLayout) {}
+	mWriteTextures(writeTextures) {}

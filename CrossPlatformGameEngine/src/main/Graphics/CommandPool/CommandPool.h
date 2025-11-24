@@ -3,6 +3,9 @@
 #include "../Core/Types.h"
 #include "../Handle/Handle.h"
 
+#include "../FrameGraph/Graphics/GraphicsFramePass.h"
+#include "../FrameGraph/Compute/ComputeFramePass.h"
+
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -35,15 +38,25 @@ namespace ascen
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
-		void record(
+		VkCommandBuffer beginCommand(uint32_t frameIndex);
+		void endCommand(VkCommandBuffer buffer);
+
+		void recordGraphics(
 			VkPhysicalDevice physicalDevice,
+			VkCommandBuffer commandBuffer,
+			const GraphicsFramePass* framePass,
 			uint32_t frameIndex,
 			uint32_t imageIndex,
-			const FrameGraph& frameGraph,
 			VkBuffer indirectBuffer,
 			const RenderPassPtr& renderPass,
 			const SwapchainPtr& swapchain,
 			uint32_t drawCommandCount);
+
+		void recordCompute(
+			VkPhysicalDevice physicalDevice,
+			VkCommandBuffer commandBuffer,
+			const ComputeFramePass* framePass,
+			uint32_t currentFrame);
 
 		VkCommandBuffer beginSingle(VkDevice device);
 		void endSingle(VkDevice device, VkQueue queue, VkCommandBuffer buffer);

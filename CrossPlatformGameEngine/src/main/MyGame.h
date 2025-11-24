@@ -34,7 +34,7 @@ private:
 	WindowManager& mWindowManager;
 	ascen::Engine mEngine;
 
-	std::unordered_map<uint32_t, ModelData> mModelData;
+	std::unordered_map<uint32_t, ascen::ModelData> mModelData;
 
 	std::vector<float> mVertices;
 	std::vector<uint32_t> mIndices;

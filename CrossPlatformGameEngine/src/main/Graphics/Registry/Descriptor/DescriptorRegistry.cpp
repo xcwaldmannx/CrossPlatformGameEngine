@@ -19,7 +19,7 @@ DescriptorRegistry::DescriptorRegistry(
 void DescriptorRegistry::registerDescriptor(DescriptorSetEntry entry)
 {
 	mDescriptorPoolRequirements[entry.mType]++;
-	std::string setName = entry.mSetName;
+	const std::string& setName = entry.mSetName;
 	mSetEntries[setName].emplace_back(std::move(entry));
 }
 
@@ -39,10 +39,10 @@ void DescriptorRegistry::reconstruct()
 	}
 
 	mDescriptorPool = mDescriptorFactory.createPool(sizes);
-
-	for (auto& [set, entries] : mSetEntries)
+	
+	for (auto& [name, entries] : mSetEntries)
 	{
-		if (mDescriptorSetLayouts.find(set) == mDescriptorSetLayouts.end())
+		if (mDescriptorSetLayouts.find(name) == mDescriptorSetLayouts.end())
 		{
 			std::vector<DescriptorSetLayout::Binding> bindings;
 			std::vector<DescriptorSet::Write> writes;
@@ -101,24 +101,26 @@ void DescriptorRegistry::reconstruct()
 				}
 			}
 
-			mDescriptorSetLayouts.emplace(set, mDescriptorFactory.createSetLayout(bindings));
-			mDescriptorSets.emplace(set, mDescriptorFactory.createSet(
-				mDescriptorPool, mDescriptorSetLayouts.at(set), writes));
+			mDescriptorSetLayouts.emplace(name, mDescriptorFactory.createSetLayout(bindings));
+			mDescriptorSets.emplace(name, mDescriptorFactory.createSet(
+				mDescriptorPool, mDescriptorSetLayouts.at(name), writes));
 		}
 		else
 		{
 			throw std::runtime_error("A descriptor set layout with that name already exists!");
 		}
 	}
+	
 }
 
 void DescriptorRegistry::cleanup()
 {
 	for (auto& [name, layout] : mDescriptorSetLayouts)
 	{
-		if (layout) mDescriptorSetLayouts.at(name)->destroy(mDevice);
+		if (layout) layout->destroy(mDevice);
 	}
 	mDescriptorSetLayouts.clear();
+	mDescriptorSets.clear();
 
 	mDescriptorPool->destroy(mDevice);
 }

@@ -17,6 +17,8 @@ void FrameGraph::compile()
 	{
 		mExecutions.push_back(framePass);
 	}
+
+	std::reverse(mExecutions.begin(), mExecutions.end());
 }
 
 const std::vector<FramePassPtr>& FrameGraph::getExecutions() const

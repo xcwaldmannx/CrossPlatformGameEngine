@@ -28,8 +28,10 @@ namespace ascen
 		VkDevice getDevice() const;
 		uint32_t getGraphicsFamilyIndex() const;
 		uint32_t getPresentFamilyIndex() const;
+		uint32_t getComputeFamilyIndex() const;
 		VkQueue getGraphicsQueue() const;
 		VkQueue getPresentQueue() const;
+		VkQueue getComputeQueue() const;
 
 		const CommandPoolFactory& getCommandPoolFactory() const;
 		const DescriptorFactory& getDescriptorFactory() const;
@@ -57,8 +59,10 @@ namespace ascen
 		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
 		uint32_t mGraphicsFamilyIndex = 0;
 		uint32_t mPresentFamilyIndex = 0;
+		uint32_t mComputeFamilyIndex = 0;
 		VkQueue mGraphicsQueue = VK_NULL_HANDLE;
 		VkQueue mPresentQueue = VK_NULL_HANDLE;
+		VkQueue mComputeQueue = VK_NULL_HANDLE;
 		VkDevice mDevice = VK_NULL_HANDLE;
 
 		CommandPoolFactory mCommandPoolFactory;

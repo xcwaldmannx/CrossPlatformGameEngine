@@ -35,7 +35,7 @@ namespace ascen
 		uint32_t mSlot;
 		uint64_t mSize;
 		DescriptorType mType;
-		DescriptorStage mStage;
+		uint32_t mStage;
 	};
 
 	class DescriptorRegistry : public Registry_I

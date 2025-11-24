@@ -6,10 +6,16 @@
 #include "RenderContext.h"
 #include "../CommandPool/CommandPool.h"
 #include "../Swapchain/Swapchain.h"
+#include "../FrameGraph/Graphics/GraphicsFramePass.h"
+#include "../FrameGraph/Compute/ComputeFramePass.h"
+#include "../Resource/Barrier/Barrier.h"
 #include "../Resource/Buffer/Buffer.h"
 #include "../Resource/Buffer/Indirect/IndirectBuffer.h"
+#include "../Registry/Vertex/VertexRegistry.h"
 #include "../Registry/Resource/ResourceRegistry.h"
+#include "../Registry/Resource/ResourceRegistryBackend.h"
 #include "../Registry/Descriptor/DescriptorRegistry.h"
+#include "../Registry/Pipeline/PipelineRegistry.h"
 #include "../Registry/FramePass/FramePassRegistry.h"
 
 using namespace ascen;
@@ -19,8 +25,10 @@ Renderer::Renderer(
 	EcsSystem& ecsSystem,
 	VulkanContext& vulkanContext,
 	RenderContext& renderContext,
+	VertexRegistry& vertexRegistry,
 	ResourceRegistry& resourceRegistry,
 	DescriptorRegistry& descriptorRegistry,
+	PipelineRegistry& pipelineRegistry,
 	FramePassRegistry& framePassRegistry) :
 	mWindowManager(windowManager),
 	mEcsSystem(ecsSystem),
@@ -29,16 +37,102 @@ Renderer::Renderer(
 	mPresentQueue(vulkanContext.getPresentQueue()),
 	mDevice(vulkanContext.getDevice()),
 	mRenderContext(renderContext),
+	mVertexRegistry(vertexRegistry),
 	mResourceRegistry(resourceRegistry),
 	mDescriptorRegistry(descriptorRegistry),
-	mFrameGraph(framePassRegistry)
+	mPipelineRegistry(pipelineRegistry),
+	mFramePassRegistry(framePassRegistry),
+	mFrameGraph(mFramePassRegistry)
 {
-	mResourceRegistry.registerBuffer({ "instance", ascen::BufferType::STORAGE, 1'000'000, sizeof(GPUInstance)});
+	const ascen::VertexBinding binding{ 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX };
+	const std::vector<ascen::VertexAttribute> attributes =
+	{
+		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+		{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
+		{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
+	};
+
+	mVertexRegistry.registerVertex({ "ENGINE_VERTEX", binding, attributes });
+
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_VERTEX", ascen::BufferType::VERTEX, 1'000'000, sizeof(float) * 8 });
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_INDEX", ascen::BufferType::INDEX, 1'000'000, sizeof(uint32_t) });
+
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_CAMERA", BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_ENTITY", BufferType::STORAGE, 1'000'000, sizeof(GPUEntity) });
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_MESH", BufferType::STORAGE, 1'000'000, sizeof(GPUMesh) });
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_TRANSFORM", BufferType::STORAGE, 1'000'000, sizeof(float) });
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_INSTANCE", BufferType::STORAGE, 1'000'000, sizeof(GPUInstance) });
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_DRAW", BufferType::INDIRECT, 1'000'000, 0 /*not used*/});
+
+	mResourceRegistry.registerSampler({ "ENGINE_SAMPLER" });
+	mResourceRegistry.registerTexture({ "ENGINE_TEXTURE_IMAGE", TextureType::IMAGE, 1024, 1024, 16 });
+
+	// ENGINE GRAPHICS
 
 	mDescriptorRegistry.registerDescriptor(
-		{ "instance", "engine", 0x00, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_DESC_GRAPHICS", 0x00, sizeof(glm::mat4) * 2,
+		DescriptorType::UBO_DYNAMIC, DescriptorStage::VERTEX });
 
-	mIndirectBuffer = vulkanContext.getBufferFactory().createIndirect(renderContext.getCommandPool(), 1'000'000);
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_INSTANCE", "ENGINE_DESC_GRAPHICS", 0x01, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::VERTEX });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_SAMPLER", "ENGINE_DESC_GRAPHICS", 0x02, 0 /*not used*/,
+		DescriptorType::SAMPLER, DescriptorStage::PIXEL });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_TEXTURE_IMAGE", "ENGINE_DESC_GRAPHICS", 0x03, 0 /*not used*/,
+		DescriptorType::IMAGE, DescriptorStage::PIXEL });
+
+	mPipelineRegistry.registerGraphicsPipeline(
+		{ "ENGINE_PIPELINE_GRAPHICS", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv",
+		"ENGINE_VERTEX", { "ENGINE_DESC_GRAPHICS" }});
+
+	mFramePassRegistry.registerGraphics(
+		{ "ENGINE_FRAMEPASS_GRAPHICS", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS",
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE", "ENGINE_BUFFER_DRAW" },
+		{},
+		{ "ENGINE_TEXTURE_IMAGE" },
+		{},
+		{ "ENGINE_BUFFER_VERTEX" }, "ENGINE_BUFFER_INDEX" });
+
+	// ENGINE COMPUTE
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_DESC_COMPUTE", 0x00, sizeof(glm::mat4) * 2,
+		DescriptorType::UBO_DYNAMIC, DescriptorStage::COMPUTE });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_ENTITY", "ENGINE_DESC_COMPUTE", 0x01, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::COMPUTE });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_MESH", "ENGINE_DESC_COMPUTE", 0x02, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::COMPUTE });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_TRANSFORM", "ENGINE_DESC_COMPUTE", 0x03, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::COMPUTE });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_INSTANCE", "ENGINE_DESC_COMPUTE", 0x04, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::COMPUTE });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_DRAW", "ENGINE_DESC_COMPUTE", 0x05, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::COMPUTE });
+
+	mPipelineRegistry.registerComputePipeline(
+		{ "ENGINE_PIPELINE_COMPUTE", "src/shaders/GPUDrivenCS.spv", { "ENGINE_DESC_COMPUTE" } });
+
+	mFramePassRegistry.registerCompute(
+		{ "ENGINE_FRAMEPASS_COMPUTE", { "ENGINE_DESC_COMPUTE" }, "ENGINE_PIPELINE_COMPUTE",
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_ENTITY", "ENGINE_BUFFER_MESH", "ENGINE_BUFFER_TRANSFORM" },
+		{ "ENGINE_BUFFER_INSTANCE", "ENGINE_BUFFER_DRAW" },
+		{},
+		{},
+		{ 0, 0, 0 }});
 
 	createSyncObjects();
 }
@@ -47,26 +141,22 @@ void Renderer::updateRenderSystem()
 {
 	mEcsSystem.updateSystem<RenderSystem>(0);
 	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
-	const auto& instances = renderSystem->getInstances();
-	const auto& drawCommands = renderSystem->getDrawCommands();
+	const auto& entities = renderSystem->getEntities();
+	const auto& meshes = renderSystem->getMeshes();
 
-	mDrawCommandCount = drawCommands.size();
+	mDrawCommandCount = 0;
 
-	if (!instances.empty())
+	if (!entities.empty() && !meshes.empty())
 	{
 		mResourceRegistry.updateBuffer(
-			"instance", instances.data(), instances.size(), sizeof(GPUInstance));
-	}
+			"ENGINE_BUFFER_ENTITY", entities.data(), entities.size(), sizeof(GPUEntity));
 
-	if (!drawCommands.empty())
-	{
-		mIndirectBuffer->update(
-			mPhysicalDevice, mDevice, mGraphicsQueue, mRenderContext.getCommandPool(),
-			drawCommands.data(), drawCommands.size(), sizeof(IndirectBuffer::DrawCommand));
+		mResourceRegistry.updateBuffer(
+			"ENGINE_BUFFER_MESH", meshes.data(), meshes.size(), sizeof(GPUMesh));
+
+		mDrawCommandCount = meshes.size();
 	}
 }
-
-#include <iostream>
 
 void Renderer::drawFrame()
 {
@@ -78,15 +168,19 @@ void Renderer::drawFrame()
 
 	updateRenderSystem();
 
-	vkWaitForFences(mDevice, 1, &mInFlightFences[mCurrentFrame], VK_TRUE, UINT64_MAX);
+	const auto& commandPool = mRenderContext.getCommandPool();
+	const auto& renderPass = mRenderContext.getRenderPass();
+	const auto& swapchain = mRenderContext.getSwapchain();
+
+	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
 
 	VkResult nextImageResult = vkAcquireNextImageKHR(
 		mDevice,
-		mRenderContext.getSwapchain()->handle(),
+		swapchain->handle(),
 		UINT64_MAX,
-		mImageAvailableSemaphores[mCurrentFrame],
+		mImageAvailableSemaphores[mFrameIndex],
 		VK_NULL_HANDLE,
-		&mCurrentImage);
+		&mImageIndex);
 
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
@@ -98,36 +192,72 @@ void Renderer::drawFrame()
 		throw std::runtime_error("failed to acquire swapchain image!");
 	}
 
-	vkResetFences(mDevice, 1, &mInFlightFences[mCurrentFrame]);
+	vkResetFences(mDevice, 1, &mInFlightFences[mFrameIndex]);
 
 	mFrameGraph.compile();
+	const auto& executions = mFrameGraph.getExecutions();
 
-	mRenderContext.getCommandPool()->record(
-		mPhysicalDevice,
-		mCurrentFrame,
-		mCurrentImage,
-		mFrameGraph,
-		mIndirectBuffer->handle(),
-		mRenderContext.getRenderPass(),
-		mRenderContext.getSwapchain(),
-		mDrawCommandCount);
+	auto commandBuffer = commandPool->beginCommand(mFrameIndex);
+
+	const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
+
+	for (const auto& exec : executions)
+	{
+		switch (exec->mType)
+		{
+		case FramePassType::GRAPHICS:
+			commandPool->recordGraphics(
+				mPhysicalDevice,
+				commandBuffer,
+				static_cast<const GraphicsFramePass*>(exec.get()),
+				mFrameIndex,
+				mImageIndex,
+				drawBuffer->handle(),
+				renderPass,
+				swapchain,
+				mDrawCommandCount);
+			break;
+		case FramePassType::COMPUTE:
+			commandPool->recordCompute(
+				mPhysicalDevice,
+				commandBuffer,
+				static_cast<const ComputeFramePass*>(exec.get()),
+				mFrameIndex);
+			break;
+		case FramePassType::NONE:
+		default:
+			return;
+		}
+
+		Barrier::buffer(
+			commandBuffer,
+			drawBuffer->handle(),
+			VK_ACCESS_2_SHADER_WRITE_BIT,
+			VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+			VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
+			VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
+			VK_WHOLE_SIZE);
+
+	}
+
+	commandPool->endCommand(commandBuffer);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { mImageAvailableSemaphores[mCurrentFrame] };
+	VkSemaphore waitSemaphores[] = { mImageAvailableSemaphores[mFrameIndex] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = mRenderContext.getCommandPool()->getBufferIndex(mCurrentFrame);
+	submitInfo.pCommandBuffers = commandPool->getBufferIndex(mFrameIndex);
 
-	VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphores[mCurrentFrame] };
+	VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphores[mFrameIndex] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
-	if (vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mCurrentFrame]) != VK_SUCCESS)
+	if (vkQueueSubmit(mGraphicsQueue, 1, &submitInfo, mInFlightFences[mFrameIndex]) != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
@@ -138,10 +268,10 @@ void Renderer::drawFrame()
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
-	VkSwapchainKHR swapchains[] = { mRenderContext.getSwapchain()->handle() };
+	VkSwapchainKHR swapchains[] = { swapchain->handle() };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapchains;
-	presentInfo.pImageIndices = &mCurrentImage;
+	presentInfo.pImageIndices = &mImageIndex;
 	presentInfo.pResults = nullptr;
 
 	VkResult queuePresentResult = vkQueuePresentKHR(mPresentQueue, &presentInfo);
@@ -156,7 +286,7 @@ void Renderer::drawFrame()
 		throw std::runtime_error("failed to present swap chain image!");
 	}
 
-	mCurrentFrame = (mCurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+	mFrameIndex = (mFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void Renderer::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
@@ -202,11 +332,10 @@ void Renderer::destroySyncObjects()
 
 void Renderer::cleanup()
 {
-	mIndirectBuffer->destroy(mDevice);
 	destroySyncObjects();
 }
 
-uint32_t Renderer::getCurrentFrame() const
+uint32_t Renderer::getFrameIndex() const
 {
-	return mCurrentFrame;
+	return mFrameIndex;
 }

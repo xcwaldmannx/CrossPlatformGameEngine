@@ -15,7 +15,8 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkSurfaceKHR surface,
 			QueueFamily& graphicsFamily,
-			QueueFamily& presentFamily);
+			QueueFamily& presentFamily,
+			QueueFamily& computeFamily);
 
 		static VkQueue getDeviceQueue(VkDevice device, uint32_t index);
 	};

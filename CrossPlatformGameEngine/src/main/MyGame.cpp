@@ -9,52 +9,17 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mWindowManager(windowManager),
 	mEngine(windowManager)
 {
-	const ascen::VertexBinding binding { 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX};
-	const std::vector<ascen::VertexAttribute> attributes =
-	{
-		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
-		{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
-		{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
-	};
-
-	mEngine.vertex().registerVertex({ "simpleVertex", binding, attributes });
-
-	mEngine.resource().registerBuffer({ "vertex", ascen::BufferType::VERTEX, 1'000'000, sizeof(float) * 8 });
-	mEngine.resource().registerBuffer({ "index", ascen::BufferType::INDEX, 1'000'000, sizeof(uint32_t) });
-	mEngine.resource().registerBuffer({ "camera", ascen::BufferType::UNIFORM, 2, sizeof(Camera) });
-	mEngine.resource().registerBuffer({ "transform", ascen::BufferType::STORAGE, 1'000'000, sizeof(float) });
-
-	mEngine.resource().registerSampler({ "sampler" });
-	mEngine.resource().registerTexture({ "texture", ascen::TextureType::IMAGE, 1024, 1024, 16 });
-
-	mEngine.descriptor().registerDescriptor(
-		{ "camera", "set0", 0x00, sizeof(Camera), ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::VERTEX});
-	mEngine.descriptor().registerDescriptor(
-		{ "transform", "set0", 0x01, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX});
-	mEngine.descriptor().registerDescriptor(
-		{ "sampler", "set0", 0x10, 0, ascen::DescriptorType::SAMPLER, ascen::DescriptorStage::PIXEL });
-	mEngine.descriptor().registerDescriptor(
-		{ "texture", "set0", 0x11, 0, ascen::DescriptorType::IMAGE, ascen::DescriptorStage::PIXEL });
-
-	mEngine.pipeline().registerGraphicsPipeline(
-		{ "pipeline", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv", "simpleVertex", { "set0" }});
-
-	mEngine.frame().registerFramePass(
-		{
-			"frame", { "vertex" }, "index", {}, {}, {}, {}, { "set0" }, "pipeline", ascen::FramePassType::GRAPHICS
-		});
-
 	mEngine.reload();
 
 	loadModels();
 
-	mEngine.resource().updateBuffer("vertex", mVertices.data(), mVertices.size(), sizeof(float));
-	mEngine.resource().updateBuffer("index", mIndices.data(), mIndices.size(), sizeof(uint32_t));
-	mEngine.resource().updateBuffer("transform", mTransforms.data(), mTransforms.size(), sizeof(float));
+	mEngine.resource().updateBuffer("ENGINE_BUFFER_VERTEX", mVertices.data(), mVertices.size(), sizeof(float));
+	mEngine.resource().updateBuffer("ENGINE_BUFFER_INDEX", mIndices.data(), mIndices.size(), sizeof(uint32_t));
+	mEngine.resource().updateBuffer("ENGINE_BUFFER_TRANSFORM", mTransforms.data(), mTransforms.size(), sizeof(float));
 
 	loadTextures();
 
-	mEngine.resource().updateTexture("texture", mPixels);
+	mEngine.resource().updateTexture("ENGINE_TEXTURE_IMAGE", mPixels);
 
 	mEngine.updateModelData(mModelData);
 
@@ -62,7 +27,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	for (int i = 0; i < 10; i++)
 	{
-		for (int j = 0; j < 100; j++)
+		for (int j = 0; j < 10; j++)
 		{
 			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
 		}
@@ -141,7 +106,7 @@ void MyGame::loadModels()
 		assert(modelLayout.mVertices.size() % (modelLayout.mVertexLayout.mStride / sizeof(float)) == 0);
 		assert(modelLayout.mTransforms.size() % 16 == 0);
 
-		ModelData info{};
+		ascen::ModelData info{};
 
 		for (const auto& mesh : modelLayout.mMeshLayouts)
 		{
@@ -214,7 +179,7 @@ void MyGame::createHelicopter(glm::vec3 position)
 
 void MyGame::updateEntities(float delta)
 {
-	for (int i = 0; i < 1000; i++)
+	for (int i = 0; i < 100; i++)
 	{ // helicopters
 		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
 		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
@@ -267,7 +232,7 @@ void MyGame::updateCamera(float delta)
 			width / height, 0.01f, 10'000.0f);
 		ubo.mProj[1][1] *= -1;
 
-		mEngine.resource().updateBuffer("camera", &ubo, 1, sizeof(Camera), mEngine.getCurrentFrame());
+		mEngine.resource().updateBuffer("ENGINE_BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
 	}
 
 }

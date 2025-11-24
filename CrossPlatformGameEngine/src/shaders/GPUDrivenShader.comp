@@ -1,26 +1,175 @@
 #version 450
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-struct InstanceData {
-    mat4 transform;
-    uint textureId;
-    uint pad[3];
+struct Entity
+{
+	vec3 mPosition;
+	uint _pad0;
+
+	vec3 mRotation;
+	uint _pad1;
+
+	vec3 mScale;
+	uint mMeshCount;
+
+	uint mMeshIndex;
+	uint _pad2[3];
 };
 
-layout(std430, set = 0, binding = 0x01) readonly buffer Transforms {
+struct Mesh
+{
+	vec3 mPosition;
+	uint _pad0;
+
+	vec3 mRotation;
+	uint _pad1;
+
+	vec3 mScale;
+	uint mTransformIndex;
+
+	uint mTextureIndex;
+    uint mDrawIndex;
+	uint _pad2[2];
+};
+
+struct Instance
+{
+	mat4 mTransform;
+	uint mTextureIndex;
+	uint _pad[3];
+};
+
+struct DrawCommand
+{
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int  vertexOffset;
+    uint firstInstance;
+};
+
+layout(std140, set = 0, binding = 0x00) uniform Camera
+{
+    mat4 view;
+    mat4 proj;
+} camera;
+
+layout(std430, set = 0, binding = 0x01) readonly buffer Entities
+{
+    Entity entities[];
+};
+
+layout(std430, set = 0, binding = 0x02) readonly buffer Meshes
+{
+    Mesh meshes[];
+};
+
+layout(std430, set = 0, binding = 0x03) readonly buffer Transforms
+{
     mat4 transforms[];
 };
 
-layout(std430, set = 0, binding = 0x02) buffer Instances {
-    InstanceData instances[];
-} buf;
+layout(std430, set = 0, binding = 0x04) buffer Instances
+{
+    Instance instances[];
+};
 
-layout(push_constant) uniform Params {
-    uint count;
-    float scale;
-} pc;
+layout(std430, set = 0, binding = 0x04) buffer DrawCommands
+{
+    DrawCommand drawCommands[];
+};
+
+mat4 eulerToMat4(vec3 euler)
+{
+    float cx = cos(euler.x);
+    float sx = sin(euler.x);
+    float cy = cos(euler.y);
+    float sy = sin(euler.y);
+    float cz = cos(euler.z);
+    float sz = sin(euler.z);
+
+    mat3 Rz = mat3(
+        cz, -sz, 0.0,
+        sz,  cz, 0.0,
+        0.0, 0.0, 1.0
+    );
+
+    mat3 Ry = mat3(
+         cy, 0.0, sy,
+         0.0, 1.0, 0.0,
+        -sy, 0.0, cy
+    );
+
+    mat3 Rx = mat3(
+        1.0, 0.0, 0.0,
+        0.0,  cx, -sx,
+        0.0,  sx,  cx
+    );
+
+    mat3 R = Rz * Ry * Rx;
+
+    mat4 M = mat4(1.0);
+    M[0].xyz = R[0];
+    M[1].xyz = R[1];
+    M[2].xyz = R[2];
+    return M;
+}
+
+mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
+{
+    mat4 R = eulerToMat4(rotEuler);
+
+    R[0] *= scale.x;
+    R[1] *= scale.y;
+    R[2] *= scale.z;
+
+    R[3].xyz = pos;
+
+    return R;
+}
+
+
 
 void main()
 {
-    uint i = gl_GlobalInvocationID.x;
+    uint e = gl_GlobalInvocationID.x;
+
+    // Bounds check against number of entities
+    if (e >= entities.length())
+        return;
+
+    Entity ent = entities[e];
+
+    // Entity/world TRS
+    mat4 entityMat = buildTRS(ent.mPosition, ent.mRotation, ent.mScale);
+
+    // Loop over meshes for this entity
+    for (uint i = 0; i < ent.mMeshCount; ++i)
+    {
+        uint meshIndex = ent.mMeshIndex + i;
+        Mesh mesh = meshes[meshIndex];
+
+        // Mesh local TRS (per-entity per-mesh offset)
+        mat4 meshLocal = buildTRS(mesh.mPosition, mesh.mRotation, mesh.mScale);
+
+        // Static mesh transform from importer (e.g., bind pose / original node transform)
+        mat4 meshStatic = transforms[mesh.mTransformIndex];
+
+        // Final instance transform = entity * static * local
+        mat4 finalMat = entityMat * meshStatic * meshLocal;
+
+        uint drawIdx = mesh.mDrawIndex;
+
+        // Atomically reserve an instance slot for this draw
+        uint localInstanceIndex =
+            atomicAdd(drawCommands[drawIdx].instanceCount, 1u);
+
+        // Global instance index into instances[]
+        uint dstIndex =
+            drawCommands[drawIdx].firstInstance + localInstanceIndex;
+
+        // Write instance data
+        instances[dstIndex].mTransform    = finalMat;
+        instances[dstIndex].mTextureIndex = mesh.mTextureIndex;
+    }
 }

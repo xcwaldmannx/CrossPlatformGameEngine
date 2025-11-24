@@ -71,7 +71,6 @@ DescriptorSet::Write DescriptorFactory::createBufferWrite(
 	bufferWrite.mWrite.dstArrayElement = 0;
 	bufferWrite.mWrite.descriptorType = type;
 	bufferWrite.mWrite.descriptorCount = 1;
-	//bufferWrite.mWrite.pBufferInfo = &info;
 
 	return bufferWrite;
 }
@@ -96,7 +95,6 @@ DescriptorSet::Write DescriptorFactory::createImageWrite(
 	imageWrite.mWrite.dstArrayElement = 0;
 	imageWrite.mWrite.descriptorType = type;
 	imageWrite.mWrite.descriptorCount = 1;
-	//imageWrite.mWrite.pImageInfo = &info;
 
 	return imageWrite;
 }
