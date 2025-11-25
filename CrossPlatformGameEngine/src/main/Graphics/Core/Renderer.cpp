@@ -91,7 +91,7 @@ Renderer::Renderer(
 
 	mFramePassRegistry.registerGraphics(
 		{ "ENGINE_FRAMEPASS_GRAPHICS", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS",
-		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE", "ENGINE_BUFFER_DRAW" },
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE" },
 		{},
 		{ "ENGINE_TEXTURE_IMAGE" },
 		{},
@@ -119,20 +119,16 @@ Renderer::Renderer(
 		{ "ENGINE_BUFFER_INSTANCE", "ENGINE_DESC_COMPUTE", 0x04, VK_WHOLE_SIZE,
 		DescriptorType::SSBO, DescriptorStage::COMPUTE });
 
-	mDescriptorRegistry.registerDescriptor(
-		{ "ENGINE_BUFFER_DRAW", "ENGINE_DESC_COMPUTE", 0x05, VK_WHOLE_SIZE,
-		DescriptorType::SSBO, DescriptorStage::COMPUTE });
-
 	mPipelineRegistry.registerComputePipeline(
 		{ "ENGINE_PIPELINE_COMPUTE", "src/shaders/GPUDrivenCS.spv", { "ENGINE_DESC_COMPUTE" } });
 
 	mFramePassRegistry.registerCompute(
 		{ "ENGINE_FRAMEPASS_COMPUTE", { "ENGINE_DESC_COMPUTE" }, "ENGINE_PIPELINE_COMPUTE",
 		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_ENTITY", "ENGINE_BUFFER_MESH", "ENGINE_BUFFER_TRANSFORM" },
-		{ "ENGINE_BUFFER_INSTANCE", "ENGINE_BUFFER_DRAW" },
+		{ "ENGINE_BUFFER_INSTANCE" },
 		{},
 		{},
-		{ 0, 0, 0 }});
+		{ 100'000 / 64 + 1, 1, 1 }});
 
 	createSyncObjects();
 }
@@ -143,6 +139,7 @@ void Renderer::updateRenderSystem()
 	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
 	const auto& entities = renderSystem->getEntities();
 	const auto& meshes = renderSystem->getMeshes();
+	const auto& drawCommands = renderSystem->getDrawCommands();
 
 	mDrawCommandCount = 0;
 
@@ -154,7 +151,10 @@ void Renderer::updateRenderSystem()
 		mResourceRegistry.updateBuffer(
 			"ENGINE_BUFFER_MESH", meshes.data(), meshes.size(), sizeof(GPUMesh));
 
-		mDrawCommandCount = meshes.size();
+		mResourceRegistry.updateBuffer(
+			"ENGINE_BUFFER_DRAW", drawCommands.data(), drawCommands.size(), sizeof(GPUMesh));
+
+		mDrawCommandCount = drawCommands.size();
 	}
 }
 
@@ -200,6 +200,8 @@ void Renderer::drawFrame()
 	auto commandBuffer = commandPool->beginCommand(mFrameIndex);
 
 	const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
+	const auto& instanceBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_INSTANCE");
+	const auto& transformBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_TRANSFORM");
 
 	for (const auto& exec : executions)
 	{
@@ -223,21 +225,38 @@ void Renderer::drawFrame()
 				commandBuffer,
 				static_cast<const ComputeFramePass*>(exec.get()),
 				mFrameIndex);
+
+			Barrier::buffer(
+				commandBuffer,
+				drawBuffer->handle(),
+				VK_ACCESS_2_SHADER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+				VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
+				VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
+				VK_WHOLE_SIZE);
+
+			Barrier::buffer(
+				commandBuffer,
+				instanceBuffer->handle(),
+				VK_ACCESS_2_SHADER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+				VK_ACCESS_2_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+				VK_WHOLE_SIZE);
+
+			Barrier::buffer(
+				commandBuffer,
+				transformBuffer->handle(),
+				VK_ACCESS_2_SHADER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+				VK_ACCESS_2_SHADER_READ_BIT,
+				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+				VK_WHOLE_SIZE);
 			break;
 		case FramePassType::NONE:
 		default:
 			return;
 		}
-
-		Barrier::buffer(
-			commandBuffer,
-			drawBuffer->handle(),
-			VK_ACCESS_2_SHADER_WRITE_BIT,
-			VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-			VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
-			VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
-			VK_WHOLE_SIZE);
-
 	}
 
 	commandPool->endCommand(commandBuffer);

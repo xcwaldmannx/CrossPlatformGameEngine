@@ -5,6 +5,8 @@
 #include "../Components/ModelComponent.h"
 #include "../Components/TransformComponent.h"
 
+#include "../../Resource/Buffer/Indirect/IndirectBuffer.h"
+
 #include <cstdint>
 
 #include <unordered_map>
@@ -30,8 +32,9 @@ namespace ascen
 		glm::vec3 mScale;
 		uint32_t mMeshCount;
 
-		uint32_t mMeshIndex;
-		uint32_t _pad2[3];
+		uint32_t mMeshOffset;
+		uint32_t mInstanceLocalOffset;
+		uint32_t _pad2[2];
 	};
 
 	struct alignas(16) GPUMesh
@@ -43,16 +46,17 @@ namespace ascen
 		uint32_t _pad1;
 
 		glm::vec3 mScale;
-		uint32_t mTransformIndex;
+		uint32_t mTransformOffset;
 
-		uint32_t mTextureIndex;
-		uint32_t _pad2[3];
+		uint32_t mTextureOffset;
+		uint32_t mInstanceBaseOffset;
+		uint32_t _pad2[2];
 	};
 
 	struct alignas(16) GPUInstance
 	{
-		glm::mat4 mTransform = glm::mat4(1.0);
-		uint32_t mTextureIndex = 0;
+		glm::mat4 mTransform;
+		uint32_t mTextureIndex;
 		uint32_t _pad[3];
 	};
 
@@ -96,15 +100,16 @@ namespace ascen
 		void updateModels(std::unordered_map<uint32_t, ModelData>& modelData);
 
 		const std::vector<GPUEntity>& getEntities() const;
-
 		const std::vector<GPUMesh>& getMeshes() const;
+		const std::vector<IndirectBuffer::DrawCommand> getDrawCommands() const;
 
 	private:
 		std::unordered_map<uint32_t, ModelData>* mModelData = nullptr;
 
-		std::unordered_map<MeshKey, std::vector<GPUInstance>, MeshKeyHasher> mMeshGroups; // mesh ID -> instances
+		// std::unordered_map<MeshKey, std::vector<GPUInstance>, MeshKeyHasher> mMeshGroups; // mesh ID -> instances
 		std::vector<GPUEntity> mGPUEntities;
 		std::vector<GPUMesh> mGPUMeshes;
+		std::vector<IndirectBuffer::DrawCommand> mDrawCommands;
 
 	};
 

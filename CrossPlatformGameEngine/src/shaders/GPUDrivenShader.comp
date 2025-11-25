@@ -12,8 +12,9 @@ struct Entity
 	vec3 mScale;
 	uint mMeshCount;
 
-	uint mMeshIndex;
-	uint _pad2[3];
+	uint mMeshOffset;
+	uint mInstanceLocalOffset;
+	uint _pad2[2];
 };
 
 struct Mesh
@@ -25,10 +26,10 @@ struct Mesh
 	uint _pad1;
 
 	vec3 mScale;
-	uint mTransformIndex;
+	uint mTransformOffset;
 
 	uint mTextureIndex;
-    uint mDrawIndex;
+	uint mInstanceBaseOffset;
 	uint _pad2[2];
 };
 
@@ -72,11 +73,6 @@ layout(std430, set = 0, binding = 0x03) readonly buffer Transforms
 layout(std430, set = 0, binding = 0x04) buffer Instances
 {
     Instance instances[];
-};
-
-layout(std430, set = 0, binding = 0x04) buffer DrawCommands
-{
-    DrawCommand drawCommands[];
 };
 
 mat4 eulerToMat4(vec3 euler)
@@ -128,48 +124,23 @@ mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
     return R;
 }
 
-
-
 void main()
 {
-    uint e = gl_GlobalInvocationID.x;
+	const uint entityId = gl_GlobalInvocationID.x;
 
-    // Bounds check against number of entities
-    if (e >= entities.length())
-        return;
-
-    Entity ent = entities[e];
-
-    // Entity/world TRS
-    mat4 entityMat = buildTRS(ent.mPosition, ent.mRotation, ent.mScale);
-
-    // Loop over meshes for this entity
-    for (uint i = 0; i < ent.mMeshCount; ++i)
-    {
-        uint meshIndex = ent.mMeshIndex + i;
-        Mesh mesh = meshes[meshIndex];
-
-        // Mesh local TRS (per-entity per-mesh offset)
-        mat4 meshLocal = buildTRS(mesh.mPosition, mesh.mRotation, mesh.mScale);
-
-        // Static mesh transform from importer (e.g., bind pose / original node transform)
-        mat4 meshStatic = transforms[mesh.mTransformIndex];
-
-        // Final instance transform = entity * static * local
-        mat4 finalMat = entityMat * meshStatic * meshLocal;
-
-        uint drawIdx = mesh.mDrawIndex;
-
-        // Atomically reserve an instance slot for this draw
-        uint localInstanceIndex =
-            atomicAdd(drawCommands[drawIdx].instanceCount, 1u);
-
-        // Global instance index into instances[]
-        uint dstIndex =
-            drawCommands[drawIdx].firstInstance + localInstanceIndex;
-
-        // Write instance data
-        instances[dstIndex].mTransform    = finalMat;
-        instances[dstIndex].mTextureIndex = mesh.mTextureIndex;
-    }
+	// no more work, exit
+    if (entityId >= entities.length()) return;
+	
+	const Entity entity = entities[entityId];
+	const mat4 entityTRS = buildTRS(entity.mPosition, entity.mRotation, entity.mScale);
+	
+	for (uint i = 0; i < entity.mMeshCount; i++)
+	{
+		const Mesh mesh = meshes[entity.mMeshOffset + i];
+		const mat4 meshTRS = buildTRS(mesh.mPosition, mesh.mRotation, mesh.mScale);
+		
+		uint instanceIndex = mesh.mInstanceBaseOffset + entity.mInstanceLocalOffset;
+		instances[instanceIndex].mTransform = entityTRS * transforms[mesh.mTransformOffset] * meshTRS;
+		instances[instanceIndex].mTextureIndex = mesh.mTextureIndex;
+	}
 }

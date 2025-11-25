@@ -7,7 +7,7 @@
 namespace ascen
 {
 
-	inline static const bool ENABLE_VALIDATION_LAYERS = true;
+	inline static const bool ENABLE_VALIDATION_LAYERS = false;
 
 	class ValidationLayers
 	{

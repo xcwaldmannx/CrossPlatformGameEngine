@@ -25,9 +25,9 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	// createEntities();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 100; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < 100; j++)
 		{
 			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
 		}
@@ -179,7 +179,7 @@ void MyGame::createHelicopter(glm::vec3 position)
 
 void MyGame::updateEntities(float delta)
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 10'000; i++)
 	{ // helicopters
 		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
 		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
@@ -229,7 +229,7 @@ void MyGame::updateCamera(float delta)
 		Camera ubo{};
 		ubo.mView = glm::inverse(cameraTransform);
 		ubo.mProj = glm::perspective(glm::radians(90.0f),
-			width / height, 0.01f, 10'000.0f);
+			width / height, 0.01f, 100'000.0f);
 		ubo.mProj[1][1] *= -1;
 
 		mEngine.resource().updateBuffer("ENGINE_BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
