@@ -128,7 +128,7 @@ Renderer::Renderer(
 		{ "ENGINE_BUFFER_INSTANCE" },
 		{},
 		{},
-		{ 100'000 / 64 + 1, 1, 1 }});
+		{ (100'000 + 63) / 64, 1, 1 }});
 
 	createSyncObjects();
 }
@@ -226,14 +226,14 @@ void Renderer::drawFrame()
 				static_cast<const ComputeFramePass*>(exec.get()),
 				mFrameIndex);
 
-			Barrier::buffer(
-				commandBuffer,
-				drawBuffer->handle(),
-				VK_ACCESS_2_SHADER_WRITE_BIT,
-				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-				VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
-				VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
-				VK_WHOLE_SIZE);
+			//Barrier::buffer(
+			//	commandBuffer,
+			//	drawBuffer->handle(),
+			//	VK_ACCESS_2_SHADER_WRITE_BIT,
+			//	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+			//	VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
+			//	VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
+			//	VK_WHOLE_SIZE);
 
 			Barrier::buffer(
 				commandBuffer,
@@ -244,14 +244,15 @@ void Renderer::drawFrame()
 				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
 				VK_WHOLE_SIZE);
 
-			Barrier::buffer(
-				commandBuffer,
-				transformBuffer->handle(),
-				VK_ACCESS_2_SHADER_WRITE_BIT,
-				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-				VK_ACCESS_2_SHADER_READ_BIT,
-				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
-				VK_WHOLE_SIZE);
+			//Barrier::buffer(
+			//	commandBuffer,
+			//	transformBuffer->handle(),
+			//	VK_ACCESS_2_SHADER_WRITE_BIT,
+			//	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
+			//	VK_ACCESS_2_SHADER_READ_BIT,
+			//	VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
+			//	VK_WHOLE_SIZE);
+
 			break;
 		case FramePassType::NONE:
 		default:
