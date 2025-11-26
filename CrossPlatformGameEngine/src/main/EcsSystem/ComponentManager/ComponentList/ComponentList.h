@@ -11,13 +11,16 @@
 #include <stack>
 
 template<typename T>
-class ComponentList : public ComponentList_I {
+class ComponentList : public ComponentList_I
+{
 public:
-	ComponentList() : mComponentCount(0) {
+	ComponentList() : mComponentCount(0)
+	{
 		mComponents.reserve(ENTITY_MAX);
 	}
 
-	void add(EntityId entity, T&& component) {
+	void add(EntityId entity, T&& component)
+	{
 		assert(!has(entity) && "Entity already has component. Cannot add.");
 
 		assert((mComponentCount >= ENTITY_MIN && mComponentCount < ENTITY_MAX) &&
@@ -31,13 +34,15 @@ public:
 		mComponentCount++;
 	}
 
-	void remove(EntityId entity) override {
+	void remove(EntityId entity) override
+	{
 		assert(has(entity) && "Entity does not have component. Cannot remove.");
 
 		uint32_t index = mEntityToComponentIdx[entity];
 		uint32_t lastIndex = mComponentCount - 1;
 
-		if (index != lastIndex) { // move the last component to the space being removed to keep contiguous
+		if (index != lastIndex)
+		{ // move the last component to the space being removed to keep contiguous
 			mComponents[index] = std::move(mComponents[lastIndex]);
 
 			// update the mappings
@@ -54,13 +59,22 @@ public:
 		mComponentCount--;
 	}
 
-	T& get(EntityId entity) {
+	T& get(EntityId entity)
+	{
 		assert(has(entity) && "Entity does not have component. Cannot get.");
 
 		return mComponents.at(mEntityToComponentIdx.at(entity));
 	}
 
-	bool has(EntityId entity) const {
+	const T& get(EntityId entity) const
+	{
+		assert(has(entity) && "Entity does not have component. Cannot get.");
+
+		return mComponents.at(mEntityToComponentIdx.at(entity));
+	}
+
+	bool has(EntityId entity) const
+	{
 		return mEntityToComponentIdx.find(entity) != mEntityToComponentIdx.end();
 	}
 
@@ -69,7 +83,8 @@ public:
 		return mComponents;
 	}
 
-	std::string toString() override {
+	std::string toString() override
+	{
 		std::stringstream ss;
 
 		ss << "EntityToComponentIdx\n";

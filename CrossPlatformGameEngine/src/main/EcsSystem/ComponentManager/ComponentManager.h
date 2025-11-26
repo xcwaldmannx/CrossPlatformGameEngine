@@ -10,12 +10,14 @@
 #include <vector>
 #include <unordered_map>
 
-class ComponentManager {
+class ComponentManager
+{
 public:
 	ComponentManager() : mRegisteredComponentCount(0) {};
 
 	template<typename T>
-	void registerComponent() {
+	void registerComponent()
+	{
 		std::type_index component = typeid(T);
 		assert(mComponentLists.find(component) == mComponentLists.end() &&
 			"Component already registered. Cannot register.");
@@ -28,7 +30,8 @@ public:
 	}
 
 	template<typename T>
-	void addComponent(EntityId entity, T&& component) {
+	void addComponent(EntityId entity, T&& component)
+	{
 		std::type_index comp = typeid(T);
 		auto it = mComponentLists.find(comp);
 		assert(it != mComponentLists.end() && "Component is not registered. Cannot add.");
@@ -38,7 +41,8 @@ public:
 	}
 
 	template<typename T>
-	void removeComponent(EntityId entity) {
+	void removeComponent(EntityId entity)
+	{
 		std::type_index component = typeid(T);
 		auto it = mComponentLists.find(component);
 		assert(it != mComponentLists.end() && "Component is not registered. Cannot remove.");
@@ -47,9 +51,12 @@ public:
 		list->remove(entity);
 	}
 
-	void removeComponents(EntityId entity, const Signature& signature) {
-		for (int i = 0; i < signature.size(); i++) {
-			if (signature.test(i)) {
+	void removeComponents(EntityId entity, const Signature& signature)
+	{
+		for (int i = 0; i < signature.size(); i++)
+		{
+			if (signature.test(i))
+			{
 				const std::type_index& component = mComponentIdToComponent.at(i);
 				auto it = mComponentLists.find(component);
 				assert(it != mComponentLists.end() && "Component is not registered. Cannot remove.");
@@ -60,7 +67,8 @@ public:
 	}
 
 	template<typename T>
-	T& getComponent(EntityId entity) {
+	T& getComponent(EntityId entity)
+	{
 		std::type_index component = typeid(T);
 		auto it = mComponentLists.find(component);
 		assert(it != mComponentLists.end() && "Component is not registered. Cannot get.");
@@ -71,7 +79,20 @@ public:
 	}
 
 	template<typename T>
-	const std::shared_ptr<ComponentList<T>>& getComponentList() {
+	const T& getComponent(EntityId entity) const
+	{
+		std::type_index component = typeid(T);
+		auto it = mComponentLists.find(component);
+		assert(it != mComponentLists.end() && "Component is not registered. Cannot get.");
+
+		ComponentList<T>* list = static_cast<ComponentList<T>*>(it->second.get());
+
+		return list->get(entity);
+	}
+
+	template<typename T>
+	const std::shared_ptr<ComponentList<T>>& getComponentList()
+	{
 		std::type_index type = typeid(T);
 		auto it = mComponentLists.find(type);
 		assert(it != mComponentLists.end() && "Component is not registered. Cannot get list.");
@@ -80,7 +101,8 @@ public:
 	}
 
 	template<typename T>
-	uint32_t getComponentId() {
+	uint32_t getComponentId()
+	{
 		std::type_index component = typeid(T);
 		assert(mComponentToComponentId.find(component) != mComponentToComponentId.end() &&
 			"Component is not registered. Cannot get id.");
@@ -88,7 +110,8 @@ public:
 		return mComponentToComponentId[component];
 	}
 
-	std::string toString() {
+	std::string toString()
+	{
 		std::stringstream ss;
 
 		for (const auto& pair : mComponentLists) {

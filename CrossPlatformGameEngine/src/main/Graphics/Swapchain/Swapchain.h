@@ -39,6 +39,7 @@ namespace ascen
 		//void recreate(VkDevice device);
 
 		const VkExtent2D& getExtent();
+		uint32_t getImageCount() const;
 		const std::vector<VkFramebuffer>& getFramebuffers();
 
 		static SwapchainSupportDetails querySwapchainSupport(

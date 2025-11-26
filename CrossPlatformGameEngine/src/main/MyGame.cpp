@@ -25,9 +25,9 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	// createEntities();
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 5; i++)
 	{
-		for (int j = 0; j < 100; j++)
+		for (int j = 0; j < 5; j++)
 		{
 			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
 		}
@@ -179,7 +179,7 @@ void MyGame::createHelicopter(glm::vec3 position)
 
 void MyGame::updateEntities(float delta)
 {
-	for (int i = 0; i < 10'000; i++)
+	for (int i = 0; i < 15; i++)
 	{ // helicopters
 		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
 		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;

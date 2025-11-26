@@ -6,7 +6,8 @@
 #include <memory>
 #include <unordered_set>
 
-class System_I {
+class System_I
+{
 public:
 	virtual ~System_I() = default;
 
@@ -14,5 +15,6 @@ public:
 	
 public:
 	std::unordered_set<EntityId> mEntities;
+	std::unordered_set<EntityId> mDirtyEntities;
 	ComponentManager* mComponentManager = nullptr;
 };

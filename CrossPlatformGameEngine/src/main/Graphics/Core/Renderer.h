@@ -80,8 +80,10 @@ namespace ascen
 		FrameGraph mFrameGraph;
 
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
-		std::vector<VkSemaphore> mRenderFinishedSemaphores;
+		//std::vector<VkSemaphore> mRenderFinishedSemaphores;
+		std::vector<VkSemaphore> mRenderFinishedForImageSemaphores;
 		std::vector<VkFence> mInFlightFences;
+
 
 		uint32_t MAX_FRAMES_IN_FLIGHT = 2;
 		uint32_t mFrameIndex = 0;

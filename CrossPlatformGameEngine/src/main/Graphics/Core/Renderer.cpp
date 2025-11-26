@@ -273,7 +273,7 @@ void Renderer::drawFrame()
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = commandPool->getBufferIndex(mFrameIndex);
 
-	VkSemaphore signalSemaphores[] = { mRenderFinishedSemaphores[mFrameIndex] };
+	VkSemaphore signalSemaphores[] = { mRenderFinishedForImageSemaphores[mImageIndex] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -318,7 +318,7 @@ void Renderer::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
 void Renderer::createSyncObjects()
 {
 	mImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	mRenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	// mRenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	mInFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
 	VkSemaphoreCreateInfo semaphoreInfo{};
@@ -331,10 +331,21 @@ void Renderer::createSyncObjects()
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
 		if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mImageAvailableSemaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]) != VK_SUCCESS ||
+			//vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedSemaphores[i]) != VK_SUCCESS ||
 			vkCreateFence(mDevice, &fenceInfo, nullptr, &mInFlightFences[i]) != VK_SUCCESS)
 		{
 
+			throw std::runtime_error("failed to create synchronization objects for a frame!");
+		}
+	}
+
+	size_t swapchainImageCount = mRenderContext.getSwapchain()->getImageCount();
+	mRenderFinishedForImageSemaphores.resize(swapchainImageCount);
+
+	for (size_t i = 0; i < swapchainImageCount; i++)
+	{
+		if (vkCreateSemaphore(mDevice, &semaphoreInfo, nullptr, &mRenderFinishedForImageSemaphores[i]) != VK_SUCCESS)
+		{
 			throw std::runtime_error("failed to create synchronization objects for a frame!");
 		}
 	}
@@ -342,9 +353,14 @@ void Renderer::createSyncObjects()
 
 void Renderer::destroySyncObjects()
 {
+	for (size_t i = 0; i < mRenderFinishedForImageSemaphores.size(); i++)
+	{
+		vkDestroySemaphore(mDevice, mRenderFinishedForImageSemaphores[i], nullptr);
+	}
+
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
 	{
-		vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
+		//vkDestroySemaphore(mDevice, mRenderFinishedSemaphores[i], nullptr);
 		vkDestroySemaphore(mDevice, mImageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(mDevice, mInFlightFences[i], nullptr);
 	}

@@ -7,7 +7,8 @@
 #include <iostream>
 #include <utility>
 
-class EcsSystem {
+class EcsSystem
+{
 public:
 	template<typename T>
 	void registerComponent()
@@ -53,8 +54,11 @@ public:
 		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot add component.");
 
 		mEntityIdToSignature.at(entity).set(mComponentManager.getComponentId<T>());
+		Signature entitySignature = mEntityIdToSignature.at(entity);
+
 		mComponentManager.addComponent<T>(entity, std::forward<T>(component));
-		mSystemManager.addEntity(entity, mEntityIdToSignature.at(entity));
+		mSystemManager.addEntity(entity, entitySignature);
+		mSystemManager.addDirtyEntity(entity, entitySignature);
 	}
 
 	template<typename T>
@@ -63,12 +67,20 @@ public:
 		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot remove components.");
 
 		mComponentManager.removeComponent<T>(entity);
-		mEntityIdToSignature.at(entity).reset();
 		mSystemManager.removeEntity(entity, mEntityIdToSignature.at(entity));
+		mEntityIdToSignature.at(entity).reset();
 	}
 
 	template<typename T>
 	T& getComponent(EntityId entity)
+	{
+		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot get component.");
+		mSystemManager.addDirtyEntity(entity, mEntityIdToSignature.at(entity));
+		return mComponentManager.getComponent<T>(entity);
+	}
+
+	template<typename T>
+	const T& getComponent(EntityId entity) const
 	{
 		assert(entity < ENTITY_MAX && "Entity limit reached. Cannot get component.");
 

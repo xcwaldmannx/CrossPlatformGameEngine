@@ -92,6 +92,11 @@ const VkExtent2D& Swapchain::getExtent()
     return mExtent;
 }
 
+uint32_t Swapchain::getImageCount() const
+{
+    return mImageCount;
+}
+
 const std::vector<VkFramebuffer>& Swapchain::getFramebuffers()
 {
     return mFrameBuffers;
