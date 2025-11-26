@@ -46,14 +46,21 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 
 	QueueFamily graphicsFamily{};
 	QueueFamily presentFamily{};
-	QueueFamilies::updateQueueFamilies(mPhysicalDevice, mSurface, graphicsFamily, presentFamily);
+	QueueFamily computeFamily{};
+	QueueFamilies::updateQueueFamilies(mPhysicalDevice, mSurface, graphicsFamily, presentFamily, computeFamily);
 	mGraphicsFamilyIndex = graphicsFamily.value();
 	mPresentFamilyIndex = presentFamily.value();
+	mComputeFamilyIndex = computeFamily.value();
 
-	mDevice = Device::create(mPhysicalDevice, graphicsFamily.value(), presentFamily.value());
+	mDevice = Device::create(
+		mPhysicalDevice,
+		graphicsFamily.value(),
+		presentFamily.value(),
+		computeFamily.value());
 
 	mGraphicsQueue = QueueFamilies::getDeviceQueue(mDevice, mGraphicsFamilyIndex);
 	mPresentQueue = QueueFamilies::getDeviceQueue(mDevice, mPresentFamilyIndex);
+	mComputeQueue = QueueFamilies::getDeviceQueue(mDevice, mComputeFamilyIndex);
 
 	mCommandPoolFactory      = CommandPoolFactory(mDevice);
 	mDescriptorFactory       = DescriptorFactory(mDevice);
@@ -86,6 +93,11 @@ uint32_t VulkanContext::getPresentFamilyIndex() const
 	return mPresentFamilyIndex;
 }
 
+uint32_t VulkanContext::getComputeFamilyIndex() const
+{
+	return mComputeFamilyIndex;
+}
+
 VkQueue VulkanContext::getGraphicsQueue() const
 {
 	return mGraphicsQueue;
@@ -94,6 +106,11 @@ VkQueue VulkanContext::getGraphicsQueue() const
 VkQueue VulkanContext::getPresentQueue() const
 {
 	return mPresentQueue;
+}
+
+VkQueue VulkanContext::getComputeQueue() const
+{
+	return mComputeQueue;
 }
 
 const CommandPoolFactory& VulkanContext::getCommandPoolFactory() const

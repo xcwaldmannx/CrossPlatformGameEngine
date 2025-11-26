@@ -10,13 +10,15 @@ using namespace ascen;
 VkDevice Device::create(
     VkPhysicalDevice physicalDevice,
     uint32_t graphicsFamily,
-    uint32_t presentFamily)
+    uint32_t presentFamily,
+    uint32_t computeFamily)
 {
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    std::set<uint32_t> uniqueQueueFamilies = { graphicsFamily, presentFamily };
+    std::set<uint32_t> uniqueQueueFamilies = { graphicsFamily, presentFamily, computeFamily };
 
     float queuePriority = 1.0f;
-    for (uint32_t queueFamily : uniqueQueueFamilies) {
+    for (uint32_t queueFamily : uniqueQueueFamilies)
+    {
         VkDeviceQueueCreateInfo queueCreateInfo{};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
         queueCreateInfo.queueFamilyIndex = queueFamily;

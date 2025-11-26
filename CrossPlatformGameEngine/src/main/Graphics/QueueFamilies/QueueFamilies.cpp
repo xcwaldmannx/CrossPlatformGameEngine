@@ -8,7 +8,8 @@ void QueueFamilies::updateQueueFamilies(
 	VkPhysicalDevice physicalDevice,
 	VkSurfaceKHR surface,
 	QueueFamily& graphicsFamily,
-	QueueFamily& presentFamily)
+	QueueFamily& presentFamily,
+    QueueFamily& computeFamily)
 {
     uint32_t queueFamilyCount = 0;
     vkGetPhysicalDeviceQueueFamilyProperties(physicalDevice, &queueFamilyCount, nullptr);
@@ -30,6 +31,11 @@ void QueueFamilies::updateQueueFamilies(
         if (presentSupport)
         {
             presentFamily = i;
+        }
+
+        if (queueFamily.queueFlags & VK_QUEUE_COMPUTE_BIT)
+        {
+            computeFamily = i;
         }
 
         if (graphicsFamily.has_value() && presentFamily.has_value())

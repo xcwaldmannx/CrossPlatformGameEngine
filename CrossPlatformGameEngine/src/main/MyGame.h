@@ -34,7 +34,7 @@ private:
 	WindowManager& mWindowManager;
 	ascen::Engine mEngine;
 
-	std::unordered_map<uint32_t, ModelData> mModelData;
+	std::unordered_map<uint32_t, ascen::ModelData> mModelData;
 
 	std::vector<float> mVertices;
 	std::vector<uint32_t> mIndices;
@@ -64,5 +64,5 @@ private:
 	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 camPosition{ 0.0f };
 	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
-	float camSpeed = 10.0f;
+	float camSpeed = 50.0f;
 };

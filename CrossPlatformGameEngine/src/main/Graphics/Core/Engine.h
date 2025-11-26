@@ -15,6 +15,9 @@
 #include "../Resource/Barrier/Barrier.h"
 
 #include "../../EcsSystem/EcsSystem.h"
+#include "../Ecs/Components/TransformComponent.h"
+#include "../Ecs/Components/ModelComponent.h"
+#include "../Ecs/Systems/RenderSystem.h"
 
 class WindowManager;
 
@@ -45,7 +48,7 @@ namespace ascen
 
 		uint32_t getScreenWidth() const;
 		uint32_t getScreenHeight() const;
-		uint32_t getCurrentFrame() const;
+		uint32_t getFrameIndex() const;
 
 	private:
 		WindowManager& mWindowManager;

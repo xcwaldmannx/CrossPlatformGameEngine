@@ -26,7 +26,8 @@ namespace ascen
 		VERTEX,
 		INDEX,
 		UNIFORM,
-		STORAGE
+		STORAGE,
+		INDIRECT,
 	};
 
 	struct BufferEntry

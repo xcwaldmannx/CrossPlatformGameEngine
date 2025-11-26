@@ -2,6 +2,8 @@
 
 #include <stdexcept>
 
+#include "../../FrameGraph/Graphics/GraphicsFramePass.h"
+#include "../../FrameGraph/Compute/ComputeFramePass.h"
 #include "../Resource/ResourceRegistryBackend.h"
 #include "../Descriptor/DescriptorRegistryBackend.h"
 #include "../Pipeline/PipelineRegistryBackend.h"
@@ -18,26 +20,33 @@ FramePassRegistry::FramePassRegistry(
 	const PipelineRegistry& pipelineRegistry) :
 	mResourceRegistry(resourceRegistry),
 	mDescriptorRegistry(descriptorRegistry),
-	mPipelineRegistry(pipelineRegistry)
-{
+	mPipelineRegistry(pipelineRegistry) {}
 
-}
-
-void FramePassRegistry::registerFramePass(FramePassEntry entry)
+void FramePassRegistry::registerGraphics(GraphicsFramePassEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
 		throw std::runtime_error("A frame pass with that name already exists!");
 	}
 
-	mEntries.emplace_back(std::move(entry));
+	mGraphicsEntries.emplace_back(std::move(entry));
+}
+
+void FramePassRegistry::registerCompute(ComputeFramePassEntry entry)
+{
+	if (isRegistered(entry.mName))
+	{
+		throw std::runtime_error("A frame pass with that name already exists!");
+	}
+
+	mComputeEntries.emplace_back(std::move(entry));
 }
 
 void FramePassRegistry::reconstruct()
 {
 	cleanup();
 
-	for (auto& entry : mEntries)
+	for (const auto& entry : mGraphicsEntries)
 	{
 		std::vector<VkBuffer> vertexBufferHandles;
 
@@ -84,8 +93,64 @@ void FramePassRegistry::reconstruct()
 
 		std::vector<VkDescriptorSet> descriptorSetHandles;
 
-		const auto& engineSet = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, "engine");
-		descriptorSetHandles.push_back(engineSet->handle());
+		for (auto& descriptorSet : entry.mDescriptorSets)
+		{
+			const auto& set = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
+			descriptorSetHandles.push_back(set->handle());
+		}
+
+		const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, entry.mPipeline);
+		VkPipeline pipelineHandle = pipeline->handle();
+		VkPipelineLayout pipelineLayoutHandle = pipeline->getLayout();
+
+		mFramePasses[entry.mName] = std::make_shared<GraphicsFramePass>(
+			FramePassType::GRAPHICS,
+			descriptorSetHandles,
+			pipelineHandle,
+			pipelineLayoutHandle,
+			readBufferHandles,
+			writeBufferHandles,
+			readTextureHandles,
+			writeTextureHandles,
+			vertexBufferHandles,
+			indexBufferHandle);
+	}
+
+	for (const auto& entry : mComputeEntries)
+	{
+		std::vector<VkBuffer> readBufferHandles;
+
+		for (auto& readBuffer : entry.mReadBuffers)
+		{
+			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
+			readBufferHandles.push_back(buffer->handle());
+		}
+
+		std::vector<VkBuffer> writeBufferHandles;
+
+		for (auto& writeBuffer : entry.mWriteBuffers)
+		{
+			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
+			writeBufferHandles.push_back(buffer->handle());
+		}
+
+		std::vector<VkImageView> readTextureHandles;
+
+		for (auto& readTexture : entry.mReadTextures)
+		{
+			const auto& texture = ResourceRegistryBackend::getTexture(mResourceRegistry, readTexture);
+			readTextureHandles.push_back(texture->handle());
+		}
+
+		std::vector<VkImageView> writeTextureHandles;
+
+		for (auto& writeTexture : entry.mWriteTextures)
+		{
+			const auto& texture = ResourceRegistryBackend::getTexture(mResourceRegistry, writeTexture);
+			writeTextureHandles.push_back(texture->handle());
+		}
+
+		std::vector<VkDescriptorSet> descriptorSetHandles;
 
 		for (auto& descriptorSet : entry.mDescriptorSets)
 		{
@@ -93,37 +158,20 @@ void FramePassRegistry::reconstruct()
 			descriptorSetHandles.push_back(set->handle());
 		}
 
-		VkPipeline pipelineHandle = VK_NULL_HANDLE;
-		VkPipelineLayout pipelineLayoutHandle = VK_NULL_HANDLE;
+		const auto& pipeline = PipelineRegistryBackend::getComputePipeline(mPipelineRegistry, entry.mPipeline);
+		VkPipeline pipelineHandle = pipeline->handle();
+		VkPipelineLayout pipelineLayoutHandle = pipeline->getLayout();
 
-		switch (entry.mPipelineType)
-		{
-		case FramePassType::GRAPHICS:
-		{
-			const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, entry.mPipeline);
-			pipelineHandle = pipeline->handle();
-			pipelineLayoutHandle = pipeline->getLayout();
-			break;
-		}
-		case FramePassType::COMPUTE:
-		{
-			const auto& pipeline = PipelineRegistryBackend::getComputePipeline(mPipelineRegistry, entry.mPipeline);
-			pipelineHandle = pipeline->handle();
-			pipelineLayoutHandle = pipeline->getLayout();
-			break;
-		}
-		}
-
-		mFramePasses[entry.mName] = std::make_shared<FramePass>(
-			vertexBufferHandles,
-			indexBufferHandle,
+		mFramePasses[entry.mName] = std::make_shared<ComputeFramePass>(
+			FramePassType::COMPUTE,
+			descriptorSetHandles,
+			pipelineHandle,
+			pipelineLayoutHandle,
 			readBufferHandles,
 			writeBufferHandles,
 			readTextureHandles,
 			writeTextureHandles,
-			descriptorSetHandles,
-			pipelineHandle,
-			pipelineLayoutHandle);
+			entry.mGroups);
 	}
 }
 

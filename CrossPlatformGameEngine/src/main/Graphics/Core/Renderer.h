@@ -1,8 +1,7 @@
 #pragma once
 
-#include "../Ecs/Systems/RenderSystem.h"
-
 #include "../FrameGraph/FrameGraph.h"
+#include "../Ecs/Systems/RenderSystem.h"
 
 #include <concepts>
 
@@ -45,8 +44,10 @@ namespace ascen
 			EcsSystem& ecsSystem,
 			VulkanContext& vulkanContext,
 			RenderContext& renderContext,
+			VertexRegistry& vertexRegistry,
 			ResourceRegistry& resourceRegistry,
 			DescriptorRegistry& descriptorRegistry,
+			PipelineRegistry& pipelineRegistry,
 			FramePassRegistry& framePassRegistry);
 
 		void updateRenderSystem();
@@ -60,7 +61,7 @@ namespace ascen
 
 		void cleanup();
 
-		uint32_t getCurrentFrame() const;
+		uint32_t getFrameIndex() const;
 
 	private:
 		WindowManager& mWindowManager;
@@ -70,8 +71,11 @@ namespace ascen
 		const VkQueue mPresentQueue;
 		const VkDevice mDevice;
 		RenderContext& mRenderContext;
+		VertexRegistry& mVertexRegistry;
 		ResourceRegistry& mResourceRegistry;
 		DescriptorRegistry& mDescriptorRegistry;
+		PipelineRegistry& mPipelineRegistry;
+		FramePassRegistry& mFramePassRegistry;
 
 		FrameGraph mFrameGraph;
 
@@ -80,11 +84,8 @@ namespace ascen
 		std::vector<VkFence> mInFlightFences;
 
 		uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-		uint32_t mCurrentFrame = 0;
-		uint32_t mCurrentImage = 0;
-
-		BufferPtr mInstanceBuffer = nullptr;
-		BufferPtr mIndirectBuffer = nullptr;
+		uint32_t mFrameIndex = 0;
+		uint32_t mImageIndex = 0;
 
 		uint32_t mDrawCommandCount = 0;
 	};

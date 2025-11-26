@@ -52,9 +52,6 @@ void PipelineRegistry::reconstruct()
 	{
 		std::vector<DescriptorSetLayoutPtr> layouts;
 
-		auto& engineLayout = DescriptorRegistryBackend::getDescriptorSetLayout(mDescriptorRegistry, "engine");
-		layouts.push_back(engineLayout);
-
 		for (const auto& layoutName : entry.mDescriptorSetLayouts)
 		{
 			auto& layout = DescriptorRegistryBackend::getDescriptorSetLayout(mDescriptorRegistry, layoutName);

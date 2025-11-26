@@ -17,7 +17,8 @@ namespace ascen
 		static VkDevice create(
 			VkPhysicalDevice physicalDevice,
 			uint32_t graphicsFamily,
-			uint32_t presentFamily);
+			uint32_t presentFamily,
+			uint32_t computeFamily);
 
 		static void destroy(VkDevice device);
 	};

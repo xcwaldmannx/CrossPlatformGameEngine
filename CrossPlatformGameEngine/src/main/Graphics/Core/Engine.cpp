@@ -4,10 +4,6 @@
 
 #include "../Swapchain/Swapchain.h"
 
-#include "../Ecs/Components/TransformComponent.h"
-#include "../Ecs/Components/ModelComponent.h"
-#include "../Ecs/Systems/RenderSystem.h"
-
 using namespace ascen;
 
 Engine::Engine(WindowManager& windowManager) :
@@ -18,7 +14,8 @@ Engine::Engine(WindowManager& windowManager) :
 	mDescriptorRegistry(mVulkanContext, mResourceRegistry),
 	mPipelineRegistry(mVulkanContext, mRenderContext, mVertexRegistry, mDescriptorRegistry),
 	mFramePassRegistry(mResourceRegistry, mDescriptorRegistry, mPipelineRegistry),
-	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext, mResourceRegistry, mDescriptorRegistry, mFramePassRegistry)
+	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext,
+		mVertexRegistry, mResourceRegistry, mDescriptorRegistry, mPipelineRegistry, mFramePassRegistry)
 {
 	// initialize ECS
 	mEcs.registerComponent<TransformComponent>();
@@ -104,7 +101,7 @@ uint32_t Engine::getScreenHeight() const
 	return mRenderContext.getSwapchain()->getExtent().height;
 }
 
-uint32_t Engine::getCurrentFrame() const
+uint32_t Engine::getFrameIndex() const
 {
-	return mRenderer.getCurrentFrame();
+	return mRenderer.getFrameIndex();
 }

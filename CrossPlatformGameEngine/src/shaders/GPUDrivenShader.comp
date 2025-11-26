@@ -1,26 +1,146 @@
 #version 450
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-struct InstanceData {
-    mat4 transform;
-    uint textureId;
-    uint pad[3];
+struct Entity
+{
+	vec3 mPosition;
+	uint _pad0;
+
+	vec3 mRotation;
+	uint _pad1;
+
+	vec3 mScale;
+	uint mMeshCount;
+
+	uint mMeshOffset;
+	uint mInstanceLocalOffset;
+	uint _pad2[2];
 };
 
-layout(std430, set = 0, binding = 0x01) readonly buffer Transforms {
+struct Mesh
+{
+	vec3 mPosition;
+	uint _pad0;
+
+	vec3 mRotation;
+	uint _pad1;
+
+	vec3 mScale;
+	uint mTransformOffset;
+
+	uint mTextureIndex;
+	uint mInstanceBaseOffset;
+	uint _pad2[2];
+};
+
+struct Instance
+{
+	mat4 mTransform;
+	uint mTextureIndex;
+	uint _pad[3];
+};
+
+struct DrawCommand
+{
+    uint indexCount;
+    uint instanceCount;
+    uint firstIndex;
+    int  vertexOffset;
+    uint firstInstance;
+};
+
+layout(std140, set = 0, binding = 0x00) uniform Camera
+{
+    mat4 view;
+    mat4 proj;
+} camera;
+
+layout(std430, set = 0, binding = 0x01) readonly buffer Entities
+{
+    Entity entities[];
+};
+
+layout(std430, set = 0, binding = 0x02) readonly buffer Meshes
+{
+    Mesh meshes[];
+};
+
+layout(std430, set = 0, binding = 0x03) readonly buffer Transforms
+{
     mat4 transforms[];
 };
 
-layout(std430, set = 0, binding = 0x02) buffer Instances {
-    InstanceData instances[];
-} buf;
+layout(std430, set = 0, binding = 0x04) buffer Instances
+{
+    Instance instances[];
+};
 
-layout(push_constant) uniform Params {
-    uint count;
-    float scale;
-} pc;
+mat4 eulerToMat4(vec3 euler)
+{
+    float cx = cos(euler.x);
+    float sx = sin(euler.x);
+    float cy = cos(euler.y);
+    float sy = sin(euler.y);
+    float cz = cos(euler.z);
+    float sz = sin(euler.z);
+
+    mat3 Rz = mat3(
+        cz, -sz, 0.0,
+        sz,  cz, 0.0,
+        0.0, 0.0, 1.0
+    );
+
+    mat3 Ry = mat3(
+         cy, 0.0, sy,
+         0.0, 1.0, 0.0,
+        -sy, 0.0, cy
+    );
+
+    mat3 Rx = mat3(
+        1.0, 0.0, 0.0,
+        0.0,  cx, -sx,
+        0.0,  sx,  cx
+    );
+
+    mat3 R = Rz * Ry * Rx;
+
+    mat4 M = mat4(1.0);
+    M[0].xyz = R[0];
+    M[1].xyz = R[1];
+    M[2].xyz = R[2];
+    return M;
+}
+
+mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
+{
+    mat4 R = eulerToMat4(rotEuler);
+
+    R[0] *= scale.x;
+    R[1] *= scale.y;
+    R[2] *= scale.z;
+
+    R[3].xyz = pos;
+
+    return R;
+}
 
 void main()
 {
-    uint i = gl_GlobalInvocationID.x;
+	const uint entityId = gl_GlobalInvocationID.x;
+
+	// no more work, exit
+    if (entityId >= entities.length()) return;
+	
+	const Entity entity = entities[entityId];
+	const mat4 entityTRS = buildTRS(entity.mPosition, entity.mRotation, entity.mScale);
+	
+	for (uint i = 0; i < entity.mMeshCount; i++)
+	{
+		const Mesh mesh = meshes[entity.mMeshOffset + i];
+		const mat4 meshTRS = buildTRS(mesh.mPosition, mesh.mRotation, mesh.mScale);
+		
+		uint instanceIndex = mesh.mInstanceBaseOffset + entity.mInstanceLocalOffset;
+		instances[instanceIndex].mTransform = entityTRS * transforms[mesh.mTransformOffset] * meshTRS;
+		instances[instanceIndex].mTextureIndex = mesh.mTextureIndex;
+	}
 }
