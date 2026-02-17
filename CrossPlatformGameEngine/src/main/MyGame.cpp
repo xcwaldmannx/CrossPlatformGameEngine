@@ -25,9 +25,9 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	// createEntities();
 
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 100; i++)
 	{
-		for (int j = 0; j < 10; j++)
+		for (int j = 0; j < 100; j++)
 		{
 			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
 		}
@@ -178,7 +178,7 @@ void MyGame::createHelicopter(glm::vec3 position)
 
 void MyGame::updateEntities(float delta)
 {
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 10'000; i++)
 	{ // helicopters
 		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
 		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
@@ -194,7 +194,7 @@ void MyGame::updateCamera(float delta)
 	// --- yaw (Q/E), pitch clamped ---
 	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_Q)) camRotation.y -= camSpeed * 0.25f * delta; // look left
 	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_E)) camRotation.y += camSpeed * 0.25f * delta; // look right
-	camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f); // �89�
+	camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f);
 	
 	// --- derive camera basis (-Z forward, Y up) ---
 	glm::vec3 camForward;

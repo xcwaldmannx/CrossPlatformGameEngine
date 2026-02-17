@@ -17,7 +17,7 @@ namespace ascen
 	{
 	public:
 		RenderContext(
-			const WindowManager& windowManager,
+			WindowManager& windowManager,
 			const VulkanContext& vulkanContext);
 
 		void resize();
@@ -29,7 +29,7 @@ namespace ascen
 		const RenderPassPtr& getRenderPass() const;
 
 	private:
-		const WindowManager& mWindowManager;
+		WindowManager& mWindowManager;
 		const VkDevice mDevice;
 		const uint32_t mGraphicsFamilyIndex;
 		const uint32_t mPresentFamilyIndex;

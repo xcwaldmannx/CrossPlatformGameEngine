@@ -7,7 +7,7 @@
 using namespace ascen;
 
 RenderContext::RenderContext(
-	const WindowManager& windowManager,
+	WindowManager& windowManager,
 	const VulkanContext& vulkanContext) :
 	mWindowManager(windowManager),
 	mDevice(vulkanContext.getDevice()),
@@ -61,6 +61,8 @@ void RenderContext::resize()
 		mDevice,
 		mRenderPass->handle(),
 		mDepthTexture->handle());
+
+	mWindowManager.setResized(false);
 }
 
 void RenderContext::cleanup()
