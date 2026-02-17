@@ -25,9 +25,9 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	// createEntities();
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 10; i++)
 	{
-		for (int j = 0; j < 100; j++)
+		for (int j = 0; j < 10; j++)
 		{
 			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
 		}
@@ -52,9 +52,7 @@ void MyGame::loadTextures()
 
 	std::vector<const char*> mTextureFilepaths =
 	{
-		"res/textures/testimg1.png",
-		"res/textures/testimg2.png",
-		"res/textures/testimg3.png",
+		"assets/textures/metal.jpg",
 	};
 
 	uint32_t width = 1024;
@@ -86,11 +84,12 @@ void MyGame::loadModels()
 
 	std::vector<std::pair<uint32_t, std::string>> modelFilepaths =
 	{
-		{ PRISM,      "res/models/prism.model"      },
-		{ SHAPES,     "res/models/shapes.model"     },
-		{ WINDMILL,   "res/models/windmill.model"   },
-		{ HELICOPTER, "res/models/helicopter.model" },
-		{ FROSTY,     "res/models/frosty.model"     },
+		{ HELICOPTER, "assets/models/submarine.model" },
+		// { PRISM,      "res/models/prism.model"      },
+		// { SHAPES,     "res/models/shapes.model"     },
+		// { WINDMILL,   "res/models/windmill.model"   },
+		// { HELICOPTER, "res/models/helicopter.model" },
+		// { FROSTY,     "res/models/frosty.model"     },
 	};
 
 	uint32_t globalVertexOffset = 0;
@@ -179,14 +178,14 @@ void MyGame::createHelicopter(glm::vec3 position)
 
 void MyGame::updateEntities(float delta)
 {
-	for (int i = 0; i < 10'000; i++)
+	for (int i = 0; i < 100; i++)
 	{ // helicopters
 		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
 		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
 
 		auto& m = mEngine.ecs().getComponent<ModelComponent>(i);
-		m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
-		m.mMeshTransforms[2].mRotation += glm::vec3(40.0f, 0, 0) * delta; // tail
+		//m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
+		m.mMeshTransforms[2].mRotation += glm::vec3(0, 10, 0) * delta; // tail
 	}
 }
 
@@ -195,7 +194,7 @@ void MyGame::updateCamera(float delta)
 	// --- yaw (Q/E), pitch clamped ---
 	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_Q)) camRotation.y -= camSpeed * 0.25f * delta; // look left
 	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_E)) camRotation.y += camSpeed * 0.25f * delta; // look right
-	camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f); // ±89°
+	camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f); // ï¿½89ï¿½
 	
 	// --- derive camera basis (-Z forward, Y up) ---
 	glm::vec3 camForward;

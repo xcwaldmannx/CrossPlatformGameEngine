@@ -18,6 +18,8 @@
 #include "../Registry/Pipeline/PipelineRegistry.h"
 #include "../Registry/FramePass/FramePassRegistry.h"
 
+#include <filesystem>
+
 using namespace ascen;
 
 Renderer::Renderer(
@@ -84,6 +86,8 @@ Renderer::Renderer(
 	mDescriptorRegistry.registerDescriptor(
 		{ "ENGINE_TEXTURE_IMAGE", "ENGINE_DESC_GRAPHICS", 0x03, 0 /*not used*/,
 		DescriptorType::IMAGE, DescriptorStage::PIXEL });
+
+	std::cout << "CWD: " << std::filesystem::current_path() << "\n";
 
 	mPipelineRegistry.registerGraphicsPipeline(
 		{ "ENGINE_PIPELINE_GRAPHICS", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv",
@@ -296,7 +300,9 @@ void Renderer::drawFrame()
 
 	VkResult queuePresentResult = vkQueuePresentKHR(mPresentQueue, &presentInfo);
 
-	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR || queuePresentResult == VK_SUBOPTIMAL_KHR)
+	if (queuePresentResult == VK_ERROR_OUT_OF_DATE_KHR ||
+		queuePresentResult == VK_SUBOPTIMAL_KHR ||
+		mWindowManager.isResized())
 	{
 		mRenderContext.resize();
 		return;

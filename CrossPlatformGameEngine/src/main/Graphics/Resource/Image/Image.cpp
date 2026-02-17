@@ -3,6 +3,7 @@
 #include "../Barrier/Barrier.h"
 
 #include <stdexcept>
+#include <string.h>
 
 using namespace ascen;
 

@@ -17,7 +17,7 @@ int main()
 
 	mGame = new MyGame(mWindow);
 
-	while (mWindow.isRunning())
+	while (mWindow.isRunning() && !mWindow.isCloseRequested())
 	{
 		frameCounter.frame();
 		const float delta = frameCounter.deltaTime();

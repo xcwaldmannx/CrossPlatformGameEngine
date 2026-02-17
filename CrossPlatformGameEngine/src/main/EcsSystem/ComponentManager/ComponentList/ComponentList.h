@@ -6,7 +6,7 @@
 #include <cassert>
 
 #include <sstream>
-#include <array>
+#include <vector>
 #include <unordered_map>
 #include <stack>
 
@@ -54,7 +54,8 @@ public:
 		mComponentCount--;
 	}
 
-	T& get(EntityId entity) {
+	T& get(EntityId entity)
+	{
 		assert(has(entity) && "Entity does not have component. Cannot get.");
 
 		return mComponents.at(mEntityToComponentIdx.at(entity));

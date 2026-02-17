@@ -1,6 +1,7 @@
 #include "ValidationLayers.h"
 
 #include <stdexcept>
+#include <cstring>
 
 using namespace ascen;
 
