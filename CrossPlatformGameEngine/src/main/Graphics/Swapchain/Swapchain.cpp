@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include <array>
+#include <limits>
 
 using namespace ascen;
 

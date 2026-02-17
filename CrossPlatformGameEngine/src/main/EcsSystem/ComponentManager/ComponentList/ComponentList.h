@@ -6,7 +6,7 @@
 #include <cassert>
 
 #include <sstream>
-#include <array>
+#include <vector>
 #include <unordered_map>
 #include <stack>
 

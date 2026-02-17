@@ -2,6 +2,8 @@
 
 #include "../Registry/FramePass/FramePassRegistryBackend.h"
 
+#include <algorithm>
+
 using namespace ascen;
 
 FrameGraph::FrameGraph(const FramePassRegistry& framePassRegistry) :

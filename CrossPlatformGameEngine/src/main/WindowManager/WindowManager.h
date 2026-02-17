@@ -16,12 +16,14 @@ public:
 
 	static void framebufferSizeCallback(GLFWwindow* window, int width, int height);
 	static void iconifyCallback(GLFWwindow* window, int iconified);
+	static void windowCloseCallback(GLFWwindow* window);
 
 	void setResized(bool resized);
 
 	bool isRunning() const;
 	bool isResized() const;
 	bool isMinimized() const;
+	bool isCloseRequested() const;
 
 	GLFWwindow* getWindow() const;
 	InputManager& getInput();
@@ -49,6 +51,7 @@ private:
 	inline static std::atomic<int> mFramebufferHeight = 0;
 	inline static std::atomic<bool> mIsResized = false;
 	inline static std::atomic<bool> mIsMinimized = false;
+	inline static std::atomic<bool> mIsCloseRequested = false;
 
 	std::thread mWindowThread;
 

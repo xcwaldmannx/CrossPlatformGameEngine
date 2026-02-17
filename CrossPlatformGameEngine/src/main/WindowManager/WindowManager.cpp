@@ -19,6 +19,12 @@ void WindowManager::destroy()
     {
         mWindowThread.join();
     }
+
+    mIsRunning.store(false, std::memory_order_release);
+    mWindowReady.store(false, std::memory_order_release);
+
+    glfwDestroyWindow(mWindow);
+    glfwTerminate();
 }
 
 void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -33,6 +39,11 @@ void WindowManager::iconifyCallback(GLFWwindow* window, int iconified)
     // iconified == 1, minimized  
     // iconified == 0, restored
     mIsMinimized.store(iconified == GLFW_TRUE, std::memory_order_release);
+}
+
+void WindowManager::windowCloseCallback(GLFWwindow* window)
+{
+    mIsCloseRequested.store(true, std::memory_order_release);
 }
 
 void WindowManager::setResized(bool resized)
@@ -53,6 +64,11 @@ bool WindowManager::isResized() const
 bool WindowManager::isMinimized() const
 {
     return mIsMinimized.load(std::memory_order_acquire);
+}
+
+bool WindowManager::isCloseRequested() const
+{
+    return mIsCloseRequested.load(std::memory_order_acquire);
 }
 
 GLFWwindow* WindowManager::getWindow() const
@@ -87,6 +103,7 @@ void WindowManager::windowThread()
 
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
     glfwSetWindowIconifyCallback(mWindow, iconifyCallback);
+    glfwSetWindowCloseCallback(mWindow, windowCloseCallback);
 
     mIsRunning.store(true, std::memory_order_release);
     mWindowReady.store(true, std::memory_order_release);
@@ -94,15 +111,9 @@ void WindowManager::windowThread()
     glfwMakeContextCurrent(mWindow);
     glfwSwapInterval(1);
 
-    while (!glfwWindowShouldClose(mWindow) && mIsRunning.load(std::memory_order_acquire))
+    while (!mIsCloseRequested.load(std::memory_order_acquire) && mIsRunning.load(std::memory_order_acquire))
     {
         glfwPollEvents();
         mInputManager.update(mWindow);
     }
-
-    mIsRunning.store(false, std::memory_order_release);
-    mWindowReady.store(false, std::memory_order_release);
-
-    glfwDestroyWindow(mWindow);
-    glfwTerminate();
 }

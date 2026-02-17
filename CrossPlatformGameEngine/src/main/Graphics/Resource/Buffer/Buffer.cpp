@@ -4,6 +4,7 @@
 #include "../Barrier/Barrier.h"
 
 #include <stdexcept>
+#include <string.h>
 
 using namespace ascen;
 
@@ -69,7 +70,7 @@ void Buffer::update(
 		size_t size = static_cast<size_t>(itemCount * itemSize);
 		size_t itemOffset = static_cast<size_t>(itemSize * offset);
 
-		std::memcpy(static_cast<uint8_t*>(mMappedMemory) + itemOffset, items, size);
+		memcpy(static_cast<uint8_t*>(mMappedMemory) + itemOffset, items, size);
 	}
 	else
 	{
@@ -85,7 +86,7 @@ void Buffer::update(
 
 		void* data = nullptr;
 		vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
-		std::memcpy(data, items, sizeBytes);
+		memcpy(data, items, sizeBytes);
 		vkUnmapMemory(device, stagingBuffer.mMemory);
 
 		copy(device, queue, commandPool, stagingBuffer, *this, false);

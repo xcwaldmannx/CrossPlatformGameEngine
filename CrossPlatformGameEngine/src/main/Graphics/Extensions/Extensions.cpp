@@ -1,5 +1,6 @@
 #include "Extensions.h"
 
+#include <cstring>
 #include <iostream>
 
 using namespace ascen;
