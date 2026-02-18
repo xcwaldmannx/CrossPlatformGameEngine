@@ -71,6 +71,13 @@ namespace ascen
 		std::vector<uint32_t> mIndexCounts;
 		std::vector<uint32_t> mIndexOffsets;
 		std::vector<uint32_t> mTransformOffsets;
+
+		std::vector<float> mBoundsPosX;
+		std::vector<float> mBoundsPosY;
+		std::vector<float> mBoundsPosZ;
+		std::vector<float> mBoundsNegX;
+		std::vector<float> mBoundsNegY;
+		std::vector<float> mBoundsNegZ;
 	};
 
 	struct MeshKey

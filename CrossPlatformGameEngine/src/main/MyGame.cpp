@@ -96,11 +96,11 @@ void MyGame::loadModels()
 	uint32_t globalIndexOffset = 0;
 	uint32_t globalTransformOffset = 0;
 
-	for (const auto& path : modelFilepaths)
+	for (const auto&[id, filepath] : modelFilepaths)
 	{
-		mass::ModelLayout modelLayout = mass::deserialize(config, path.second);
+		mass::ModelLayout modelLayout = mass::deserialize(config, filepath);
 
-		uint32_t floatsPerVertex = modelLayout.mVertexLayout.mStride / sizeof(float);
+		const uint32_t floatsPerVertex = modelLayout.mVertexLayout.mStride / sizeof(float);
 
 		assert(modelLayout.mVertices.size() % (modelLayout.mVertexLayout.mStride / sizeof(float)) == 0);
 		assert(modelLayout.mTransforms.size() % 16 == 0);
@@ -114,9 +114,15 @@ void MyGame::loadModels()
 			info.mIndexOffsets.push_back(globalIndexOffset + mesh.mIndexOffset);
 			info.mIndexCounts.push_back(mesh.mIndexCount);
 			info.mTransformOffsets.push_back(globalTransformOffset + mesh.mTransformOffset);
+			info.mBoundsPosX.push_back(mesh.mBoundPosX);
+			info.mBoundsPosY.push_back(mesh.mBoundPosY);
+			info.mBoundsPosZ.push_back(mesh.mBoundPosZ);
+			info.mBoundsNegX.push_back(mesh.mBoundNegX);
+			info.mBoundsNegY.push_back(mesh.mBoundNegY);
+			info.mBoundsNegZ.push_back(mesh.mBoundNegZ);
 		}
 
-		mModelData.emplace(path.first, std::move(info));
+		mModelData.emplace(id, std::move(info));
 
 		mVertices.insert(mVertices.end(), modelLayout.mVertices.begin(), modelLayout.mVertices.end());
 		mIndices.insert(mIndices.end(), modelLayout.mIndices.begin(), modelLayout.mIndices.end());
