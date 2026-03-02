@@ -56,8 +56,13 @@ void FramePassRegistry::reconstruct()
 			vertexBufferHandles.push_back(buffer->handle());
 		}
 
-		const auto& indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, entry.mIndexBuffer);
-		VkBuffer indexBufferHandle = indexBuffer->handle();
+		VkBuffer indexBufferHandle = VK_NULL_HANDLE;
+
+		if (!entry.mIndexBuffer.empty())
+		{
+			const auto& indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, entry.mIndexBuffer);
+			indexBufferHandle = indexBuffer->handle();
+		}
 
 		std::vector<VkBuffer> readBufferHandles;
 
@@ -105,6 +110,7 @@ void FramePassRegistry::reconstruct()
 
 		mFramePasses[entry.mName] = std::make_shared<GraphicsFramePass>(
 			FramePassType::GRAPHICS,
+			entry.mFramePassMode,
 			descriptorSetHandles,
 			pipelineHandle,
 			pipelineLayoutHandle,

@@ -4,6 +4,7 @@ using namespace ascen;
 
 GraphicsFramePass::GraphicsFramePass(
 	const FramePassType type,
+	const GraphicsFramePassMode mode,
 	const std::vector<VkDescriptorSet> descriptorSets,
 	const VkPipeline pipeline,
 	const VkPipelineLayout pipelineLayout,
@@ -16,4 +17,5 @@ GraphicsFramePass::GraphicsFramePass(
 	FramePass(type, descriptorSets, pipeline, pipelineLayout,
 		readBuffers, writeBuffers, readTextures, writeTextures),
 	mVertexBuffers(vertexBuffers),
-	mIndexBuffer(indexBuffer) {}
+	mIndexBuffer(indexBuffer),
+	mMode(mode) {}

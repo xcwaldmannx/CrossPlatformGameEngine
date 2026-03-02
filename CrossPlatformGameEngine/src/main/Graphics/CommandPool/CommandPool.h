@@ -39,21 +39,25 @@ namespace ascen
 		void destroy(VkDevice device) override;
 
 		VkCommandBuffer beginCommand(uint32_t frameIndex);
+
 		void endCommand(VkCommandBuffer buffer);
 
+		void beginRenderPass(
+			VkCommandBuffer commandBuffer,
+			uint32_t currentImage,
+			const RenderPassPtr& renderPass,
+			const SwapchainPtr& swapchain);
+
+		void endRenderPass(VkCommandBuffer commandBuffer);
+
 		void recordGraphics(
-			VkPhysicalDevice physicalDevice,
 			VkCommandBuffer commandBuffer,
 			const GraphicsFramePass* framePass,
 			uint32_t frameIndex,
-			uint32_t imageIndex,
 			VkBuffer indirectBuffer,
-			const RenderPassPtr& renderPass,
-			const SwapchainPtr& swapchain,
 			uint32_t drawCommandCount);
 
 		void recordCompute(
-			VkPhysicalDevice physicalDevice,
 			VkCommandBuffer commandBuffer,
 			const ComputeFramePass* framePass,
 			uint32_t currentFrame);

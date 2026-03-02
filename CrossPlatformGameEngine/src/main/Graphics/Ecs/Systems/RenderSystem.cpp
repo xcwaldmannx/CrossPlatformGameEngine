@@ -13,7 +13,8 @@ void RenderSystem::update(float deltaTime)
 {
 	mGPUEntities.clear();
 	mGPUMeshes.clear();
-	mDrawCommands.clear();
+	mMeshDraws.clear();
+	mBBoxDraws.clear();
 
 	std::map<uint32_t, std::vector<EntityId>> modelToEntities;
 
@@ -34,13 +35,20 @@ void RenderSystem::update(float deltaTime)
 
 		for (uint32_t i = 0; i < modelData.mMeshCount; i++)
 		{
-			IndirectBuffer::DrawCommand drawCommand{};
-			drawCommand.vertexOffset = static_cast<int32_t>(modelData.mVertexOffsets[i]);
-			drawCommand.firstIndex = modelData.mIndexOffsets[i];
-			drawCommand.indexCount = modelData.mIndexCounts[i];
-			drawCommand.firstInstance = firstInstance;
-			drawCommand.instanceCount = entityCount;
-			mDrawCommands.emplace_back(std::move(drawCommand));
+			IndirectBuffer::IndexedIndirectCommand meshDraw{};
+			meshDraw.vertexOffset = static_cast<int32_t>(modelData.mVertexOffsets[i]);
+			meshDraw.firstIndex = modelData.mIndexOffsets[i];
+			meshDraw.indexCount = modelData.mIndexCounts[i];
+			meshDraw.firstInstance = firstInstance;
+			meshDraw.instanceCount = entityCount;
+			mMeshDraws.emplace_back(std::move(meshDraw));
+
+			IndirectBuffer::IndirectCommand bboxDraw{};
+			bboxDraw.firstVertex = modelBaseInstance * 96 * 2;
+			bboxDraw.vertexCount = 96 * 2;
+			bboxDraw.firstInstance = firstInstance;
+			bboxDraw.instanceCount = entityCount;
+			mBBoxDraws.emplace_back(std::move(bboxDraw));
 
 			firstInstance += entityCount;
 		}
@@ -72,6 +80,8 @@ void RenderSystem::update(float deltaTime)
 				mesh.mTransformOffset = modelData.mTransformOffsets[meshIdx];
 				mesh.mTextureOffset = model.mTextureId;
 				mesh.mInstanceBaseOffset = modelBaseInstance + entityCount * meshIdx;
+				mesh.mBoundsPos = modelData.mBoundsPos[meshIdx];
+				mesh.mBoundsNeg = modelData.mBoundsNeg[meshIdx];
 				mGPUMeshes.emplace_back(std::move(mesh));
 			}
 		}
@@ -93,7 +103,12 @@ const std::vector<GPUMesh>& RenderSystem::getMeshes() const
 	return mGPUMeshes;
 }
 
-const std::vector<IndirectBuffer::DrawCommand> RenderSystem::getDrawCommands() const
+const std::vector<IndirectBuffer::IndexedIndirectCommand> RenderSystem::getMeshDraws() const
 {
-	return mDrawCommands;
+	return mMeshDraws;
+}
+
+const std::vector<IndirectBuffer::IndirectCommand> RenderSystem::getBBoxDraws() const
+{
+	return mBBoxDraws;
 }

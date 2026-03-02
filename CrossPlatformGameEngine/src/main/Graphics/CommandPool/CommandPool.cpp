@@ -74,16 +74,11 @@ void CommandPool::endCommand(VkCommandBuffer buffer)
     }
 }
 
-void CommandPool::recordGraphics(
-    VkPhysicalDevice physicalDevice,
+void CommandPool::beginRenderPass(
     VkCommandBuffer commandBuffer,
-    const GraphicsFramePass* framePass,
-    uint32_t currentFrame,
     uint32_t currentImage,
-    VkBuffer indirectBuffer,
     const RenderPassPtr& renderPass,
-    const SwapchainPtr& swapchain,
-    uint32_t drawCommandCount)
+    const SwapchainPtr& swapchain)
 {
     const VkExtent2D& renderArea = swapchain->getExtent();
 
@@ -109,14 +104,27 @@ void CommandPool::recordGraphics(
     renderPassInfo.renderArea.extent = renderArea;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clearValues[0].color = { { 0.01f, 0.01f, 0.01f, 1.0f } };
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();
 
     vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+}
 
+void CommandPool::endRenderPass(VkCommandBuffer commandBuffer)
+{
+    vkCmdEndRenderPass(commandBuffer);
+}
+
+void CommandPool::recordGraphics(
+    VkCommandBuffer commandBuffer,
+    const GraphicsFramePass* framePass,
+    uint32_t frameIndex,
+    VkBuffer indirectBuffer,
+    uint32_t drawCommandCount)
+{
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, framePass->mPipeline);
         
     std::vector<VkDeviceSize> vertexOffsets(framePass->mVertexBuffers.size(), 0);
@@ -136,7 +144,7 @@ void CommandPool::recordGraphics(
     // TODO: create dynamic offsets for dynamic buffers. This is currently hard-coded
     std::vector<uint32_t> dynamicOffets =
     {
-        currentFrame * 64 * 2 // camera UBO, 2 mat4s, 64 bytes each
+        frameIndex * 64 * 2 // camera UBO, 2 mat4s, 64 bytes each
     };
 
     vkCmdBindDescriptorSets(
@@ -155,12 +163,9 @@ void CommandPool::recordGraphics(
         0,
         drawCommandCount,
         sizeof(VkDrawIndexedIndirectCommand));
-        
-    vkCmdEndRenderPass(commandBuffer);
 }
 
 void CommandPool::recordCompute(
-    VkPhysicalDevice physicalDevice,
     VkCommandBuffer commandBuffer,
     const ComputeFramePass* framePass,
     uint32_t currentFrame)

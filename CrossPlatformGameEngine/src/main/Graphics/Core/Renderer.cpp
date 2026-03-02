@@ -5,6 +5,8 @@
 #include "VulkanContext.h"
 #include "RenderContext.h"
 #include "../CommandPool/CommandPool.h"
+#include "../CommandRecorder/LineCommandRecorder/LineCommandRecorder.h"
+#include "../CommandRecorder/MeshCommandRecorder/MeshCommandRecorder.h"
 #include "../Swapchain/Swapchain.h"
 #include "../FrameGraph/Graphics/GraphicsFramePass.h"
 #include "../FrameGraph/Compute/ComputeFramePass.h"
@@ -46,15 +48,26 @@ Renderer::Renderer(
 	mFramePassRegistry(framePassRegistry),
 	mFrameGraph(mFramePassRegistry)
 {
-	const ascen::VertexBinding binding{ 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX };
-	const std::vector<ascen::VertexAttribute> attributes =
+	const ascen::VertexBinding bindingVec3{ 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX };
+	const std::vector<ascen::VertexAttribute> attributesVec3 =
 	{
 		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
 		{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
 		{ 2, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6 }
 	};
 
-	mVertexRegistry.registerVertex({ "ENGINE_VERTEX", binding, attributes });
+	mVertexRegistry.registerVertex({ "ENGINE_VERTEX_VEC3", bindingVec3, attributesVec3 });
+
+	const ascen::VertexBinding bindingVec3Color{ 0, sizeof(float) * 6, VK_VERTEX_INPUT_RATE_VERTEX };
+	const std::vector<ascen::VertexAttribute> attributesVec3Color =
+	{
+		{ 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+		{ 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
+	};
+
+	mVertexRegistry.registerVertex({ "ENGINE_VERTEX_VEC3_COLOR", bindingVec3Color, attributesVec3Color });
+
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_VERTEX_BBOX", ascen::BufferType::VERTEX, 1'000'000, sizeof(float) * 8 });
 
 	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_VERTEX", ascen::BufferType::VERTEX, 1'000'000, sizeof(float) * 8 });
 	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_INDEX", ascen::BufferType::INDEX, 1'000'000, sizeof(uint32_t) });
@@ -64,12 +77,17 @@ Renderer::Renderer(
 	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_MESH", BufferType::STORAGE, 1'000'000, sizeof(GPUMesh) });
 	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_TRANSFORM", BufferType::STORAGE, 1'000'000, sizeof(float) });
 	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_INSTANCE", BufferType::STORAGE, 1'000'000, sizeof(GPUInstance) });
-	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_DRAW", BufferType::INDIRECT, 1'000'000, 0 /*not used*/});
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_DRAW", BufferType::INDIRECT, 1'000'000, sizeof(IndirectBuffer::IndexedIndirectCommand)});
+	mResourceRegistry.registerBuffer({ "ENGINE_BUFFER_DRAW_BBOX", BufferType::INDIRECT, 1'000'000, sizeof(IndirectBuffer::IndexedIndirectCommand)});
 
 	mResourceRegistry.registerSampler({ "ENGINE_SAMPLER" });
 	mResourceRegistry.registerTexture({ "ENGINE_TEXTURE_IMAGE", TextureType::IMAGE, 1024, 1024, 16 });
 
 	// ENGINE GRAPHICS
+
+	// TRIANGLES
+
+
 
 	mDescriptorRegistry.registerDescriptor(
 		{ "ENGINE_BUFFER_CAMERA", "ENGINE_DESC_GRAPHICS", 0x00, sizeof(glm::mat4) * 2,
@@ -80,26 +98,65 @@ Renderer::Renderer(
 		DescriptorType::SSBO, DescriptorStage::VERTEX });
 
 	mDescriptorRegistry.registerDescriptor(
-		{ "ENGINE_SAMPLER", "ENGINE_DESC_GRAPHICS", 0x02, 0 /*not used*/,
+		{ "ENGINE_SAMPLER", "ENGINE_DESC_GRAPHICS", 0x02, 0,
 		DescriptorType::SAMPLER, DescriptorStage::PIXEL });
 
 	mDescriptorRegistry.registerDescriptor(
-		{ "ENGINE_TEXTURE_IMAGE", "ENGINE_DESC_GRAPHICS", 0x03, 0 /*not used*/,
+		{ "ENGINE_TEXTURE_IMAGE", "ENGINE_DESC_GRAPHICS", 0x03, 0,
 		DescriptorType::IMAGE, DescriptorStage::PIXEL });
 
-	std::cout << "CWD: " << std::filesystem::current_path() << "\n";
+	GraphicsPipelineEntry graphicsPipelineEntryTriangles;
+	graphicsPipelineEntryTriangles.mName = "ENGINE_PIPELINE_GRAPHICS_TRIANGLES";
+	graphicsPipelineEntryTriangles.mVertexShader = "src/shaders/GPUDrivenVS.spv";
+	graphicsPipelineEntryTriangles.mPixelShader = "src/shaders/GPUDrivenPS.spv";
+	graphicsPipelineEntryTriangles.mVertex = "ENGINE_VERTEX_VEC3";
+	graphicsPipelineEntryTriangles.mDescriptorSetLayouts = { "ENGINE_DESC_GRAPHICS" };
+	graphicsPipelineEntryTriangles.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+	graphicsPipelineEntryTriangles.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
+	graphicsPipelineEntryTriangles.mParams.mCullMode = VK_CULL_MODE_BACK_BIT;
 
-	mPipelineRegistry.registerGraphicsPipeline(
-		{ "ENGINE_PIPELINE_GRAPHICS", "src/shaders/GPUDrivenVS.spv", "src/shaders/GPUDrivenPS.spv",
-		"ENGINE_VERTEX", { "ENGINE_DESC_GRAPHICS" }});
+	mPipelineRegistry.registerGraphicsPipeline(graphicsPipelineEntryTriangles);
+
 
 	mFramePassRegistry.registerGraphics(
-		{ "ENGINE_FRAMEPASS_GRAPHICS", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS",
+		{ "ENGINE_FRAMEPASS_GRAPHICS_TRIANGLES", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS_TRIANGLES",
 		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE" },
 		{},
 		{ "ENGINE_TEXTURE_IMAGE" },
 		{},
-		{ "ENGINE_BUFFER_VERTEX" }, "ENGINE_BUFFER_INDEX" });
+		{ "ENGINE_BUFFER_VERTEX" }, "ENGINE_BUFFER_INDEX", GraphicsFramePassMode::MESH });
+
+
+
+	// LINES
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_DESC_GRAPHICS_LINES", 0x00, sizeof(glm::mat4) * 2,
+		DescriptorType::UBO_DYNAMIC, DescriptorStage::VERTEX });
+
+	mDescriptorRegistry.registerDescriptor(
+		{ "ENGINE_BUFFER_INSTANCE", "ENGINE_DESC_GRAPHICS_LINES", 0x01, VK_WHOLE_SIZE,
+		DescriptorType::SSBO, DescriptorStage::VERTEX });
+
+	GraphicsPipelineEntry graphicsPipelineEntryLines;
+	graphicsPipelineEntryLines.mName = "ENGINE_PIPELINE_GRAPHICS_LINES";
+	graphicsPipelineEntryLines.mVertexShader = "src/shaders/BoundingBoxVS.spv";
+	graphicsPipelineEntryLines.mPixelShader = "src/shaders/BoundingBoxPS.spv";
+	graphicsPipelineEntryLines.mVertex = "ENGINE_VERTEX_VEC3_COLOR";
+	graphicsPipelineEntryLines.mDescriptorSetLayouts = { "ENGINE_DESC_GRAPHICS_LINES" };
+	graphicsPipelineEntryLines.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+	graphicsPipelineEntryLines.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
+	graphicsPipelineEntryLines.mParams.mCullMode = VK_CULL_MODE_NONE;
+
+	mPipelineRegistry.registerGraphicsPipeline(graphicsPipelineEntryLines);
+
+	mFramePassRegistry.registerGraphics(
+		{ "ENGINE_FRAMEPASS_GRAPHICS_LINES", { "ENGINE_DESC_GRAPHICS_LINES" }, "ENGINE_PIPELINE_GRAPHICS_LINES",
+		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE" },
+		{},
+		{},
+		{},
+		{ "ENGINE_BUFFER_VERTEX_BBOX" }, {}, GraphicsFramePassMode::LINES });
 
 	// ENGINE COMPUTE
 
@@ -143,7 +200,8 @@ void Renderer::updateRenderSystem()
 	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
 	const auto& entities = renderSystem->getEntities();
 	const auto& meshes = renderSystem->getMeshes();
-	const auto& drawCommands = renderSystem->getDrawCommands();
+	const auto& meshDraws = renderSystem->getMeshDraws();
+	const auto& bboxDraws = renderSystem->getBBoxDraws();
 
 	mDrawCommandCount = 0;
 
@@ -156,9 +214,12 @@ void Renderer::updateRenderSystem()
 			"ENGINE_BUFFER_MESH", meshes.data(), meshes.size(), sizeof(GPUMesh));
 
 		mResourceRegistry.updateBuffer(
-			"ENGINE_BUFFER_DRAW", drawCommands.data(), drawCommands.size(), sizeof(GPUMesh));
+			"ENGINE_BUFFER_DRAW", meshDraws.data(), meshDraws.size(), sizeof(IndirectBuffer::IndexedIndirectCommand));
 
-		mDrawCommandCount = drawCommands.size();
+		mResourceRegistry.updateBuffer(
+		"ENGINE_BUFFER_DRAW_BBOX", bboxDraws.data(), bboxDraws.size(), sizeof(IndirectBuffer::IndirectCommand));
+
+		mDrawCommandCount = bboxDraws.size();
 	}
 }
 
@@ -203,29 +264,54 @@ void Renderer::drawFrame()
 
 	auto commandBuffer = commandPool->beginCommand(mFrameIndex);
 
-	const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
+	// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
 	const auto& instanceBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_INSTANCE");
 	const auto& transformBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_TRANSFORM");
+
+	bool isRenderPassActive = false;
 
 	for (const auto& exec : executions)
 	{
 		switch (exec->mType)
 		{
 		case FramePassType::GRAPHICS:
+			if (!isRenderPassActive)
+			{
+				commandPool->beginRenderPass(commandBuffer, mImageIndex, renderPass, swapchain);
+				isRenderPassActive = true;
+			}
+
+			if (static_cast<const GraphicsFramePass*>(exec.get())->mMode == GraphicsFramePassMode::MESH)
+			{
+				const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
+				MeshCommandRecorder meshRecorder;
+				meshRecorder.record(commandBuffer, static_cast<const GraphicsFramePass*>(exec.get()), mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+			}
+			else
+			if (static_cast<const GraphicsFramePass*>(exec.get())->mMode == GraphicsFramePassMode::LINES)
+			{
+				const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
+
+				LineCommandRecorder lineRecorder;
+				lineRecorder.record(commandBuffer, static_cast<const GraphicsFramePass*>(exec.get()), mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+			}
+				/*
 			commandPool->recordGraphics(
-				mPhysicalDevice,
 				commandBuffer,
 				static_cast<const GraphicsFramePass*>(exec.get()),
 				mFrameIndex,
-				mImageIndex,
 				drawBuffer->handle(),
-				renderPass,
-				swapchain,
 				mDrawCommandCount);
+				*/
 			break;
 		case FramePassType::COMPUTE:
+				if (isRenderPassActive)
+				{
+					commandPool->endRenderPass(commandBuffer);
+					isRenderPassActive = false;
+				}
+
 			commandPool->recordCompute(
-				mPhysicalDevice,
 				commandBuffer,
 				static_cast<const ComputeFramePass*>(exec.get()),
 				mFrameIndex);
@@ -262,6 +348,12 @@ void Renderer::drawFrame()
 		default:
 			return;
 		}
+	}
+
+	if (isRenderPassActive)
+	{
+		commandPool->endRenderPass(commandBuffer);
+		isRenderPassActive = false;
 	}
 
 	commandPool->endCommand(commandBuffer);

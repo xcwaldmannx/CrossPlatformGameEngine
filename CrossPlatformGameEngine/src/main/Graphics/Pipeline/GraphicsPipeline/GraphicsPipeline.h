@@ -23,9 +23,10 @@ namespace ascen
 
     class GraphicsPipeline : public GraphicsPipeline_I
     {
-    private:
+    protected:
         GraphicsPipeline(
             VkDevice device,
+            const GraphicsPipelineParams& params,
             const std::string& vertexShaderFilepath,
             const std::string& pixelShaderFilepath,
             const VertexPtr& vertex,
@@ -33,6 +34,7 @@ namespace ascen
             const SwapchainPtr& swapchain,
             const RenderPassPtr& renderPass) :
             GraphicsPipeline_I(
+                params,
                 vertexShaderFilepath,
                 pixelShaderFilepath)
         {
@@ -102,7 +104,7 @@ namespace ascen
 
             // create pipeline layout and pipeline
             if (vkCreatePipelineLayout(
-                device, &mLayoutInfo, nullptr, &mLayout) != VK_SUCCESS)
+                    device, &mLayoutInfo, nullptr, &mLayout) != VK_SUCCESS)
             {
                 throw std::runtime_error("failed to create graphics pipeline layout!");
             }
@@ -158,7 +160,7 @@ namespace ascen
         void handleInputAssembly()
         {
             mInputAssemblyInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-            mInputAssemblyInfo.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+            mInputAssemblyInfo.topology = static_cast<VkPrimitiveTopology>(mParams.mTopologyMode);
             mInputAssemblyInfo.primitiveRestartEnable = VK_FALSE;
         }
 
@@ -176,8 +178,8 @@ namespace ascen
         {
             mViewport.x = 0.0f;
             mViewport.y = 0.0f;
-            mViewport.width = (float) swapchainExtent.width;
-            mViewport.height = (float) swapchainExtent.height;
+            mViewport.width = static_cast<float>(swapchainExtent.width);
+            mViewport.height = static_cast<float>(swapchainExtent.height);
             mViewport.minDepth = 0.0f;
             mViewport.maxDepth = 1.0f;
 
@@ -196,9 +198,9 @@ namespace ascen
             mRasterizationStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
             mRasterizationStateInfo.depthClampEnable = VK_FALSE;
             mRasterizationStateInfo.rasterizerDiscardEnable = VK_FALSE;
-            mRasterizationStateInfo.polygonMode = VK_POLYGON_MODE_FILL;
+            mRasterizationStateInfo.polygonMode = static_cast<VkPolygonMode>(mParams.mPolygonMode);
             mRasterizationStateInfo.lineWidth = 1.0f;
-            mRasterizationStateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+            mRasterizationStateInfo.cullMode = static_cast<VkCullModeFlags>(mParams.mCullMode);
             mRasterizationStateInfo.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
             mRasterizationStateInfo.depthBiasEnable = VK_FALSE;
             mRasterizationStateInfo.depthBiasConstantFactor = 0.0f; // Optional

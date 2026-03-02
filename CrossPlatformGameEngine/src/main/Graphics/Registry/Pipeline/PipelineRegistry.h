@@ -8,6 +8,8 @@
 #include "../Vertex/VertexRegistry.h"
 #include "../Descriptor/DescriptorRegistry.h"
 
+#include "../../Pipeline/GraphicsPipeline/GraphicsPipeline.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -22,6 +24,8 @@ namespace ascen
 		std::string mPixelShader;
 		std::string mVertex;
 		std::vector<std::string> mDescriptorSetLayouts;
+
+		GraphicsPipelineParams mParams;
 	};
 
 	struct ComputePipelineEntry

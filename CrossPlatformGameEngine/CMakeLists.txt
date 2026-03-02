@@ -81,25 +81,25 @@ target_link_libraries(CrossPlatformGameEngine PRIVATE
 # copy shaders/assets
 # -------------------------
 
-set(ENGINE_SHADER_DIR "${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/src/shaders")
+set(ENGINE_SHADERS_DIR "${CMAKE_SOURCE_DIR}/CrossPlatformGameEngine/src/shaders")
 
-if (LINUX)
-	set(ENGINE_ASSET_DIR "/home/cwaldmann/Documents/Workspaces/GameEngine/assets")
+if(UNIX AND NOT APPLE)
+	set(ENGINE_ASSETS_SOURCE_DIR "/home/cwaldmann/Documents/Workspaces/GameEngine/assets")
 elseif(WIN32)
-	set(ENGINE_ASSET_DIR ".")
+	set(ENGINE_ASSETS_SOURCE_DIR "${CMAKE_SOURCE_DIR}/assets") # adjust
 endif()
 
 add_custom_command(TARGET CrossPlatformGameEngine POST_BUILD
 		COMMAND ${CMAKE_COMMAND} -E make_directory
 		"$<TARGET_FILE_DIR:CrossPlatformGameEngine>/src/shaders"
 		COMMAND ${CMAKE_COMMAND} -E copy_directory
-		"${ENGINE_SHADER_DIR}"
+		"${ENGINE_SHADERS_DIR}"
 		"$<TARGET_FILE_DIR:CrossPlatformGameEngine>/src/shaders"
 
 		COMMAND ${CMAKE_COMMAND} -E make_directory
 		"$<TARGET_FILE_DIR:CrossPlatformGameEngine>/assets"
 		COMMAND ${CMAKE_COMMAND} -E copy_directory
-		"${ENGINE_ASSET_DIR}"
+		"${ENGINE_ASSETS_SOURCE_DIR}"
 		"$<TARGET_FILE_DIR:CrossPlatformGameEngine>/assets"
 
 		COMMENT "Copying shaders and other assets to executable location..."

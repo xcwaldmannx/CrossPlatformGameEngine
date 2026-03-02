@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../../FrameGraph/FramePass.h"
+#include "../../FrameGraph/Graphics/GraphicsFramePass.h"
 
 #include "../Resource/ResourceRegistry.h"
 #include "../Descriptor/DescriptorRegistry.h"
@@ -30,6 +31,7 @@ namespace ascen
 	{
 		std::vector<std::string> mVertexBuffers;
 		std::string mIndexBuffer;
+		GraphicsFramePassMode mFramePassMode;
 	};
 
 	struct ComputeFramePassEntry : public FramePassEntry

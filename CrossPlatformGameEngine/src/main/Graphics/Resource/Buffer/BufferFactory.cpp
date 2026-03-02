@@ -64,11 +64,13 @@ BufferPtr BufferFactory::createStorage(
 
 BufferPtr BufferFactory::createIndirect(
 	const CommandPoolPtr& commandPool,
-	uint32_t itemCount) const
+	uint32_t itemCount,
+	uint32_t itemSize) const
 {
 	return std::make_shared<IndirectBuffer>(
 		mPhysicalDevice,
 		mDevice,
 		commandPool,
-		itemCount);
+		itemCount,
+		itemSize);
 }

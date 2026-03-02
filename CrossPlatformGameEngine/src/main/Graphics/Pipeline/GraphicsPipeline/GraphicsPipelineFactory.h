@@ -2,6 +2,8 @@
 
 #include "../../Core/Types.h"
 
+#include "../GraphicsPipeline/GraphicsPipeline_I.h"
+
 #include <concepts>
 #include <memory>
 
@@ -19,6 +21,7 @@ namespace ascen
 		GraphicsPipelineFactory(VkDevice device);
 
 		GraphicsPipelinePtr create(
+			const GraphicsPipelineParams& params,
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath,
 			const VertexPtr& vertex,

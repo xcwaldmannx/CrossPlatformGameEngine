@@ -53,13 +53,20 @@ namespace ascen
 		uint32_t mTextureOffset;
 		uint32_t mInstanceBaseOffset;
 		uint32_t _pad2[2];
+
+		glm::vec3 mBoundsPos;
+		uint32_t _pad3;
+
+		glm::vec3 mBoundsNeg;
+		uint32_t _pad4;
 	};
 
 	struct alignas(16) GPUInstance
 	{
 		glm::mat4 mTransform;
 		uint32_t mTextureIndex;
-		uint32_t _pad[3];
+		bool mIsVisible;
+		uint32_t _pad[2];
 	};
 
 	struct ModelData
@@ -72,12 +79,8 @@ namespace ascen
 		std::vector<uint32_t> mIndexOffsets;
 		std::vector<uint32_t> mTransformOffsets;
 
-		std::vector<float> mBoundsPosX;
-		std::vector<float> mBoundsPosY;
-		std::vector<float> mBoundsPosZ;
-		std::vector<float> mBoundsNegX;
-		std::vector<float> mBoundsNegY;
-		std::vector<float> mBoundsNegZ;
+		std::vector<glm::vec3> mBoundsPos;
+		std::vector<glm::vec3> mBoundsNeg;
 	};
 
 	struct MeshKey
@@ -110,7 +113,8 @@ namespace ascen
 
 		const std::vector<GPUEntity>& getEntities() const;
 		const std::vector<GPUMesh>& getMeshes() const;
-		const std::vector<IndirectBuffer::DrawCommand> getDrawCommands() const;
+		const std::vector<IndirectBuffer::IndexedIndirectCommand> getMeshDraws() const;
+		const std::vector<IndirectBuffer::IndirectCommand> getBBoxDraws() const;
 
 	private:
 		std::unordered_map<uint32_t, ModelData>* mModelData = nullptr;
@@ -118,7 +122,8 @@ namespace ascen
 		// std::unordered_map<MeshKey, std::vector<GPUInstance>, MeshKeyHasher> mMeshGroups; // mesh ID -> instances
 		std::vector<GPUEntity> mGPUEntities;
 		std::vector<GPUMesh> mGPUMeshes;
-		std::vector<IndirectBuffer::DrawCommand> mDrawCommands;
+		std::vector<IndirectBuffer::IndexedIndirectCommand> mMeshDraws;
+		std::vector<IndirectBuffer::IndirectCommand> mBBoxDraws;
 
 	};
 

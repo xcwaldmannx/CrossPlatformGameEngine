@@ -17,6 +17,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mEngine.resource().updateBuffer("ENGINE_BUFFER_INDEX", mIndices.data(), mIndices.size(), sizeof(uint32_t));
 	mEngine.resource().updateBuffer("ENGINE_BUFFER_TRANSFORM", mTransforms.data(), mTransforms.size(), sizeof(float));
 
+	mEngine.resource().updateBuffer("ENGINE_BUFFER_VERTEX_BBOX", mBoundingBoxes.data(), mBoundingBoxes.size(), sizeof(float) * 3);
+
 	loadTextures();
 
 	mEngine.resource().updateTexture("ENGINE_TEXTURE_IMAGE", mPixels);
@@ -25,11 +27,12 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	// createEntities();
 
-	for (int i = 0; i < 100; i++)
+	for (int i = 0; i < 10; i++)
 	{
 		for (int j = 0; j < 100; j++)
 		{
 			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
+			createModel({ -95 + (i * 20), 0, -10 - (j * 20)});
 		}
 	}
 }
@@ -85,6 +88,7 @@ void MyGame::loadModels()
 	std::vector<std::pair<uint32_t, std::string>> modelFilepaths =
 	{
 		{ HELICOPTER, "assets/models/submarine.model" },
+		{ TEST, "assets/models/test.model" },
 		// { PRISM,      "res/models/prism.model"      },
 		// { SHAPES,     "res/models/shapes.model"     },
 		// { WINDMILL,   "res/models/windmill.model"   },
@@ -114,12 +118,74 @@ void MyGame::loadModels()
 			info.mIndexOffsets.push_back(globalIndexOffset + mesh.mIndexOffset);
 			info.mIndexCounts.push_back(mesh.mIndexCount);
 			info.mTransformOffsets.push_back(globalTransformOffset + mesh.mTransformOffset);
-			info.mBoundsPosX.push_back(mesh.mBoundPosX);
-			info.mBoundsPosY.push_back(mesh.mBoundPosY);
-			info.mBoundsPosZ.push_back(mesh.mBoundPosZ);
-			info.mBoundsNegX.push_back(mesh.mBoundNegX);
-			info.mBoundsNegY.push_back(mesh.mBoundNegY);
-			info.mBoundsNegZ.push_back(mesh.mBoundNegZ);
+			info.mBoundsPos.push_back(mesh.mBoundsPos);
+			info.mBoundsNeg.push_back(mesh.mBoundsNeg);
+
+			// bbox
+
+			// top
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 1, 0, 0 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 1, 0, 0 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 1, 0, 0 });
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 0, 1 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			// bottom
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 1, 0, 0 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 1, 0, 0 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 1, 0, 0 });
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 0, 1 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			// sides
+
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 0, 1 });
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 0, 1 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 0, 1 });
+			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
+
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
+			mBoundingBoxes.push_back({ 0, 0, 1 });
+			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
+			mBoundingBoxes.push_back({ 0, 1, 0 });
 		}
 
 		mModelData.emplace(id, std::move(info));
@@ -182,9 +248,30 @@ void MyGame::createHelicopter(glm::vec3 position)
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 }
 
+void MyGame::createModel(glm::vec3 position)
+{
+	auto e = mEngine.ecs().addEntity();
+
+	TransformComponent t{};
+	t.mPosition = position;
+	t.mRotation = { 0, 0, 0 };
+	t.mScale = { 1, 1, 1 };
+
+	ModelComponent m{};
+	m.mModelId = TEST;
+	m.mTextureId = 0;
+	m.mIsHidden = false;
+	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
+	m.mMeshTransforms.push_back({ {0, 0, 1}, {0, 0, 0}, {1, 1, 1} });
+	m.mMeshTransforms.push_back({ {0, 0, 2}, {0, 0, 0}, {1, 1, 1} });
+
+	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
+	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
+}
+
 void MyGame::updateEntities(float delta)
 {
-	for (int i = 0; i < 10'000; i++)
+	for (int i = 0; i < 2000; i++)
 	{ // helicopters
 		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
 		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;

@@ -90,7 +90,8 @@ void ResourceRegistry::reconstruct()
 		case BufferType::INDIRECT:
 			mBuffers.emplace(entry.mName, mBufferFactory.createIndirect(
 				mCommandPool,
-				entry.mCapacity));
+				entry.mCapacity,
+				entry.mStride));
 			break;
 		}
 	}

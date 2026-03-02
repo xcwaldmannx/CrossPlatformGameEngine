@@ -27,6 +27,7 @@ private:
 	void loadModels();
 	void createEntities();
 	void createHelicopter(glm::vec3 position);
+	void createModel(glm::vec3 position);
 	void updateEntities(float delta);
 	void updateCamera(float delta);
 
@@ -39,6 +40,7 @@ private:
 	std::vector<float> mVertices;
 	std::vector<uint32_t> mIndices;
 	std::vector<float> mTransforms;
+	std::vector<glm::vec3> mBoundingBoxes;
 
 	std::vector<unsigned char> mPixels;
 
@@ -50,6 +52,7 @@ private:
 		WINDMILL = 3,
 		HELICOPTER = 4,
 		FROSTY = 5,
+		TEST = 6,
 	};
 
 	std::vector<std::pair<uint32_t, std::string>> mModelFilepaths =
@@ -64,5 +67,5 @@ private:
 	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 camPosition{ 0.0f };
 	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
-	float camSpeed = 20.0f;
+	float camSpeed = 10.0f;
 };

@@ -39,7 +39,8 @@ namespace ascen
 
 		BufferPtr createIndirect(
 			const CommandPoolPtr& commandPool,
-			uint32_t itemCount) const;
+			uint32_t itemCount,
+			uint32_t itemSize) const;
 
 	private:
 		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;

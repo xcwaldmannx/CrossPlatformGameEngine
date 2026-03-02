@@ -61,7 +61,7 @@ void PipelineRegistry::reconstruct()
 		auto& vertex = VertexRegistryBackend::getVertex(mVertexRegistry, entry.mVertex);
 
 		mGraphicsPipelines[entry.mName] = mGraphicsPipelineFactory.create(
-			entry.mVertexShader, entry.mPixelShader, vertex, layouts, mSwapchain, mRenderPass);
+			entry.mParams, entry.mVertexShader, entry.mPixelShader, vertex, layouts, mSwapchain, mRenderPass);
 	}
 
 	for (auto& entry : mComputeEntries)
