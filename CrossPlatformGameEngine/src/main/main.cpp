@@ -1,5 +1,5 @@
 ﻿#include "WindowManager/WindowManager.h"
-#include "MyGame.h"
+#include "MyGame/MyGame.h"
 
 #include "Utility/FrameCounter.h"
 

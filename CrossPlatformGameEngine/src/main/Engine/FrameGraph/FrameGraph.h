@@ -1,0 +1,29 @@
+#pragma once
+
+#include "FramePass/FramePass.h"
+
+#include "../Registry/FramePass/FramePassRegistry.h"
+
+#include <vector>
+
+#include <vulkan/vulkan.h>
+
+namespace ascen
+{
+
+	class FrameGraph
+	{
+	public:
+		FrameGraph(const FramePassRegistry& framePassRegistry);
+
+		void compile();
+
+		const std::vector<FramePassPtr>& getExecutions() const;
+
+	private:
+		const FramePassRegistry& mFramePassRegistry;
+
+		std::vector<FramePassPtr> mExecutions;
+	};
+
+}
