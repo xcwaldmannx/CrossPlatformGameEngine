@@ -64,20 +64,20 @@ void FramePassRegistry::reconstruct()
 			indexBufferHandle = indexBuffer->handle();
 		}
 
-		std::vector<VkBuffer> readBufferHandles;
+		std::vector<std::string> readBufferHandles;
 
 		for (auto& readBuffer : entry.mReadBuffers)
 		{
-			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
-			readBufferHandles.push_back(buffer->handle());
+			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
+			readBufferHandles.push_back(readBuffer);
 		}
 
-		std::vector<VkBuffer> writeBufferHandles;
+		std::vector<std::string> writeBufferHandles;
 
 		for (auto& writeBuffer : entry.mWriteBuffers)
 		{
-			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
-			writeBufferHandles.push_back(buffer->handle());
+			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
+			writeBufferHandles.push_back(writeBuffer);
 		}
 
 		std::vector<VkImageView> readTextureHandles;
@@ -124,20 +124,20 @@ void FramePassRegistry::reconstruct()
 
 	for (const auto& entry : mComputeEntries)
 	{
-		std::vector<VkBuffer> readBufferHandles;
+		std::vector<std::string> readBufferHandles;
 
 		for (auto& readBuffer : entry.mReadBuffers)
 		{
-			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
-			readBufferHandles.push_back(buffer->handle());
+			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
+			readBufferHandles.push_back(readBuffer);
 		}
 
-		std::vector<VkBuffer> writeBufferHandles;
+		std::vector<std::string> writeBufferHandles;
 
 		for (auto& writeBuffer : entry.mWriteBuffers)
 		{
-			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
-			writeBufferHandles.push_back(buffer->handle());
+			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
+			writeBufferHandles.push_back(writeBuffer);
 		}
 
 		std::vector<VkImageView> readTextureHandles;

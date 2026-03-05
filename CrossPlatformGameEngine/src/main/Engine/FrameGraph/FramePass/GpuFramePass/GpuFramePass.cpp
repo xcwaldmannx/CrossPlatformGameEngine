@@ -7,8 +7,8 @@ GpuFramePass::GpuFramePass(
     const std::vector<VkDescriptorSet> descriptorSets,
     const VkPipeline pipeline,
     const VkPipelineLayout pipelineLayout,
-    const std::vector<VkBuffer> readBuffers,
-    const std::vector<VkBuffer> writeBuffers,
+    const std::vector<std::string> readBuffers,
+    const std::vector<std::string> writeBuffers,
     const std::vector<VkImageView> readTextures,
     const std::vector<VkImageView> writeTextures) :
     FramePass(type),

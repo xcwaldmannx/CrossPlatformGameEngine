@@ -8,6 +8,7 @@ namespace ascen
         CPU,
         GRAPHICS,
         COMPUTE,
+        TRANSFER,
     };
 
     struct FramePass

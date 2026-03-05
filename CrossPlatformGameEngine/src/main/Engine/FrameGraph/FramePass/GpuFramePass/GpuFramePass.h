@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 #include "../FramePass.h"
 
 #include <vector>
@@ -16,16 +18,16 @@ namespace ascen
             const std::vector<VkDescriptorSet> descriptorSets,
             const VkPipeline pipeline,
             const VkPipelineLayout pipelineLayout,
-            const std::vector<VkBuffer> readBuffers,
-            const std::vector<VkBuffer> writeBuffers,
+            const std::vector<std::string> readBuffers,
+            const std::vector<std::string> writeBuffers,
             const std::vector<VkImageView> readTextures,
             const std::vector<VkImageView> writeTextures);
 
         const std::vector<VkDescriptorSet> mDescriptorSets;
         const VkPipeline mPipeline;
         const VkPipelineLayout mPipelineLayout;
-        const std::vector<VkBuffer> mReadBuffers;
-        const std::vector<VkBuffer> mWriteBuffers;
+        const std::vector<std::string> mReadBuffers;
+        const std::vector<std::string> mWriteBuffers;
         const std::vector<VkImageView> mReadTextures;
         const std::vector<VkImageView> mWriteTextures;
     };
