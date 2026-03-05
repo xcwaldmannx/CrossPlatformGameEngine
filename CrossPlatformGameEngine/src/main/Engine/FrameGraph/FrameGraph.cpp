@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <iostream>
 
 using namespace ascen;
 
@@ -79,6 +80,37 @@ void FrameGraph::compile()
     {
         mExecutions.push_back(nodes[idx].mFramePass);
     }
+
+    // debug logging below
+    /*
+
+    passIndex = 0;
+
+    for (const auto& exec : mExecutions)
+    {
+        const auto& pass = std::reinterpret_pointer_cast<GpuFramePass>(exec);
+
+        std::cout << "pass: " << passIndex << std::endl << "inputs:" << std::endl;
+
+        for (const auto& readBuffer : pass->mReadBuffers)
+        {
+            std::cout << readBuffer << ", " << std::endl;
+        }
+
+        std::cout << "outputs:" << std::endl;
+
+        for (const auto& writeBuffer : pass->mWriteBuffers)
+        {
+            std::cout << writeBuffer << ", " << std::endl;
+        }
+
+        std::cout << std::endl;
+
+
+        passIndex++;
+
+    }
+    */
 }
 
 const std::vector<FramePassPtr>& FrameGraph::getExecutions() const
