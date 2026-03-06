@@ -7,9 +7,14 @@ namespace ascen
 
     class GraphicsGpuFramePass;
 
-    class MeshCommandRecorder
+    class MeshCommandRecorder : public CommandRecorder_I
     {
     public:
+        MeshCommandRecorder(
+            PipelineRegistry& pipelineRegistry,
+            DescriptorRegistry& descriptorRegistry,
+            ResourceRegistry& resourceRegistry);
+
         void record(
             VkCommandBuffer commandBuffer,
             const GraphicsGpuFramePass* framePass,

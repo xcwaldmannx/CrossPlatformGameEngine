@@ -118,6 +118,7 @@ void CommandPool::endRenderPass(VkCommandBuffer commandBuffer)
     vkCmdEndRenderPass(commandBuffer);
 }
 
+/*
 void CommandPool::recordGraphics(
     VkCommandBuffer commandBuffer,
     const GraphicsGpuFramePass* framePass,
@@ -191,6 +192,7 @@ void CommandPool::recordCompute(
     vkCmdDispatch(commandBuffer,
         framePass->mGroups[0], framePass->mGroups[1], framePass->mGroups[2]);
 }
+*/
 
 VkCommandBuffer CommandPool::beginSingle(VkDevice device)
 {

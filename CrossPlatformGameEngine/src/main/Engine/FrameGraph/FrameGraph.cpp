@@ -39,27 +39,21 @@ void FrameGraph::compile()
 
             case FramePassType::COMPUTE:
             case FramePassType::GRAPHICS:
-            case FramePassType::TRANSFER:
             {
                 auto gpuFramePass = std::static_pointer_cast<GpuFramePass>(framePass);
-                const auto& readBuffers  = gpuFramePass->mReadBuffers;
-                const auto& writeBuffers = gpuFramePass->mWriteBuffers;
 
-                for (const auto& readBuffer : readBuffers)
-                {
-                    auto it = lastWriter.find(readBuffer);
-                    if (it != lastWriter.end()) node.mDependencies.push_back(it->second);
-                }
+                const auto& resources = gpuFramePass->mResources;
 
-                for (const auto& writeBuffer : writeBuffers)
+                for (const auto& resource : resources)
                 {
-                    auto it = lastWriter.find(writeBuffer);
+                    auto it = lastWriter.find(resource.mName);
                     if (it != lastWriter.end()) node.mDependencies.push_back(it->second);
 
-                    lastWriter[writeBuffer] = passIndex;
+                    if (resource.mAccess == ResourceAccess::WRITE)
+                    {
+                        lastWriter[resource.mName] = passIndex;
+                    }
                 }
-
-                break;
             }
         }
 
@@ -72,7 +66,7 @@ void FrameGraph::compile()
         passIndex++;
     }
 
-    auto order = topoSort(nodes);
+    const auto order = topoSort(nodes);
 
     // Example: store the ordered passes
     mExecutions.reserve(order.size());
@@ -90,18 +84,12 @@ void FrameGraph::compile()
     {
         const auto& pass = std::reinterpret_pointer_cast<GpuFramePass>(exec);
 
-        std::cout << "pass: " << passIndex << std::endl << "inputs:" << std::endl;
+        std::cout << "pass: " << passIndex << std::endl << "resources:" << std::endl;
 
-        for (const auto& readBuffer : pass->mReadBuffers)
+        for (const auto& resource : pass->mResources)
         {
-            std::cout << readBuffer << ", " << std::endl;
-        }
-
-        std::cout << "outputs:" << std::endl;
-
-        for (const auto& writeBuffer : pass->mWriteBuffers)
-        {
-            std::cout << writeBuffer << ", " << std::endl;
+            std::string access = (resource.mAccess == ResourceAccess::WRITE) ? "WRITE" : "READ";
+            std::cout << "    " << resource.mName << ": " << access << std::endl;
         }
 
         std::cout << std::endl;
@@ -111,6 +99,7 @@ void FrameGraph::compile()
 
     }
     */
+
 }
 
 const std::vector<FramePassPtr>& FrameGraph::getExecutions() const

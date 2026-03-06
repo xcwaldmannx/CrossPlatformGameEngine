@@ -13,7 +13,6 @@ Engine::Engine(WindowManager& windowManager) :
 	mResourceRegistry(mVulkanContext, mRenderContext),
 	mDescriptorRegistry(mVulkanContext, mResourceRegistry),
 	mPipelineRegistry(mVulkanContext, mRenderContext, mVertexRegistry, mDescriptorRegistry),
-	mFramePassRegistry(mResourceRegistry, mDescriptorRegistry, mPipelineRegistry),
 	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext,
 		mVertexRegistry, mResourceRegistry, mDescriptorRegistry, mPipelineRegistry, mFramePassRegistry)
 {

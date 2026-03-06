@@ -54,10 +54,12 @@ BoundingBoxHandler::BoundingBoxHandler(ascen::Engine& engine) :
     framePassEntry.mName = "BBOX_FRAMEPASS_COMPUTE";
     framePassEntry.mPipeline = "BBOX_PIPELINE_COMPUTE";
     framePassEntry.mDescriptorSets = { "BBOX_DESC_COMPUTE" };
-    framePassEntry.mReadBuffers = { "ENGINE_BUFFER_CAMERA", "BBOX_BUFFER_INPUT" };
-    framePassEntry.mWriteBuffers = { "BBOX_BUFFER_OUTPUT" };
-    framePassEntry.mReadTextures = {};
-    framePassEntry.mWriteTextures = {};
+    framePassEntry.mResources =
+    {
+        { "ENGINE_BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ },
+        { "BBOX_BUFFER_INPUT",    ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::READ },
+        { "BBOX_BUFFER_OUTPUT",   ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE }
+    };
     framePassEntry.mGroups = { (1000 + 63) / 64, 1, 1 };
     mEngine.frame().registerCompute(framePassEntry);
 }

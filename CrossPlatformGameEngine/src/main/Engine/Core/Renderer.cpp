@@ -46,7 +46,10 @@ Renderer::Renderer(
 	mDescriptorRegistry(descriptorRegistry),
 	mPipelineRegistry(pipelineRegistry),
 	mFramePassRegistry(framePassRegistry),
-	mFrameGraph(mFramePassRegistry)
+	mFrameGraph(mFramePassRegistry),
+	mLineCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
+	mMeshCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
+	mComputeCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry)
 {
 	const ascen::VertexBinding bindingVec3{ 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX };
 	const std::vector<ascen::VertexAttribute> attributesVec3 =
@@ -87,8 +90,6 @@ Renderer::Renderer(
 
 	// TRIANGLES
 
-
-
 	mDescriptorRegistry.registerDescriptor(
 		{ "ENGINE_BUFFER_CAMERA", "ENGINE_DESC_GRAPHICS", 0x00, sizeof(glm::mat4) * 2,
 		DescriptorType::UBO_DYNAMIC, DescriptorStage::VERTEX });
@@ -120,13 +121,14 @@ Renderer::Renderer(
 
 	mFramePassRegistry.registerGraphics(
 		{ "ENGINE_FRAMEPASS_GRAPHICS_TRIANGLES", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS_TRIANGLES",
-		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE" },
-		{},
-		{ "ENGINE_TEXTURE_IMAGE" },
-		{},
-		{ "ENGINE_BUFFER_VERTEX" }, "ENGINE_BUFFER_INDEX", GraphicsMode::MESH });
-
-
+		{
+			{ "ENGINE_BUFFER_CAMERA",   ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ },
+			{ "ENGINE_BUFFER_INSTANCE", ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
+			{ "ENGINE_TEXTURE_IMAGE",   ResourceUsage::IMAGE_SAMPLED,  ResourceAccess::READ },
+			{ "ENGINE_BUFFER_VERTEX",   ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ },
+			{ "ENGINE_BUFFER_INDEX",    ResourceUsage::BUFFER_INDEX,   ResourceAccess::READ }
+		},
+		GraphicsMode::MESH });
 
 	// LINES
 
@@ -152,11 +154,12 @@ Renderer::Renderer(
 
 	mFramePassRegistry.registerGraphics(
 		{ "ENGINE_FRAMEPASS_GRAPHICS_LINES", { "ENGINE_DESC_GRAPHICS_LINES" }, "ENGINE_PIPELINE_GRAPHICS_LINES",
-		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_INSTANCE" },
-		{},
-		{},
-		{},
-		{ "ENGINE_BUFFER_VERTEX_BBOX" }, {}, GraphicsMode::LINES });
+		{
+			{ "ENGINE_BUFFER_CAMERA",      ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ },
+			{ "ENGINE_BUFFER_INSTANCE",    ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
+			{ "ENGINE_BUFFER_VERTEX_BBOX", ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ },
+		},
+		GraphicsMode::LINES });
 
 	// ENGINE COMPUTE
 
@@ -185,10 +188,13 @@ Renderer::Renderer(
 
 	mFramePassRegistry.registerCompute(
 		{ "ENGINE_FRAMEPASS_COMPUTE", { "ENGINE_DESC_COMPUTE" }, "ENGINE_PIPELINE_COMPUTE",
-		{ "ENGINE_BUFFER_CAMERA", "ENGINE_BUFFER_ENTITY", "ENGINE_BUFFER_MESH", "ENGINE_BUFFER_TRANSFORM" },
-		{ "ENGINE_BUFFER_INSTANCE" },
-		{},
-		{},
+		{
+			{ "ENGINE_BUFFER_CAMERA",    ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ },
+			{ "ENGINE_BUFFER_ENTITY",    ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
+			{ "ENGINE_BUFFER_MESH",      ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
+			{ "ENGINE_BUFFER_TRANSFORM", ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
+			{"ENGINE_BUFFER_INSTANCE",   ResourceUsage::BUFFER_STORAGE, ResourceAccess::WRITE }
+		},
 		{ (100'000 + 63) / 64, 1, 1 }});
 
 	createSyncObjects();
@@ -239,7 +245,7 @@ void Renderer::drawFrame()
 
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
 
-	VkResult nextImageResult = vkAcquireNextImageKHR(
+	const VkResult nextImageResult = vkAcquireNextImageKHR(
 		mDevice,
 		swapchain->handle(),
 		UINT64_MAX,
@@ -262,7 +268,7 @@ void Renderer::drawFrame()
 	mFrameGraph.compile();
 	const auto& executions = mFrameGraph.getExecutions();
 
-	auto commandBuffer = commandPool->beginCommand(mFrameIndex);
+	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
 
 	// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
 	const auto& instanceBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_INSTANCE");
@@ -275,46 +281,40 @@ void Renderer::drawFrame()
 		switch (exec->mType)
 		{
 		case FramePassType::GRAPHICS:
+		{
 			if (!isRenderPassActive)
 			{
 				commandPool->beginRenderPass(commandBuffer, mImageIndex, renderPass, swapchain);
 				isRenderPassActive = true;
 			}
 
-			if (static_cast<const GraphicsGpuFramePass*>(exec.get())->mMode == GraphicsMode::MESH)
+			const auto& pass = reinterpret_cast<const GraphicsGpuFramePass*>(exec.get());
+
+			if (pass->mMode == GraphicsMode::MESH)
 			{
 				const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
-				MeshCommandRecorder meshRecorder;
-				meshRecorder.record(commandBuffer, static_cast<const GraphicsGpuFramePass*>(exec.get()), mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+
+				mMeshCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
 			}
-			else
-			if (static_cast<const GraphicsGpuFramePass*>(exec.get())->mMode == GraphicsMode::LINES)
+			else if (pass->mMode == GraphicsMode::LINES)
 			{
 				const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
 
-				LineCommandRecorder lineRecorder;
-				lineRecorder.record(commandBuffer, static_cast<const GraphicsGpuFramePass*>(exec.get()), mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+				mLineCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
 			}
-				/*
-			commandPool->recordGraphics(
-				commandBuffer,
-				static_cast<const GraphicsFramePass*>(exec.get()),
-				mFrameIndex,
-				drawBuffer->handle(),
-				mDrawCommandCount);
-				*/
 			break;
+		}
 		case FramePassType::COMPUTE:
-				if (isRenderPassActive)
-				{
-					commandPool->endRenderPass(commandBuffer);
-					isRenderPassActive = false;
-				}
+		{
+			if (isRenderPassActive)
+			{
+				commandPool->endRenderPass(commandBuffer);
+				isRenderPassActive = false;
+			}
 
-			commandPool->recordCompute(
-				commandBuffer,
-				static_cast<const ComputeGpuFramePass*>(exec.get()),
-				mFrameIndex);
+			const auto& pass = reinterpret_cast<const ComputeGpuFramePass*>(exec.get());
+
+			mComputeCommandRecorder.record(commandBuffer, pass, mFrameIndex);
 
 			//Barrier::buffer(
 			//	commandBuffer,
@@ -344,6 +344,7 @@ void Renderer::drawFrame()
 			//	VK_WHOLE_SIZE);
 
 			break;
+		}
 		case FramePassType::NONE:
 		default:
 			return;

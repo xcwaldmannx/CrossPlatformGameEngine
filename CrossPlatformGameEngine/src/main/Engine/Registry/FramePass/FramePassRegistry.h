@@ -21,10 +21,7 @@ namespace ascen
 		std::vector<std::string> mDescriptorSets;
 		std::string mPipeline;
 
-		std::vector<std::string> mReadBuffers;
-		std::vector<std::string> mWriteBuffers;
-		std::vector<std::string> mReadTextures;
-		std::vector<std::string> mWriteTextures;
+		std::vector<GpuResource> mResources;
 	};
 
 	struct GpuFramePassEntry
@@ -34,9 +31,7 @@ namespace ascen
 
 	struct GraphicsFramePassEntry : public FramePassEntry
 	{
-		std::vector<std::string> mVertexBuffers;
-		std::string mIndexBuffer;
-		GraphicsMode mFramePassMode;
+		GraphicsMode mFramePassMode = GraphicsMode::MESH;
 	};
 
 	struct ComputeFramePassEntry : public FramePassEntry
@@ -47,11 +42,6 @@ namespace ascen
 	class FramePassRegistry : public Registry_I
 	{
 	public:
-		FramePassRegistry(
-			const ResourceRegistry& resourceRegistry,
-			const DescriptorRegistry& descriptorRegistry,
-			const PipelineRegistry& pipelineRegistry);
-
 		void registerGraphics(GraphicsFramePassEntry entry);
 		void registerCompute(ComputeFramePassEntry entry);
 
@@ -64,10 +54,6 @@ namespace ascen
 		bool exists(const std::string& name) const;
 
 	private:
-		const ResourceRegistry& mResourceRegistry;
-		const DescriptorRegistry& mDescriptorRegistry;
-		const PipelineRegistry& mPipelineRegistry;
-
 		std::vector<std::string> mRegisteredNames;
 
 		std::vector<GraphicsFramePassEntry> mGraphicsEntries;

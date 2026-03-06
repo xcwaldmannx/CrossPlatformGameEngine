@@ -14,14 +14,6 @@
 
 using namespace ascen;
 
-FramePassRegistry::FramePassRegistry(
-	const ResourceRegistry& resourceRegistry,
-	const DescriptorRegistry& descriptorRegistry,
-	const PipelineRegistry& pipelineRegistry) :
-	mResourceRegistry(resourceRegistry),
-	mDescriptorRegistry(descriptorRegistry),
-	mPipelineRegistry(pipelineRegistry) {}
-
 void FramePassRegistry::registerGraphics(GraphicsFramePassEntry entry)
 {
 	if (isRegistered(entry.mName))
@@ -48,135 +40,21 @@ void FramePassRegistry::reconstruct()
 
 	for (const auto& entry : mGraphicsEntries)
 	{
-		std::vector<VkBuffer> vertexBufferHandles;
-
-		for (auto& vertexBuffer : entry.mVertexBuffers)
-		{
-			const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, vertexBuffer);
-			vertexBufferHandles.push_back(buffer->handle());
-		}
-
-		VkBuffer indexBufferHandle = VK_NULL_HANDLE;
-
-		if (!entry.mIndexBuffer.empty())
-		{
-			const auto& indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, entry.mIndexBuffer);
-			indexBufferHandle = indexBuffer->handle();
-		}
-
-		std::vector<std::string> readBufferHandles;
-
-		for (auto& readBuffer : entry.mReadBuffers)
-		{
-			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
-			readBufferHandles.push_back(readBuffer);
-		}
-
-		std::vector<std::string> writeBufferHandles;
-
-		for (auto& writeBuffer : entry.mWriteBuffers)
-		{
-			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
-			writeBufferHandles.push_back(writeBuffer);
-		}
-
-		std::vector<VkImageView> readTextureHandles;
-
-		for (auto& readTexture : entry.mReadTextures)
-		{
-			const auto& texture = ResourceRegistryBackend::getTexture(mResourceRegistry, readTexture);
-			readTextureHandles.push_back(texture->handle());
-		}
-
-		std::vector<VkImageView> writeTextureHandles;
-
-		for (auto& writeTexture : entry.mWriteTextures)
-		{
-			const auto& texture = ResourceRegistryBackend::getTexture(mResourceRegistry, writeTexture);
-			writeTextureHandles.push_back(texture->handle());
-		}
-
-		std::vector<VkDescriptorSet> descriptorSetHandles;
-
-		for (auto& descriptorSet : entry.mDescriptorSets)
-		{
-			const auto& set = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
-			descriptorSetHandles.push_back(set->handle());
-		}
-
-		const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, entry.mPipeline);
-		VkPipeline pipelineHandle = pipeline->handle();
-		VkPipelineLayout pipelineLayoutHandle = pipeline->getLayout();
-
 		mFramePasses[entry.mName] = std::make_shared<GraphicsGpuFramePass>(
 			FramePassType::GRAPHICS,
 			entry.mFramePassMode,
-			descriptorSetHandles,
-			pipelineHandle,
-			pipelineLayoutHandle,
-			readBufferHandles,
-			writeBufferHandles,
-			readTextureHandles,
-			writeTextureHandles,
-			vertexBufferHandles,
-			indexBufferHandle);
+			entry.mPipeline,
+			entry.mDescriptorSets,
+			entry.mResources);
 	}
 
 	for (const auto& entry : mComputeEntries)
 	{
-		std::vector<std::string> readBufferHandles;
-
-		for (auto& readBuffer : entry.mReadBuffers)
-		{
-			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, readBuffer);
-			readBufferHandles.push_back(readBuffer);
-		}
-
-		std::vector<std::string> writeBufferHandles;
-
-		for (auto& writeBuffer : entry.mWriteBuffers)
-		{
-			// const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, writeBuffer);
-			writeBufferHandles.push_back(writeBuffer);
-		}
-
-		std::vector<VkImageView> readTextureHandles;
-
-		for (auto& readTexture : entry.mReadTextures)
-		{
-			const auto& texture = ResourceRegistryBackend::getTexture(mResourceRegistry, readTexture);
-			readTextureHandles.push_back(texture->handle());
-		}
-
-		std::vector<VkImageView> writeTextureHandles;
-
-		for (auto& writeTexture : entry.mWriteTextures)
-		{
-			const auto& texture = ResourceRegistryBackend::getTexture(mResourceRegistry, writeTexture);
-			writeTextureHandles.push_back(texture->handle());
-		}
-
-		std::vector<VkDescriptorSet> descriptorSetHandles;
-
-		for (auto& descriptorSet : entry.mDescriptorSets)
-		{
-			const auto& set = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
-			descriptorSetHandles.push_back(set->handle());
-		}
-
-		const auto& pipeline = PipelineRegistryBackend::getComputePipeline(mPipelineRegistry, entry.mPipeline);
-		VkPipeline pipelineHandle = pipeline->handle();
-		VkPipelineLayout pipelineLayoutHandle = pipeline->getLayout();
-
 		mFramePasses[entry.mName] = std::make_shared<ComputeGpuFramePass>(
 			FramePassType::COMPUTE,
-			descriptorSetHandles,
-			pipelineHandle,
-			pipelineLayoutHandle,
-			readBufferHandles,
-			writeBufferHandles,
-			readTextureHandles,
-			writeTextureHandles,
+			entry.mPipeline,
+			entry.mDescriptorSets,
+			entry.mResources,
 			entry.mGroups);
 	}
 }

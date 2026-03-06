@@ -6,26 +6,63 @@
 
 using namespace ascen;
 
+MeshCommandRecorder::MeshCommandRecorder(
+    PipelineRegistry& pipelineRegistry,
+    DescriptorRegistry& descriptorRegistry,
+    ResourceRegistry& resourceRegistry) :
+    CommandRecorder_I(pipelineRegistry, descriptorRegistry, resourceRegistry) {}
+
 void MeshCommandRecorder::record(
     VkCommandBuffer commandBuffer,
-    const GraphicsGpuFramePass* framePass,
+    const GraphicsGpuFramePass* pass,
     uint32_t frameIndex,
     VkBuffer indirectBuffer,
     uint32_t drawCommandCount)
 {
-    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, framePass->mPipeline);
+    const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, pass->mPipeline);
+    const auto& pipelineLayout = pipeline->getLayout();
 
-    std::vector<VkDeviceSize> vertexOffsets(framePass->mVertexBuffers.size(), 0);
+    std::vector<VkDescriptorSet> descriptorSets;
+    for (const auto& descriptorSet : pass->mDescriptorSets)
+    {
+        const auto& descriptorSetPtr = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
+        descriptorSets.push_back(descriptorSetPtr->handle());
+    }
+
+    std::vector<VkBuffer> vertexBuffers;
+    VkBuffer indexBuffer = VK_NULL_HANDLE;
+
+    for (const auto & resource : pass->mResources)
+    {
+        switch (resource.mUsage)
+        {
+            case ResourceUsage::BUFFER_VERTEX:
+            {
+                const auto& vertexBufferPtr = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
+                vertexBuffers.push_back(vertexBufferPtr->handle());
+                break;
+            }
+            case ResourceUsage::BUFFER_INDEX:
+                indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName)->handle();
+                break;
+            default:
+                break;
+        }
+    }
+
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle());
+
+    std::vector<VkDeviceSize> vertexOffsets(vertexBuffers.size(), 0);
     vkCmdBindVertexBuffers(
         commandBuffer,
         0,
-        framePass->mVertexBuffers.size(),
-        framePass->mVertexBuffers.data(),
+        vertexBuffers.size(),
+        vertexBuffers.data(),
         vertexOffsets.data());
 
     vkCmdBindIndexBuffer(
         commandBuffer,
-        framePass->mIndexBuffer,
+        indexBuffer,
         0,
         VK_INDEX_TYPE_UINT32);
 
@@ -38,10 +75,10 @@ void MeshCommandRecorder::record(
     vkCmdBindDescriptorSets(
         commandBuffer,
         VK_PIPELINE_BIND_POINT_GRAPHICS,
-        framePass->mPipelineLayout,
+        pipelineLayout,
         0,
-        framePass->mDescriptorSets.size(),
-        framePass->mDescriptorSets.data(),
+        descriptorSets.size(),
+        descriptorSets.data(),
         static_cast<uint32_t>(dynamicOffets.size()),
         &dynamicOffets[0]);
 

@@ -4,22 +4,19 @@
 
 namespace ascen
 {
-    struct GraphicsGpuFramePass;
 
-    class LineCommandRecorder : public CommandRecorder_I
+    class ComputeCommandRecorder : public CommandRecorder_I
     {
     public:
-        LineCommandRecorder(
+        ComputeCommandRecorder(
             PipelineRegistry& pipelineRegistry,
             DescriptorRegistry& descriptorRegistry,
             ResourceRegistry& resourceRegistry);
 
         void record(
             VkCommandBuffer commandBuffer,
-            const GraphicsGpuFramePass* framePass,
-            uint32_t frameIndex,
-            VkBuffer indirectBuffer,
-            uint32_t drawCommandCount);
+            const ComputeGpuFramePass* framePass,
+            uint32_t frameIndex);
     };
 
 }

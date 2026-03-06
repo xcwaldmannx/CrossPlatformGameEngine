@@ -10,6 +10,10 @@
 #include <Mass.h>
 #include <vulkan/vulkan.h>
 
+#include "../CommandRecorder/ComputeCommandRecorder/ComputeCommandRecorder.h"
+#include "../CommandRecorder/LineCommandRecorder/LineCommandRecorder.h"
+#include "../CommandRecorder/MeshCommandRecorder/MeshCommandRecorder.h"
+
 class EcsSystem;
 
 namespace ascen
@@ -78,6 +82,10 @@ namespace ascen
 		FramePassRegistry& mFramePassRegistry;
 
 		FrameGraph mFrameGraph;
+
+		LineCommandRecorder mLineCommandRecorder;
+		MeshCommandRecorder mMeshCommandRecorder;
+		ComputeCommandRecorder mComputeCommandRecorder;
 
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
 		//std::vector<VkSemaphore> mRenderFinishedSemaphores;
