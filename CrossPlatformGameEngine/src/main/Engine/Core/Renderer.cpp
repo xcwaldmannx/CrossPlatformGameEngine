@@ -46,7 +46,7 @@ Renderer::Renderer(
 	mDescriptorRegistry(descriptorRegistry),
 	mPipelineRegistry(pipelineRegistry),
 	mFramePassRegistry(framePassRegistry),
-	mFrameGraph(mFramePassRegistry),
+	mFrameGraph(mFramePassRegistry, mResourceRegistry),
 	mLineCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
 	mMeshCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
 	mComputeCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry)
@@ -325,6 +325,7 @@ void Renderer::drawFrame()
 			//	VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
 			//	VK_WHOLE_SIZE);
 
+			/*
 			Barrier::buffer(
 				commandBuffer,
 				instanceBuffer->handle(),
@@ -333,6 +334,7 @@ void Renderer::drawFrame()
 				VK_ACCESS_2_SHADER_READ_BIT,
 				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
 				VK_WHOLE_SIZE);
+			*/
 
 			//Barrier::buffer(
 			//	commandBuffer,
@@ -345,6 +347,8 @@ void Renderer::drawFrame()
 
 			break;
 		}
+		case FramePassType::SYNC:
+			break;
 		case FramePassType::NONE:
 		default:
 			return;

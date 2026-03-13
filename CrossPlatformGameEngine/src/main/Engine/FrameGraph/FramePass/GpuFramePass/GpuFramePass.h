@@ -30,11 +30,11 @@ namespace ascen
         IMAGE_PRESENT
     };
 
-    enum class ResourceAccess
+    enum class ResourceAccess : uint32_t
     {
-        READ,
-        WRITE,
-        READ_WRITE
+        READ       = 0x00,
+        WRITE      = 0x01,
+        READ_WRITE = 0x02
     };
 
     struct GpuResource

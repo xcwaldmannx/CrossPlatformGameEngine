@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace ascen
 {
     enum class FramePassType
@@ -8,12 +10,15 @@ namespace ascen
         CPU,
         GRAPHICS,
         COMPUTE,
+        SYNC,
         TRANSFER,
     };
 
     struct FramePass
     {
         FramePass(const FramePassType type);
+
+        const std::string getStringType() const;
 
         const FramePassType mType;
     };

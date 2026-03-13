@@ -1,12 +1,13 @@
 #pragma once
 
+#include "../FramePass.h"
+
 namespace ascen
 {
 
-    class SyncFramePass
+    struct SyncFramePass : FramePass
     {
-    public:
-        SyncFramePass();
+        SyncFramePass(const FramePassType type);
     };
 
 }

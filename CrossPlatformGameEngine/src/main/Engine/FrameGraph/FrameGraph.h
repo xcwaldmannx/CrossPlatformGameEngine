@@ -14,23 +14,34 @@
 namespace ascen
 {
 
+	struct ResourceLastUsage
+	{
+		GpuResource mResource;
+		unsigned int mLastUsageNode;
+	};
+
 	struct FrameGraphNode
 	{
 		std::string mName;
 		FramePassPtr mFramePass;
 		std::vector<unsigned int> mDependencies;
+		std::vector<GpuResource> mResources;
 	};
 
 	class FrameGraph
 	{
 	public:
-		FrameGraph(const FramePassRegistry& framePassRegistry);
+		FrameGraph(
+			const FramePassRegistry& framePassRegistry,
+			const ResourceRegistry& resourceRegistry);
 
 		void compile();
 
 		const std::vector<FramePassPtr>& getExecutions() const;
 
 	private:
+		bool needsBarrier(const GpuResource& previous, const GpuResource& current);
+
 		// Returns a list of pass indices in execution order.
 		static std::vector<unsigned int> topoSort(const std::vector<FrameGraphNode>& nodes)
 		{
@@ -100,6 +111,7 @@ namespace ascen
 
 	private:
 		const FramePassRegistry& mFramePassRegistry;
+		const ResourceRegistry& mResourceRegistry;
 
 		std::vector<FramePassPtr> mExecutions;
 	};
