@@ -37,11 +37,19 @@ namespace ascen
         READ_WRITE = 0x02
     };
 
+    enum class ResourceStage
+    {
+        VERTEX,
+        FRAGMENT,
+        COMPUTE,
+    };
+
     struct GpuResource
     {
         std::string mName;
         ResourceUsage mUsage;
         ResourceAccess mAccess;
+        ResourceStage mStage;
     };
 
     struct GpuFramePass : FramePass

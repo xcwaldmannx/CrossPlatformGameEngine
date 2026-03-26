@@ -34,6 +34,16 @@ void FramePassRegistry::registerCompute(ComputeFramePassEntry entry)
 	mComputeEntries.emplace_back(std::move(entry));
 }
 
+void FramePassRegistry::registerSync(SyncFramePassEntry entry)
+{
+	if (isRegistered(entry.mName))
+	{
+		throw std::runtime_error("A frame pass with that name already exists!");
+	}
+
+	mSyncEntries.emplace_back(std::move(entry));
+}
+
 void FramePassRegistry::reconstruct()
 {
 	cleanup();
@@ -56,6 +66,17 @@ void FramePassRegistry::reconstruct()
 			entry.mDescriptorSets,
 			entry.mResources,
 			entry.mGroups);
+	}
+
+	for (const auto& entry : mSyncEntries)
+	{
+		mFramePasses[entry.mName] = std::make_shared<SyncFramePass>(
+			FramePassType::SYNC,
+			entry.mBuffer,
+			entry.mSrcAccess,
+			entry.mSrcStage,
+			entry.mDstAccess,
+			entry.mDstStage);
 	}
 }
 

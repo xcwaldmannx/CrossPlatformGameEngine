@@ -19,6 +19,8 @@ const std::string FramePass::getStringType() const
             return "COMPUTE";
         case FramePassType::TRANSFER:
             return "TRANSFER";
+        case FramePassType::SYNC:
+            return "SYNC";
         case FramePassType::NONE:
         default:
             return "NONE";

@@ -118,18 +118,6 @@ Renderer::Renderer(
 
 	mPipelineRegistry.registerGraphicsPipeline(graphicsPipelineEntryTriangles);
 
-
-	mFramePassRegistry.registerGraphics(
-		{ "ENGINE_FRAMEPASS_GRAPHICS_TRIANGLES", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS_TRIANGLES",
-		{
-			{ "ENGINE_BUFFER_CAMERA",   ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ },
-			{ "ENGINE_BUFFER_INSTANCE", ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
-			{ "ENGINE_TEXTURE_IMAGE",   ResourceUsage::IMAGE_SAMPLED,  ResourceAccess::READ },
-			{ "ENGINE_BUFFER_VERTEX",   ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ },
-			{ "ENGINE_BUFFER_INDEX",    ResourceUsage::BUFFER_INDEX,   ResourceAccess::READ }
-		},
-		GraphicsMode::MESH });
-
 	// LINES
 
 	mDescriptorRegistry.registerDescriptor(
@@ -151,15 +139,6 @@ Renderer::Renderer(
 	graphicsPipelineEntryLines.mParams.mCullMode = VK_CULL_MODE_NONE;
 
 	mPipelineRegistry.registerGraphicsPipeline(graphicsPipelineEntryLines);
-
-	mFramePassRegistry.registerGraphics(
-		{ "ENGINE_FRAMEPASS_GRAPHICS_LINES", { "ENGINE_DESC_GRAPHICS_LINES" }, "ENGINE_PIPELINE_GRAPHICS_LINES",
-		{
-			{ "ENGINE_BUFFER_CAMERA",      ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ },
-			{ "ENGINE_BUFFER_INSTANCE",    ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
-			{ "ENGINE_BUFFER_VERTEX_BBOX", ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ },
-		},
-		GraphicsMode::LINES });
 
 	// ENGINE COMPUTE
 
@@ -186,16 +165,41 @@ Renderer::Renderer(
 	mPipelineRegistry.registerComputePipeline(
 		{ "ENGINE_PIPELINE_COMPUTE", "src/shaders/GPUDrivenCS.spv", { "ENGINE_DESC_COMPUTE" } });
 
+
+	// All FramePasses initialized here in order
+
 	mFramePassRegistry.registerCompute(
-		{ "ENGINE_FRAMEPASS_COMPUTE", { "ENGINE_DESC_COMPUTE" }, "ENGINE_PIPELINE_COMPUTE",
+	{ "ENGINE_FRAMEPASS_COMPUTE", { "ENGINE_DESC_COMPUTE" }, "ENGINE_PIPELINE_COMPUTE",
+	{
+		{ "ENGINE_BUFFER_CAMERA",    ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ,  ResourceStage::COMPUTE },
+		{ "ENGINE_BUFFER_ENTITY",    ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ,  ResourceStage::COMPUTE },
+		{ "ENGINE_BUFFER_MESH",      ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ,  ResourceStage::COMPUTE },
+		{ "ENGINE_BUFFER_TRANSFORM", ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ,  ResourceStage::COMPUTE },
+		{"ENGINE_BUFFER_INSTANCE",   ResourceUsage::BUFFER_STORAGE, ResourceAccess::WRITE, ResourceStage::COMPUTE }
+	},
+	{ (100'000 + 63) / 64, 1, 1 }});
+
+	mFramePassRegistry.registerGraphics(
+		{ "ENGINE_FRAMEPASS_GRAPHICS_TRIANGLES", { "ENGINE_DESC_GRAPHICS" }, "ENGINE_PIPELINE_GRAPHICS_TRIANGLES",
 		{
-			{ "ENGINE_BUFFER_CAMERA",    ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ },
-			{ "ENGINE_BUFFER_ENTITY",    ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
-			{ "ENGINE_BUFFER_MESH",      ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
-			{ "ENGINE_BUFFER_TRANSFORM", ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ },
-			{"ENGINE_BUFFER_INSTANCE",   ResourceUsage::BUFFER_STORAGE, ResourceAccess::WRITE }
+			{ "ENGINE_BUFFER_CAMERA",   ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ, ResourceStage::VERTEX   },
+			{ "ENGINE_BUFFER_INSTANCE", ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ, ResourceStage::VERTEX   },
+			{ "ENGINE_TEXTURE_IMAGE",   ResourceUsage::IMAGE_SAMPLED,  ResourceAccess::READ, ResourceStage::FRAGMENT },
+			{ "ENGINE_BUFFER_VERTEX",   ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ, ResourceStage::VERTEX   },
+			{ "ENGINE_BUFFER_INDEX",    ResourceUsage::BUFFER_INDEX,   ResourceAccess::READ, ResourceStage::VERTEX   }
 		},
-		{ (100'000 + 63) / 64, 1, 1 }});
+		GraphicsMode::MESH });
+
+	mFramePassRegistry.registerGraphics(
+	{ "ENGINE_FRAMEPASS_GRAPHICS_LINES", { "ENGINE_DESC_GRAPHICS_LINES" }, "ENGINE_PIPELINE_GRAPHICS_LINES",
+	{
+		{ "ENGINE_BUFFER_CAMERA",      ResourceUsage::BUFFER_UNIFORM, ResourceAccess::READ, ResourceStage::VERTEX },
+		{ "ENGINE_BUFFER_INSTANCE",    ResourceUsage::BUFFER_STORAGE, ResourceAccess::READ, ResourceStage::VERTEX },
+		{ "ENGINE_BUFFER_VERTEX_BBOX", ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ, ResourceStage::VERTEX },
+	},
+	GraphicsMode::LINES });
+
+
 
 	createSyncObjects();
 }
@@ -348,10 +352,25 @@ void Renderer::drawFrame()
 			break;
 		}
 		case FramePassType::SYNC:
+		{
+			const auto& pass = reinterpret_cast<const SyncFramePass*>(exec.get());
+			Barrier::buffer(
+				commandBuffer,
+				pass->mBuffer,
+				pass->mSrcAccess,
+				pass->mSrcStage,
+				pass->mDstAccess,
+				pass->mDstStage);
+		}
 			break;
 		case FramePassType::NONE:
+		{
+
+		}
 		default:
+		{
 			return;
+		}
 		}
 	}
 

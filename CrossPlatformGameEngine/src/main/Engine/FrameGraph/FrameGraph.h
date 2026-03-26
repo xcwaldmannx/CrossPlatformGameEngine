@@ -28,11 +28,14 @@ namespace ascen
 		std::vector<GpuResource> mResources;
 	};
 
+	/*
+	 The FrameGraph assumes that all frames were created sequentially. No sorting is performed.
+	 */
 	class FrameGraph
 	{
 	public:
 		FrameGraph(
-			const FramePassRegistry& framePassRegistry,
+			FramePassRegistry& framePassRegistry,
 			const ResourceRegistry& resourceRegistry);
 
 		void compile();
@@ -110,10 +113,13 @@ namespace ascen
 		}
 
 	private:
-		const FramePassRegistry& mFramePassRegistry;
+		FramePassRegistry& mFramePassRegistry;
 		const ResourceRegistry& mResourceRegistry;
 
 		std::vector<FramePassPtr> mExecutions;
+
+		static std::unordered_map<ResourceAccess, VkAccessFlags2> sResourceAccessMap;
+		static std::unordered_map<ResourceStage, VkPipelineStageFlags2> sResourceStageMap;
 	};
 
 }

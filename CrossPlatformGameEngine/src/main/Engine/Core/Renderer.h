@@ -3,8 +3,6 @@
 #include "../FrameGraph/FrameGraph.h"
 #include "../Ecs/Systems/RenderSystem.h"
 
-#include <concepts>
-
 #include <unordered_map>
 
 #include <Mass.h>
@@ -88,7 +86,6 @@ namespace ascen
 		ComputeCommandRecorder mComputeCommandRecorder;
 
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
-		//std::vector<VkSemaphore> mRenderFinishedSemaphores;
 		std::vector<VkSemaphore> mRenderFinishedForImageSemaphores;
 		std::vector<VkFence> mInFlightFences;
 

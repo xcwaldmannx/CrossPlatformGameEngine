@@ -2,6 +2,8 @@
 
 #include "../../FrameGraph/FramePass/FramePass.h"
 #include "../../FrameGraph/FramePass/GpuFramePass/GraphicsGpuFramePass/GraphicsGpuFramePass.h"
+#include "../../FrameGraph/FramePass/GpuFramePass/ComputeGpuFramePass/ComputeGpuFramePass.h"
+#include "../../FrameGraph/FramePass/SyncFramePass/SyncFramePass.h"
 
 #include "../Resource/ResourceRegistry.h"
 #include "../Descriptor/DescriptorRegistry.h"
@@ -20,23 +22,31 @@ namespace ascen
 		std::string mName;
 		std::vector<std::string> mDescriptorSets;
 		std::string mPipeline;
+	};
 
+	struct GpuFramePassEntry : public FramePassEntry
+	{
 		std::vector<GpuResource> mResources;
 	};
 
-	struct GpuFramePassEntry
-	{
-
-	};
-
-	struct GraphicsFramePassEntry : public FramePassEntry
+	struct GraphicsFramePassEntry : public GpuFramePassEntry
 	{
 		GraphicsMode mFramePassMode = GraphicsMode::MESH;
 	};
 
-	struct ComputeFramePassEntry : public FramePassEntry
+	struct ComputeFramePassEntry : public GpuFramePassEntry
 	{
 		std::array<uint32_t, 3> mGroups{ 1, 1, 1 };
+	};
+
+	struct SyncFramePassEntry
+	{
+		std::string mName;
+		VkBuffer mBuffer;
+		VkAccessFlags2 mSrcAccess;
+		VkPipelineStageFlags2 mSrcStage;
+		VkAccessFlags2 mDstAccess;
+		VkPipelineStageFlags2 mDstStage;
 	};
 
 	class FramePassRegistry : public Registry_I
@@ -44,6 +54,7 @@ namespace ascen
 	public:
 		void registerGraphics(GraphicsFramePassEntry entry);
 		void registerCompute(ComputeFramePassEntry entry);
+		void registerSync(SyncFramePassEntry entry);
 
 		void reconstruct() override;
 
@@ -58,6 +69,7 @@ namespace ascen
 
 		std::vector<GraphicsFramePassEntry> mGraphicsEntries;
 		std::vector<ComputeFramePassEntry> mComputeEntries;
+		std::vector<SyncFramePassEntry> mSyncEntries;
 
 		std::unordered_map<std::string, FramePassPtr> mFramePasses;
 

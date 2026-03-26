@@ -6,12 +6,26 @@
 #include <chrono>
 #include <iostream>
 
+#include "../Registry/Resource/ResourceRegistryBackend.h"
 #include "../Resource/Barrier/Barrier.h"
 
 using namespace ascen;
 
+std::unordered_map<ResourceAccess, VkAccessFlags2> FrameGraph::sResourceAccessMap =
+{
+    { ResourceAccess::READ,  VK_ACCESS_2_SHADER_READ_BIT  },
+    { ResourceAccess::WRITE, VK_ACCESS_2_SHADER_WRITE_BIT }
+};
+
+std::unordered_map<ResourceStage, VkPipelineStageFlags2> FrameGraph::sResourceStageMap =
+{
+    { ResourceStage::VERTEX,   VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT   },
+    { ResourceStage::FRAGMENT, VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT },
+    { ResourceStage::COMPUTE,  VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT  },
+};
+
 FrameGraph::FrameGraph(
-    const FramePassRegistry& framePassRegistry,
+    FramePassRegistry& framePassRegistry,
     const ResourceRegistry& resourceRegistry) :
 	mFramePassRegistry(framePassRegistry),
     mResourceRegistry(resourceRegistry) {}
@@ -22,117 +36,92 @@ void FrameGraph::compile()
 
     const auto& framePasses = FramePassRegistryBackend::getFramePasses(mFramePassRegistry);
 
-    std::vector<FrameGraphNode> nodes;
-    nodes.reserve(framePasses.size());
-
-    std::unordered_map<std::string, ResourceLastUsage> resourceLastUsage;
-
-    unsigned int passIndex = 0;
+    std::unordered_map<std::string, std::string> resourcePrevFramePass;
+    std::unordered_map<std::string, ResourceAccess> resourcePrevAccess;
+    std::unordered_map<std::string, ResourceStage> resourcePrevStage;
 
     for (auto& [name, framePass] : framePasses)
     {
-        nodes.push_back(FrameGraphNode{});
-        FrameGraphNode& node = nodes.back();
-        node.mName = name;
-        node.mFramePass = framePass;
-
-        switch (framePass->mType)
+        // insert a SyncFramePass for GPU frame passes
+        if (framePass->mType == FramePassType::GRAPHICS || framePass->mType == FramePassType::COMPUTE)
         {
-            case FramePassType::NONE:
-            case FramePassType::CPU:
-                break;
+            const auto& gpuFramePass = std::static_pointer_cast<GpuFramePass>(framePass);
+            const auto& resources = gpuFramePass->mResources;
 
-            case FramePassType::COMPUTE:
-            case FramePassType::GRAPHICS:
+            for (const auto& resource : resources)
             {
-                auto gpuFramePass = std::static_pointer_cast<GpuFramePass>(framePass);
-                const auto& resources = gpuFramePass->mResources;
-
-                node.mResources = resources;
-
-                for (const auto& resource : resources)
+                if (resourcePrevAccess.contains(resource.mName))
                 {
-                    auto it = resourceLastUsage.find(resource.mName);
+                    const auto prevAccess = resourcePrevAccess[resource.mName];
+                    const auto currAccess = resource.mAccess;
 
-                    if (it != resourceLastUsage.end())
+                    if (prevAccess == ResourceAccess::READ  && currAccess == ResourceAccess::WRITE ||
+                        prevAccess == ResourceAccess::WRITE && currAccess == ResourceAccess::READ  ||
+                        prevAccess == ResourceAccess::WRITE && currAccess == ResourceAccess::WRITE)
                     {
-                        ResourceLastUsage& lastUse = it->second;
+                        const auto prevStage = resourcePrevStage.at(resource.mName);
+                        const auto currStage = resource.mStage;
 
-                        node.mDependencies.push_back(lastUse.mLastUsageNode);
+                        const auto srcAccess = sResourceAccessMap.at(prevAccess);
+                        const auto srcStage = sResourceStageMap.at(prevStage);
 
-                        if (needsBarrier(lastUse.mResource, resource))
-                        {
-                            switch (resource.mUsage)
-                            {
-                                case ResourceUsage::BUFFER_VERTEX:
-                                case ResourceUsage::BUFFER_INDEX:
-                                case ResourceUsage::BUFFER_UNIFORM:
-                                case ResourceUsage::BUFFER_STORAGE:
-                                case ResourceUsage::BUFFER_INDIRECT:
-                                case ResourceUsage::BUFFER_TRANSFER_SRC:
-                                case ResourceUsage::BUFFER_TRANSFER_DST:
+                        const auto dstAccess = sResourceAccessMap.at(currAccess);
+                        const auto dstStage = sResourceStageMap.at(currStage);
 
-                                    break;
+                        // insert SyncFramePass that will generate a barrier
+                        std::string syncName = resourcePrevFramePass[resource.mName] + "__TO__" + name;
 
-                                case ResourceUsage::IMAGE_SAMPLED:
-                                case ResourceUsage::IMAGE_STORAGE:
-                                case ResourceUsage::IMAGE_COLOR_ATTACH:
-                                case ResourceUsage::IMAGE_DEPTH_ATTACH:
-                                case ResourceUsage::IMAGE_TRANSFER_SRC:
-                                case ResourceUsage::IMAGE_TRANSFER_DST:
-                                case ResourceUsage::IMAGE_PRESENT:
-                                    break;
-                            }
-                        }
+                        const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
+                        mFramePassRegistry.registerSync({ syncName, buffer->handle(), srcAccess, srcStage, dstAccess, dstStage });
 
-                        lastUse.mResource = resource;
-                        lastUse.mLastUsageNode = passIndex;
-                    }
-                    else
-                    {
-                        resourceLastUsage[resource.mName] = { resource, passIndex };
+                        mFramePassRegistry.reconstruct();
+
+                        mExecutions.push_back(FramePassRegistryBackend::getFramePass(mFramePassRegistry, syncName));
                     }
                 }
 
-                break;
+                resourcePrevAccess[resource.mName] = resource.mAccess;
+                resourcePrevStage[resource.mName] = resource.mStage;
+                resourcePrevFramePass[resource.mName] = name;
             }
-
-            default:
-                break;
         }
 
-        auto& deps = node.mDependencies;
-        std::sort(deps.begin(), deps.end());
-        deps.erase(std::unique(deps.begin(), deps.end()), deps.end());
-
-        passIndex++;
-    }
-
-    const auto order = topoSort(nodes);
-
-    mExecutions.reserve(order.size());
-
-    for (unsigned int idx : order)
-    {
-        mExecutions.push_back(nodes[idx].mFramePass);
+        mExecutions.push_back(framePass);
     }
 
     // debug logging below
 
-    passIndex = 0;
+#ifdef DEBUG
+    unsigned int passIndex = 0;
 
     std::cout << "BEGIN" << std::endl;
 
     for (const auto& exec : mExecutions)
     {
-        const auto& pass = std::reinterpret_pointer_cast<GpuFramePass>(exec);
-
-        std::cout << "\t" << pass->getStringType() << " PASS: " << passIndex << std::endl << "\tresources:" << std::endl;
-
-        for (const auto& resource : pass->mResources)
+        switch (exec->mType)
         {
-            std::string access = (resource.mAccess == ResourceAccess::WRITE) ? "WRITE" : "READ";
-            std::cout << "\t\t" << resource.mName << ": " << access << std::endl;
+            case FramePassType::GRAPHICS:
+            case FramePassType::COMPUTE:
+            {
+                const auto& pass = std::reinterpret_pointer_cast<GpuFramePass>(exec);
+
+                std::cout << "\t" << pass->getStringType() << " PASS: " << passIndex << std::endl << "\tresources:" << std::endl;
+
+                for (const auto& resource : pass->mResources)
+                {
+                    std::string access = (resource.mAccess == ResourceAccess::WRITE) ? "WRITE" : "READ";
+                    std::cout << "\t\t" << resource.mName << ": " << access << std::endl;
+                }
+                break;
+            }
+            case FramePassType::SYNC:
+            {
+                const auto& pass = std::reinterpret_pointer_cast<SyncFramePass>(exec);
+
+                std::cout << "\t" << pass->getStringType() << " PASS: " << passIndex << std::endl;
+            }
+            default:
+                break;
         }
 
         std::cout << std::endl;
@@ -143,7 +132,7 @@ void FrameGraph::compile()
     }
 
     std::cout << "END" << std::endl;
-
+#endif
 }
 
 const std::vector<FramePassPtr>& FrameGraph::getExecutions() const
