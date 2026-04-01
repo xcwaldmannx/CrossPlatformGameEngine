@@ -4,7 +4,8 @@ using namespace ascen;
 
 
 
-FramePass::FramePass(const FramePassType type) :
+FramePass::FramePass(
+    const FramePassType type) :
     mType(type) {}
 
 const std::string FramePass::getStringType() const

@@ -7,7 +7,7 @@ list(FILTER SRC_FILES EXCLUDE REGEX "BadGraphicsPipeline")
 
 add_executable(CrossPlatformGameEngine ${SRC_FILES})
 
-set_property(TARGET CrossPlatformGameEngine PROPERTY CXX_STANDARD 20)
+set_property(TARGET CrossPlatformGameEngine PROPERTY CXX_STANDARD 23)
 
 # build everything static by default
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)

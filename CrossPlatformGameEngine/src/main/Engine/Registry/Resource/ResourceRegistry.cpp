@@ -122,16 +122,16 @@ void ResourceRegistry::reconstruct()
 	}
 }
 
-void ResourceRegistry::updateBuffer(
+void ResourceRegistry::uploadBuffer(
 	const std::string& name,
 	const void* items,
 	uint32_t itemCount,
 	uint32_t itemSize,
-	uint32_t offset)
+	uint32_t offset) const
 {
 	if (bufferExists(name))
 	{
-		mBuffers.at(name)->update(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, items, itemCount, itemSize, offset);
+		mBuffers.at(name)->upload(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, items, itemCount, itemSize, offset);
 	}
 	else
 	{
@@ -139,7 +139,7 @@ void ResourceRegistry::updateBuffer(
 	}
 }
 
-void ResourceRegistry::updateTexture(const std::string& name, const std::vector<unsigned char>& pixels)
+void ResourceRegistry::updateTexture(const std::string& name, const std::vector<unsigned char>& pixels) const
 {
 	if (textureExists(name))
 	{

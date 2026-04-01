@@ -1,5 +1,7 @@
 #pragma once
 
+#include <functional>
+#include <ostream>
 #include <string>
 
 namespace ascen
@@ -16,7 +18,8 @@ namespace ascen
 
     struct FramePass
     {
-        FramePass(const FramePassType type);
+        FramePass(
+            const FramePassType type);
 
         const std::string getStringType() const;
 

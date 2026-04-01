@@ -8,6 +8,7 @@
 
 struct ModelComponent
 {
+	std::string mName;
 	uint32_t mModelId   = 0;
 	uint32_t mTextureId = 0;
 

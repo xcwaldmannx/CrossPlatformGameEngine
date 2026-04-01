@@ -2,7 +2,8 @@
 
 #include "../Engine/Core/Engine.h"
 
-#include "BoundingBoxHandler.h"
+#include "ModelHandler/ModelHandler.h"
+#include "MyPipeline/MyPipeline.h"
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -26,10 +27,10 @@ public:
 
 private:
 	void loadTextures();
-	void loadModels();
+	// void loadModels();
 	void createEntities();
 	void createHelicopter(glm::vec3 position);
-	void createModel(glm::vec3 position);
+	void createModel(const glm::vec3 position);
 	void updateEntities(float delta);
 	void updateCamera(float delta);
 
@@ -37,9 +38,8 @@ private:
 	WindowManager& mWindowManager;
 	ascen::Engine mEngine;
 
-	// BoundingBoxHandler mBoundingBoxHandler;
-
-	std::unordered_map<uint32_t, ascen::ModelData> mModelData;
+	ModelHandler mModelHandler;
+	MyPipeline mPipeline;
 
 	std::vector<float> mVertices;
 	std::vector<uint32_t> mIndices;
@@ -71,5 +71,5 @@ private:
 	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 camPosition{ 0.0f };
 	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
-	float camSpeed = 10.0f;
+	float camSpeed = 2.0f;
 };

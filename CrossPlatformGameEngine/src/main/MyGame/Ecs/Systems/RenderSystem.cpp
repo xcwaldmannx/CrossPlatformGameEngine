@@ -2,11 +2,9 @@
 
 #include <map>
 
-using namespace ascen;
-
 RenderSystem::RenderSystem(
-	std::unordered_map<uint32_t, ModelData>* modelData) :
-	mModelData(modelData)
+	const std::unordered_map<std::string, MyModel>& models) :
+	mModels(models)
 {}
 
 void RenderSystem::update(float deltaTime)
@@ -31,11 +29,11 @@ void RenderSystem::update(float deltaTime)
 		uint32_t modelBaseInstance = firstInstance;
 		uint32_t entityCount = static_cast<uint32_t>(entities.size());
 
-		ModelData& modelData = mModelData->at(modelId);
+		ModelData modelData;// = mModelData->at(modelId);
 
 		for (uint32_t i = 0; i < modelData.mMeshCount; i++)
 		{
-			IndirectBuffer::IndexedIndirectCommand meshDraw{};
+			ascen::IndirectBuffer::IndexedIndirectCommand meshDraw{};
 			meshDraw.vertexOffset = static_cast<int32_t>(modelData.mVertexOffsets[i]);
 			meshDraw.firstIndex = modelData.mIndexOffsets[i];
 			meshDraw.indexCount = modelData.mIndexCounts[i];
@@ -43,7 +41,7 @@ void RenderSystem::update(float deltaTime)
 			meshDraw.instanceCount = entityCount;
 			mMeshDraws.emplace_back(std::move(meshDraw));
 
-			IndirectBuffer::IndirectCommand bboxDraw{};
+			ascen::IndirectBuffer::IndirectCommand bboxDraw{};
 			bboxDraw.firstVertex = modelBaseInstance * 96 * 2;
 			bboxDraw.vertexCount = 96 * 2;
 			bboxDraw.firstInstance = firstInstance;
@@ -88,10 +86,12 @@ void RenderSystem::update(float deltaTime)
 	}
 }
 
+/*
 void RenderSystem::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
 {
 	mModelData = &modelData;
 }
+*/
 
 const std::vector<GPUEntity>& RenderSystem::getEntities() const
 {
@@ -103,12 +103,12 @@ const std::vector<GPUMesh>& RenderSystem::getMeshes() const
 	return mGPUMeshes;
 }
 
-const std::vector<IndirectBuffer::IndexedIndirectCommand> RenderSystem::getMeshDraws() const
+const std::vector<ascen::IndirectBuffer::IndexedIndirectCommand> RenderSystem::getMeshDraws() const
 {
 	return mMeshDraws;
 }
 
-const std::vector<IndirectBuffer::IndirectCommand> RenderSystem::getBBoxDraws() const
+const std::vector<ascen::IndirectBuffer::IndirectCommand> RenderSystem::getBBoxDraws() const
 {
 	return mBBoxDraws;
 }

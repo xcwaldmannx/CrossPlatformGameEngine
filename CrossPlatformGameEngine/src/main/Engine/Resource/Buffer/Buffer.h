@@ -27,7 +27,7 @@ namespace ascen
 		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
-		void update(
+		void upload(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			VkQueue queue,
@@ -36,6 +36,15 @@ namespace ascen
 			uint32_t itemCount,
 			uint32_t itemSize,
 			uint32_t offset = 0);
+
+		void download(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkQueue queue,
+			const CommandPoolPtr& commandPool,
+			void* items,
+			uint32_t itemCount,
+			uint32_t itemSize);
 
 		size_t getItemCount() const;
 
@@ -57,6 +66,7 @@ namespace ascen
 
 		size_t mItemCount = 0;      // number of items
 		size_t mItemSize = 0;       // byte size of item
+		VkBufferUsageFlags mUsageFlags;
 		VkMemoryPropertyFlags mMemoryFlags;
 	};
 

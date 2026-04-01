@@ -3,50 +3,88 @@
 #include "../WindowManager/WindowManager.h"
 #include "../Utility/ImageLoader/ImageLoader.h"
 
-#include <Mass.h>
+#include "Ecs/Components/ModelComponent.h"
+#include "Ecs/Components/TransformComponent.h"
+
+#include "Ecs/Systems/FrustumCullingSystem.h"
+#include "Ecs/Systems/SimpleRenderSystem.h"
 
 MyGame::MyGame(WindowManager& windowManager) :
 	mWindowManager(windowManager),
-	mEngine(windowManager)
-	// mBoundingBoxHandler(mEngine)
+	mEngine(windowManager),
+	mPipeline(mEngine)
 {
+	mPipeline.init();
+
 	mEngine.reload();
 
-	loadModels();
+	mModelHandler.loadModels({ "assets/models/submarine.model", "assets/models/test.model" });
 
-	// mBoundingBoxHandler.update();
+	const auto& models = mModelHandler.getModels();
+	const auto& vertices = mModelHandler.getVertices();
+	const auto& indices = mModelHandler.getIndices();
+	const auto& transforms = mModelHandler.getTransforms();
+	const auto& bounds = mModelHandler.getBounds();
 
-	mEngine.resource().updateBuffer("ENGINE_BUFFER_VERTEX", mVertices.data(), mVertices.size(), sizeof(float));
-	mEngine.resource().updateBuffer("ENGINE_BUFFER_INDEX", mIndices.data(), mIndices.size(), sizeof(uint32_t));
-	mEngine.resource().updateBuffer("ENGINE_BUFFER_TRANSFORM", mTransforms.data(), mTransforms.size(), sizeof(float));
+	mEngine.resource().uploadBuffer("BUFFER_VERTEX", &vertices, vertices.size(), sizeof(float));
+	mEngine.resource().uploadBuffer("BUFFER_INDEX", &indices, indices.size(), sizeof(uint32_t));
+	mEngine.resource().uploadBuffer("BUFFER_TRANSFORM", &transforms, transforms.size(), sizeof(float));
+	mEngine.resource().uploadBuffer("BUFFER_BBOX", &bounds, bounds.size(), sizeof(float));
 
-	mEngine.resource().updateBuffer("ENGINE_BUFFER_VERTEX_BBOX", mBoundingBoxes.data(), mBoundingBoxes.size(), sizeof(float) * 3);
+	// initialize ECS
+	mEngine.ecs().registerComponent<TransformComponent>();
+	mEngine.ecs().registerComponent<ModelComponent>();
+
+	const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
+	const auto writeSig = mEngine.ecs().getSignature<ModelComponent>();
+
+	mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
+	mEngine.ecs().registerSystem<SimpleRenderSystem>(readSig, writeSig, mEngine, models);
 
 	loadTextures();
 
-	mEngine.resource().updateTexture("ENGINE_TEXTURE_IMAGE", mPixels);
+	mEngine.resource().updateTexture("TEXTURE", mPixels);
 
-	mEngine.updateModelData(mModelData);
-
-	// createEntities();
-
-	for (int i = 0; i < 10; i++)
+	for (int i = 0; i < 360; i += (360 / 10))
 	{
-		for (int j = 0; j < 100; j++)
-		{
-			createHelicopter({ -100 + (i * 20), 0, -10 - (j * 20)});
-			createModel({ -95 + (i * 20), 0, -10 - (j * 20)});
-		}
+		float angle = i * (M_PI / 180.0);
+		float x = 25 * cos(angle);
+		float z = 25 * sin(angle);
+
+		createModel({ x, 0, z });
 	}
 }
+
+float timeAccum = 0;
 
 void MyGame::run(float delta)
 {
 	updateCamera(delta);
-	updateEntities(delta);
+	// updateEntities(delta);
+
+	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
+	//mEngine.ecs().updateSystem<SimpleRenderSystem>(delta);
+
 	mEngine.drawFrame();
 
-	// mBoundingBoxHandler.print();
+	timeAccum += delta;
+
+	if (timeAccum >= 1)
+	{
+		std::vector<FrustumCullingSystem::Entity> data;
+		data.resize(10);
+		mEngine.resource().downloadBuffer<FrustumCullingSystem::Entity>("BUFFER_ENTITY", &data[0], data.size());
+
+		std::cout << "BREAK BREAK BREAK\n";
+		for (const auto& d : data)
+		{
+			std::cout << "entity, " << "visible=" << d.mIsVisible << ", position={ " << d.mPosition.x << ", " << d.mPosition.y << ", " << d.mPosition.z << " }" <<
+				", rotation={ " << d.mRotation.x << ", " << d.mRotation.y << ", " << d.mRotation.z << " }" <<
+				", scale={ " << d.mScale.x << ", " << d.mScale.y << ", " << d.mScale.z << " }"	<< std::endl;
+		}
+
+		timeAccum = 0;
+	}
 }
 
 void MyGame::cleanup()
@@ -74,134 +112,6 @@ void MyGame::loadTextures()
 		RawImage raw;
 		il.loadImage(filepath, &raw);
 		mPixels.insert(mPixels.end(), raw.mPixels.begin(), raw.mPixels.end());
-	}
-}
-
-void MyGame::loadModels()
-{
-	mass::Configuration config{};
-	config.mVertexLayout.mAttributes =
-	{
-		{ 3, sizeof(float), 0 },
-		{ 3, sizeof(float), sizeof(float) * 3 },
-		{ 2, sizeof(float), sizeof(float) * 6 },
-	};
-	config.mHasNormals = true;
-	config.mHasTexCoords = true;
-	config.mHasTransforms = true;
-
-	std::vector<std::pair<uint32_t, std::string>> modelFilepaths =
-	{
-		{ HELICOPTER, "assets/models/submarine.model" },
-		{ TEST, "assets/models/test.model" },
-		// { PRISM,      "res/models/prism.model"      },
-		// { SHAPES,     "res/models/shapes.model"     },
-		// { WINDMILL,   "res/models/windmill.model"   },
-		// { HELICOPTER, "res/models/helicopter.model" },
-		// { FROSTY,     "res/models/frosty.model"     },
-	};
-
-	uint32_t globalVertexOffset = 0;
-	uint32_t globalIndexOffset = 0;
-	uint32_t globalTransformOffset = 0;
-
-	for (const auto&[id, filepath] : modelFilepaths)
-	{
-		mass::ModelLayout modelLayout = mass::deserialize(config, filepath);
-
-		const uint32_t floatsPerVertex = modelLayout.mVertexLayout.mStride / sizeof(float);
-
-		assert(modelLayout.mVertices.size() % (modelLayout.mVertexLayout.mStride / sizeof(float)) == 0);
-		assert(modelLayout.mTransforms.size() % 16 == 0);
-
-		ascen::ModelData info{};
-
-		for (const auto& mesh : modelLayout.mMeshLayouts)
-		{
-			info.mMeshCount++;
-			info.mVertexOffsets.push_back(globalVertexOffset);
-			info.mIndexOffsets.push_back(globalIndexOffset + mesh.mIndexOffset);
-			info.mIndexCounts.push_back(mesh.mIndexCount);
-			info.mTransformOffsets.push_back(globalTransformOffset + mesh.mTransformOffset);
-			info.mBoundsPos.push_back(mesh.mBoundsPos);
-			info.mBoundsNeg.push_back(mesh.mBoundsNeg);
-
-			// bbox
-
-			// top
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 1, 0, 0 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 1, 0, 0 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 1, 0, 0 });
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 0, 1 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			// bottom
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 1, 0, 0 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 1, 0, 0 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 1, 0, 0 });
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 0, 1 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			// sides
-
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 0, 1 });
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 0, 1 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsNeg.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 0, 1 });
-			mBoundingBoxes.push_back({ mesh.mBoundsPos.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsNeg.z });
-			mBoundingBoxes.push_back({ 0, 0, 1 });
-			mBoundingBoxes.push_back({ mesh.mBoundsNeg.x, mesh.mBoundsPos.y, mesh.mBoundsPos.z });
-			mBoundingBoxes.push_back({ 0, 1, 0 });
-		}
-
-		mModelData.emplace(id, std::move(info));
-
-		mVertices.insert(mVertices.end(), modelLayout.mVertices.begin(), modelLayout.mVertices.end());
-		mIndices.insert(mIndices.end(), modelLayout.mIndices.begin(), modelLayout.mIndices.end());
-		mTransforms.insert(mTransforms.end(), modelLayout.mTransforms.begin(), modelLayout.mTransforms.end());
-
-		globalVertexOffset = mVertices.size() / floatsPerVertex;
-		globalIndexOffset = mIndices.size();
-		globalTransformOffset = mTransforms.size() / 16;
 	}
 }
 
@@ -253,9 +163,9 @@ void MyGame::createHelicopter(glm::vec3 position)
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 }
 
-void MyGame::createModel(glm::vec3 position)
+void MyGame::createModel(const glm::vec3 position)
 {
-	auto e = mEngine.ecs().addEntity();
+	const auto e = mEngine.ecs().addEntity();
 
 	TransformComponent t{};
 	t.mPosition = position;
@@ -263,6 +173,7 @@ void MyGame::createModel(glm::vec3 position)
 	t.mScale = { 1, 1, 1 };
 
 	ModelComponent m{};
+	m.mName = "assets/models/test.model";
 	m.mModelId = TEST;
 	m.mTextureId = 0;
 	m.mIsHidden = false;
@@ -318,8 +229,8 @@ void MyGame::updateCamera(float delta)
 	
 	glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), camPosition) * rot;
 	
-	float width = static_cast<float>(mEngine.getScreenWidth());
-	float height = static_cast<float>(mEngine.getScreenHeight());
+	const auto width = static_cast<float>(mEngine.getScreenWidth());
+	const auto height = static_cast<float>(mEngine.getScreenHeight());
 
 	if (width * height > 0)
 	{
@@ -329,7 +240,6 @@ void MyGame::updateCamera(float delta)
 			width / height, 0.01f, 100'000.0f);
 		ubo.mProj[1][1] *= -1;
 
-		mEngine.resource().updateBuffer("ENGINE_BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
+		mEngine.resource().uploadBuffer("BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
 	}
-
 }

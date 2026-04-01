@@ -7,8 +7,7 @@ namespace ascen
 
     struct TransferFramePass : FramePass
     {
-        TransferFramePass(
-            const FramePassType type);
+        TransferFramePass(const FramePassType type);
     };
 
 }

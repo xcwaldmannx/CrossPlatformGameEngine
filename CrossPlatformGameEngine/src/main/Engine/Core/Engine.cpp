@@ -15,17 +15,7 @@ Engine::Engine(WindowManager& windowManager) :
 	mPipelineRegistry(mVulkanContext, mRenderContext, mVertexRegistry, mDescriptorRegistry),
 	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext,
 		mVertexRegistry, mResourceRegistry, mDescriptorRegistry, mPipelineRegistry, mFramePassRegistry)
-{
-	// initialize ECS
-	mEcs.registerComponent<TransformComponent>();
-	mEcs.registerComponent<ModelComponent>();
-
-	std::unordered_map<uint32_t, ModelData> modelData;
-
-	auto readSig = mEcs.getSignature<TransformComponent, ModelComponent>();
-	auto writeSig = mEcs.getSignature<ModelComponent>();
-	mEcs.registerSystem<RenderSystem>(readSig, writeSig, &modelData);
-}
+{}
 
 VertexRegistry& Engine::vertex()
 {
@@ -66,10 +56,12 @@ void Engine::reload()
 	mFramePassRegistry.reconstruct();
 }
 
+/*
 void Engine::updateModelData(std::unordered_map<uint32_t, ModelData>& modelData)
 {
 	mRenderer.updateModels(modelData);
 }
+*/
 
 void Engine::drawFrame()
 {

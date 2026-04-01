@@ -34,7 +34,7 @@ void FrameGraph::compile()
 {
     mExecutions.clear();
 
-    const auto& framePasses = FramePassRegistryBackend::getFramePasses(mFramePassRegistry);
+    const auto framePasses = FramePassRegistryBackend::getFramePasses(mFramePassRegistry);
 
     std::unordered_map<std::string, std::string> resourcePrevFramePass;
     std::unordered_map<std::string, ResourceAccess> resourcePrevAccess;

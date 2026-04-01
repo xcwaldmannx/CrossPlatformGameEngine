@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../FrameGraph/FrameGraph.h"
-#include "../Ecs/Systems/RenderSystem.h"
+// #include "../Ecs/Systems/RenderSystem.h"
 
 #include <unordered_map>
 
@@ -52,11 +52,11 @@ namespace ascen
 			PipelineRegistry& pipelineRegistry,
 			FramePassRegistry& framePassRegistry);
 
-		void updateRenderSystem();
+		// void updateRenderSystem();
 
 		void drawFrame();
 
-		void updateModels(std::unordered_map<uint32_t, ModelData>& modelData);
+		// void updateModels(std::unordered_map<uint32_t, ModelData>& modelData);
 
 		void createSyncObjects();
 		void destroySyncObjects();

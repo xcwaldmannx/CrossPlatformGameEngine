@@ -222,13 +222,20 @@ void CommandPool::endSingle(VkDevice device, VkQueue queue, VkCommandBuffer buff
 {
     vkEndCommandBuffer(buffer);
 
+    VkFence fence;
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+
+    vkCreateFence(device, &fenceInfo, nullptr, &fence);
+
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &buffer;
 
-    vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(queue);
+    vkQueueSubmit(queue, 1, &submitInfo, fence);
+    vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
+    vkDestroyFence(device, fence, nullptr);
 
     vkFreeCommandBuffers(device, mHandle, 1, &buffer);
 }

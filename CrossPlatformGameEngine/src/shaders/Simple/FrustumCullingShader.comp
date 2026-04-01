@@ -1,0 +1,93 @@
+#version 450
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+struct Entity
+{
+    vec3 position;
+    vec3 rotation;
+    vec3 scale;
+
+    uint isVisible;
+    uint meshCount;
+    uint meshOffset;
+};
+
+layout(std140, set = 0, binding = 0x00) uniform Camera
+{
+    mat4 view;
+    mat4 proj;
+} camera;
+
+layout(std430, set = 0, binding = 0x01) buffer Entities
+{
+    Entity entities[];
+};
+
+mat4 eulerRotationToMat4(vec3 euler)
+{
+    float cx = cos(euler.x);
+    float sx = sin(euler.x);
+    float cy = cos(euler.y);
+    float sy = sin(euler.y);
+    float cz = cos(euler.z);
+    float sz = sin(euler.z);
+
+    mat3 Rz = mat3(
+        cz, -sz, 0.0,
+        sz,  cz, 0.0,
+        0.0, 0.0, 1.0
+    );
+
+    mat3 Ry = mat3(
+         cy, 0.0, sy,
+         0.0, 1.0, 0.0,
+        -sy, 0.0, cy
+    );
+
+    mat3 Rx = mat3(
+        1.0, 0.0, 0.0,
+        0.0,  cx, -sx,
+        0.0,  sx,  cx
+    );
+
+    mat3 R = Rz * Ry * Rx;
+
+    mat4 M = mat4(1.0);
+    M[0].xyz = R[0];
+    M[1].xyz = R[1];
+    M[2].xyz = R[2];
+    return M;
+}
+
+mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
+{
+    mat4 R = eulerRotationToMat4(rotEuler);
+
+    R[0] *= scale.x;
+    R[1] *= scale.y;
+    R[2] *= scale.z;
+
+    R[3].xyz = pos;
+
+    return R;
+}
+
+void main()
+{
+    uint entityIdx = gl_GlobalInvocationID.x;
+    if (entityIdx >= entities.length())
+    {
+        return;
+    }
+
+    Entity entity = entities[entityIdx];
+
+    vec4 pos = (camera.proj * camera.view) * vec4(entity.position, 1.0);
+
+    bool inside =
+        (pos.x >= -pos.w && pos.x <= pos.w) &&
+        (pos.y >= -pos.w && pos.y <= pos.w) &&
+        (pos.z >= -pos.w && pos.z <= pos.w);
+
+    entities[entityIdx].isVisible = inside ? 1 : 0;
+}

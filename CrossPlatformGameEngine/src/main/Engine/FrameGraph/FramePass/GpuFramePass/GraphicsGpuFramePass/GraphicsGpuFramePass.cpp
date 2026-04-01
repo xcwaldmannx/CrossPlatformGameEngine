@@ -8,6 +8,5 @@ GraphicsGpuFramePass::GraphicsGpuFramePass(
     const std::string pipeline,
     const std::vector<std::string> descriptorSets,
     const std::vector<GpuResource> resources) :
-    GpuFramePass(type, pipeline, descriptorSets,
-        resources),
+    GpuFramePass(type, pipeline, descriptorSets, resources),
     mMode(mode) {}

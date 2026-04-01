@@ -3,6 +3,7 @@
 #include "../GpuFramePass.h"
 
 #include <array>
+#include <functional>
 
 namespace ascen
 {

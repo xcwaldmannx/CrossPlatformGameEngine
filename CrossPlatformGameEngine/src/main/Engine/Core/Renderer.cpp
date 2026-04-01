@@ -22,6 +22,8 @@
 
 #include <filesystem>
 
+#include <glm/glm.hpp>
+
 using namespace ascen;
 
 Renderer::Renderer(
@@ -51,6 +53,7 @@ Renderer::Renderer(
 	mMeshCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
 	mComputeCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry)
 {
+	/*
 	const ascen::VertexBinding bindingVec3{ 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX };
 	const std::vector<ascen::VertexAttribute> attributesVec3 =
 	{
@@ -198,12 +201,13 @@ Renderer::Renderer(
 		{ "ENGINE_BUFFER_VERTEX_BBOX", ResourceUsage::BUFFER_VERTEX,  ResourceAccess::READ, ResourceStage::VERTEX },
 	},
 	GraphicsMode::LINES });
-
+	*/
 
 
 	createSyncObjects();
 }
 
+/*
 void Renderer::updateRenderSystem()
 {
 	mEcsSystem.updateSystem<RenderSystem>(0);
@@ -232,6 +236,7 @@ void Renderer::updateRenderSystem()
 		mDrawCommandCount = bboxDraws.size();
 	}
 }
+*/
 
 void Renderer::drawFrame()
 {
@@ -241,7 +246,7 @@ void Renderer::drawFrame()
 		return;
 	}
 
-	updateRenderSystem();
+	// updateRenderSystem();
 
 	const auto& commandPool = mRenderContext.getCommandPool();
 	const auto& renderPass = mRenderContext.getRenderPass();
@@ -275,8 +280,8 @@ void Renderer::drawFrame()
 	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
 
 	// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
-	const auto& instanceBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_INSTANCE");
-	const auto& transformBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_TRANSFORM");
+	// const auto& instanceBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_INSTANCE");
+	// const auto& transformBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_TRANSFORM");
 
 	bool isRenderPassActive = false;
 
@@ -296,15 +301,15 @@ void Renderer::drawFrame()
 
 			if (pass->mMode == GraphicsMode::MESH)
 			{
-				const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
+				// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
 
-				mMeshCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+				// mMeshCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
 			}
 			else if (pass->mMode == GraphicsMode::LINES)
 			{
-				const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
+				// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
 
-				mLineCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+				// mLineCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
 			}
 			break;
 		}
@@ -319,35 +324,6 @@ void Renderer::drawFrame()
 			const auto& pass = reinterpret_cast<const ComputeGpuFramePass*>(exec.get());
 
 			mComputeCommandRecorder.record(commandBuffer, pass, mFrameIndex);
-
-			//Barrier::buffer(
-			//	commandBuffer,
-			//	drawBuffer->handle(),
-			//	VK_ACCESS_2_SHADER_WRITE_BIT,
-			//	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-			//	VK_ACCESS_2_INDIRECT_COMMAND_READ_BIT,
-			//	VK_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT,
-			//	VK_WHOLE_SIZE);
-
-			/*
-			Barrier::buffer(
-				commandBuffer,
-				instanceBuffer->handle(),
-				VK_ACCESS_2_SHADER_WRITE_BIT,
-				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-				VK_ACCESS_2_SHADER_READ_BIT,
-				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
-				VK_WHOLE_SIZE);
-			*/
-
-			//Barrier::buffer(
-			//	commandBuffer,
-			//	transformBuffer->handle(),
-			//	VK_ACCESS_2_SHADER_WRITE_BIT,
-			//	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT,
-			//	VK_ACCESS_2_SHADER_READ_BIT,
-			//	VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT,
-			//	VK_WHOLE_SIZE);
 
 			break;
 		}
@@ -429,12 +405,6 @@ void Renderer::drawFrame()
 	}
 
 	mFrameIndex = (mFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
-}
-
-void Renderer::updateModels(std::unordered_map<uint32_t, ModelData>& modelData)
-{
-	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
-	renderSystem->updateModels(modelData);
 }
 
 void Renderer::createSyncObjects()

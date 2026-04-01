@@ -8,6 +8,5 @@ ComputeGpuFramePass::ComputeGpuFramePass(
     const std::vector<std::string> descriptorSets,
     const std::vector<GpuResource> resources,
     const std::array<uint32_t, 3> groups) :
-    GpuFramePass(type, pipeline, descriptorSets,
-        resources),
+    GpuFramePass(type, pipeline, descriptorSets, resources),
     mGroups(groups) {}

@@ -17,6 +17,7 @@ Buffer::Buffer(
 	VkMemoryPropertyFlags memoryFlags) :
 	mItemCount(itemCount),
 	mItemSize(itemSize),
+	mUsageFlags(usageFlags),
 	mMemoryFlags(memoryFlags)
 {
 	VkBufferCreateInfo bufferInfo{};
@@ -54,7 +55,7 @@ void Buffer::destroy(VkDevice device)
 	vkFreeMemory(device, mMemory, nullptr);
 }
 
-void Buffer::update(
+void Buffer::upload(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
 	VkQueue queue,
@@ -82,17 +83,90 @@ void Buffer::update(
 			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
-		VkDeviceSize sizeBytes = itemCount * itemSize;
+		const VkDeviceSize sizeBytes = itemCount * itemSize;
 
 		void* data = nullptr;
 		vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
 		memcpy(data, items, sizeBytes);
 		vkUnmapMemory(device, stagingBuffer.mMemory);
 
-		copy(device, queue, commandPool, stagingBuffer, *this, false);
+		VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
+
+		VkBufferCopy copyRegion{};
+		copyRegion.srcOffset = 0;
+		copyRegion.dstOffset = 0;
+		copyRegion.size = itemCount * itemSize;
+		vkCmdCopyBuffer(commandBuffer, stagingBuffer.mHandle, mHandle, 1, &copyRegion);
+
+		bool tempInsertBarrier = false;
+
+		if (tempInsertBarrier)
+		{
+			Barrier::buffer(
+				commandBuffer,
+				mHandle,
+				VK_ACCESS_2_TRANSFER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_TRANSFER_BIT,
+				VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
+				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
+				VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
+				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT);
+		}
+
+		commandPool->endSingle(device, queue, commandBuffer);
 
 		stagingBuffer.destroy(device);
 	}
+}
+
+void Buffer::download(
+	VkPhysicalDevice physicalDevice,
+	VkDevice device,
+	VkQueue queue,
+	const CommandPoolPtr& commandPool,
+	void* items,
+	uint32_t itemCount,
+	uint32_t itemSize)
+{
+	if (!(mMemoryFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+	{
+		throw std::runtime_error("Cannot copy from CPU for a non-device-local buffer.");
+	}
+
+	Buffer stagingBuffer(
+		physicalDevice,
+		device,
+		itemCount,
+		itemSize,
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+	const VkDeviceSize sizeBytes = itemCount * itemSize;
+
+	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
+
+	Barrier::buffer(
+	commandBuffer,
+	mHandle,
+	VK_ACCESS_2_SHADER_WRITE_BIT,
+	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, // or vertex/fragment depending on where it's written
+	VK_ACCESS_2_TRANSFER_READ_BIT,
+	VK_PIPELINE_STAGE_2_TRANSFER_BIT);
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = sizeBytes;
+	vkCmdCopyBuffer(commandBuffer, mHandle, stagingBuffer.mHandle, 1, &copyRegion);
+
+	commandPool->endSingle(device, queue, commandBuffer);
+
+	void* data = nullptr;
+	vkMapMemory(device, stagingBuffer.mMemory, 0, sizeBytes, 0, &data);
+	memcpy(items, data, sizeBytes);
+	vkUnmapMemory(device, stagingBuffer.mMemory);
+
+	stagingBuffer.destroy(device);
 }
 
 size_t Buffer::getItemCount() const

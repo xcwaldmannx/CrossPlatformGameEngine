@@ -38,8 +38,8 @@ namespace ascen
 	{
 		std::string mName;
 		BufferType mType = BufferType::NONE;
-		uint32_t mCapacity = 0;
-		uint32_t mStride = 0;
+		uint32_t mCapacity = 1; // default must be > 0
+		uint32_t mStride = 1;   // default must be > 0
 	};
 
 	enum class TextureType
@@ -100,17 +100,29 @@ namespace ascen
 			return std::span<T>(typed, buf->getItemCount());
 		}
 
-
-		void updateBuffer(
+		void uploadBuffer(
 			const std::string& name,
 			const void* items,
 			uint32_t itemCount,
 			uint32_t itemSize,
-			uint32_t offset = 0);
+			uint32_t offset = 0) const;
+
+		template<typename T>
+		void downloadBuffer(const std::string& name, T* data, const size_t count)
+		{
+			const auto it = mBuffers.find(name);
+			if (it == mBuffers.end())
+			{
+				throw std::runtime_error("Buffer does not exist!");
+			}
+
+			const BufferPtr& buf = it->second;
+			buf->download(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, data, count, sizeof(T));
+		}
 
 		void updateTexture(
 			const std::string& name,
-			const std::vector<unsigned char>& pixels);
+			const std::vector<unsigned char>& pixels) const;
 
 		void cleanup();
 
