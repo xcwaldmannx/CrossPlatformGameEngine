@@ -22,8 +22,6 @@ namespace ascen
 		std::string mName;
 		std::vector<std::string> mDescriptorSets;
 		std::string mPipeline;
-		std::function<void()> mPreProcess;
-		std::function<void()> mPostProcess;
 	};
 
 	struct GpuFramePassEntry : FramePassEntry
@@ -49,8 +47,6 @@ namespace ascen
 		VkPipelineStageFlags2 mSrcStage;
 		VkAccessFlags2 mDstAccess;
 		VkPipelineStageFlags2 mDstStage;
-		std::function<void()> mPreProcess;
-		std::function<void()> mPostProcess;
 	};
 
 	class FramePassRegistry : public Registry_I

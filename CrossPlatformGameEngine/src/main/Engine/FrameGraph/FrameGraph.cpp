@@ -7,7 +7,6 @@
 #include <iostream>
 
 #include "../Registry/Resource/ResourceRegistryBackend.h"
-#include "../Resource/Barrier/Barrier.h"
 
 using namespace ascen;
 

@@ -18,9 +18,7 @@ namespace ascen
         void record(
             VkCommandBuffer commandBuffer,
             const GraphicsGpuFramePass* framePass,
-            uint32_t frameIndex,
-            VkBuffer indirectBuffer,
-            uint32_t drawCommandCount);
+            uint32_t frameIndex);
     };
 
 }

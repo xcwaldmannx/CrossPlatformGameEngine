@@ -31,16 +31,6 @@ public:
         uint32_t _pad2[2];
     };
 
-    struct alignas(16) Mesh
-    {
-        uint32_t mVertexOffset;
-
-        bool operator< (const Mesh& other) const
-        {
-            return mVertexOffset < other.mVertexOffset;
-        }
-    };
-
 public:
     FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, MyModel>& models);
 

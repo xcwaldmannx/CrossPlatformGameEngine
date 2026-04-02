@@ -207,37 +207,6 @@ Renderer::Renderer(
 	createSyncObjects();
 }
 
-/*
-void Renderer::updateRenderSystem()
-{
-	mEcsSystem.updateSystem<RenderSystem>(0);
-	auto renderSystem = mEcsSystem.getSystem<RenderSystem>();
-	const auto& entities = renderSystem->getEntities();
-	const auto& meshes = renderSystem->getMeshes();
-	const auto& meshDraws = renderSystem->getMeshDraws();
-	const auto& bboxDraws = renderSystem->getBBoxDraws();
-
-	mDrawCommandCount = 0;
-
-	if (!entities.empty() && !meshes.empty())
-	{
-		mResourceRegistry.updateBuffer(
-			"ENGINE_BUFFER_ENTITY", entities.data(), entities.size(), sizeof(GPUEntity));
-
-		mResourceRegistry.updateBuffer(
-			"ENGINE_BUFFER_MESH", meshes.data(), meshes.size(), sizeof(GPUMesh));
-
-		mResourceRegistry.updateBuffer(
-			"ENGINE_BUFFER_DRAW", meshDraws.data(), meshDraws.size(), sizeof(IndirectBuffer::IndexedIndirectCommand));
-
-		mResourceRegistry.updateBuffer(
-		"ENGINE_BUFFER_DRAW_BBOX", bboxDraws.data(), bboxDraws.size(), sizeof(IndirectBuffer::IndirectCommand));
-
-		mDrawCommandCount = bboxDraws.size();
-	}
-}
-*/
-
 void Renderer::drawFrame()
 {
 	if (mWindowManager.getWidth() == 0 ||
@@ -245,8 +214,6 @@ void Renderer::drawFrame()
 	{
 		return;
 	}
-
-	// updateRenderSystem();
 
 	const auto& commandPool = mRenderContext.getCommandPool();
 	const auto& renderPass = mRenderContext.getRenderPass();
@@ -267,7 +234,8 @@ void Renderer::drawFrame()
 		mRenderContext.resize();
 		return;
 	}
-	else if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
+
+	if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
 	{
 		throw std::runtime_error("failed to acquire swapchain image!");
 	}
@@ -278,10 +246,6 @@ void Renderer::drawFrame()
 	const auto& executions = mFrameGraph.getExecutions();
 
 	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
-
-	// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
-	// const auto& instanceBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_INSTANCE");
-	// const auto& transformBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_TRANSFORM");
 
 	bool isRenderPassActive = false;
 
@@ -301,9 +265,7 @@ void Renderer::drawFrame()
 
 			if (pass->mMode == GraphicsMode::MESH)
 			{
-				// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW");
-
-				// mMeshCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+				mMeshCommandRecorder.record(commandBuffer, pass, mFrameIndex);
 			}
 			else if (pass->mMode == GraphicsMode::LINES)
 			{
@@ -362,7 +324,7 @@ void Renderer::drawFrame()
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 	VkSemaphore waitSemaphores[] = { mImageAvailableSemaphores[mFrameIndex] };
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }; // previously was VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;

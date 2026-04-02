@@ -43,9 +43,8 @@ void MyPipeline::initResources()
     mEngine.resource().registerBuffer({ "BUFFER_TRANSFORM", ascen::BufferType::STORAGE, 100000, sizeof(float) });
     mEngine.resource().registerBuffer({ "BUFFER_BBOX",      ascen::BufferType::STORAGE, 100000, sizeof(float) * 6 });
 
-    mEngine.resource().registerBuffer({ "BUFFER_ENTITY",        ascen::BufferType::STORAGE,  10, sizeof(FrustumCullingSystem::Entity) });
-    mEngine.resource().registerBuffer({ "BUFFER_DRAW_COMMANDS", ascen::BufferType::INDIRECT, 10, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
-    // mEngine.resource().registerBuffer({ "BUFFER_ENTITY_RENDER",  ascen::BufferType::STORAGE, 10, sizeof(SimpleRenderSystem::Entity) });
+    mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  10, sizeof(FrustumCullingSystem::Entity) });
+    mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 10, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
 
     // Samplers
     mEngine.resource().registerSampler({ "SAMPLER" });
@@ -71,7 +70,7 @@ void MyPipeline::initStages()
         0x00, sizeof(glm::mat4) * 2,ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::VERTEX });
 
     mEngine.descriptor().registerDescriptor({ "BUFFER_ENTITY", "DESC_RENDER_ENTITY",
-        0x01, VK_WHOLE_SIZE,ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX });
+        0x01, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX });
 
     mEngine.descriptor().registerDescriptor({ "SAMPLER", "DESC_RENDER_ENTITY",
         0x02, 0,ascen::DescriptorType::SAMPLER, ascen::DescriptorStage::PIXEL });
@@ -94,43 +93,28 @@ void MyPipeline::initStages()
 
 void MyPipeline::initFramePasses()
 {
-    mEngine.frame().registerCompute(
-        { "FRAMEPASS_FRUSTUM_CULL",
-        { "DESC_FRUSTUM_CULL" },
-        "PIPELINE_FRUSTUM_CULL",
-        nullptr,
-        [&]
-        {
-            ascen::Barrier();
-
-            std::vector<FrustumCullingSystem::Entity> entities;
-            entities.resize(10);
-            mEngine.resource().downloadBuffer<FrustumCullingSystem::Entity>("BUFFER_ENTITY", &entities[0], entities.size());
-
-            std::cout << "BREAK" << std::endl;
-
-            for (const auto& e : entities)
-            {
-                std::cout << "isVisible=" << e.mIsVisible << ", position={ " << e.mPosition.x << ", " << e.mPosition.y << ", " << e.mPosition.z << " }" << std::endl;
-            }
-        },
-        {
-            { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ, ascen::ResourceStage::COMPUTE },
-            { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
-        },
-        { (10'000 + 63) / 64, 1, 1 }});
+    // mEngine.frame().registerCompute(
+    //     { "FRAMEPASS_FRUSTUM_CULL",
+    //     { "DESC_FRUSTUM_CULL" },
+    //     "PIPELINE_FRUSTUM_CULL",
+    //     {
+    //         { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ, ascen::ResourceStage::COMPUTE },
+    //         { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
+    //     },
+    //     { (10'000 + 63) / 64, 1, 1 }});
 
 
     mEngine.frame().registerGraphics(
         { "FRAMEPASS_RENDER_ENTITY",
         { "DESC_RENDER_ENTITY" },
         "PIPELINE_RENDER_ENTITY",
-        nullptr,
-        nullptr,
         {
-            { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
-            { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
-            { "TEXTURE",       ascen::ResourceUsage::IMAGE_SAMPLED,  ascen::ResourceAccess::READ, ascen::ResourceStage::FRAGMENT },
+            { "BUFFER_VERTEX", ascen::ResourceUsage::BUFFER_VERTEX,   ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
+            { "BUFFER_INDEX",  ascen::ResourceUsage::BUFFER_INDEX,    ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
+            { "BUFFER_DRAWS",  ascen::ResourceUsage::BUFFER_INDIRECT, ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
+            { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM,  ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
+            { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE,  ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
+            { "TEXTURE",       ascen::ResourceUsage::IMAGE_SAMPLED,   ascen::ResourceAccess::READ, ascen::ResourceStage::FRAGMENT },
         },
         ascen::GraphicsMode::MESH });
 }

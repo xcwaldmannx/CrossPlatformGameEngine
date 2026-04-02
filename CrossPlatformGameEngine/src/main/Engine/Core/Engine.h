@@ -9,15 +9,9 @@
 #include "../Registry/Pipeline/PipelineRegistry.h"
 #include "../Registry/FramePass/FramePassRegistry.h"
 
-#include "../FrameGraph/FrameGraph.h"
 #include "Renderer.h"
 
-#include "../Resource/Barrier/Barrier.h"
-
 #include "../../EcsSystem/EcsSystem.h"
-//#include "../Ecs/Components/TransformComponent.h"
-//#include "../Ecs/Components/ModelComponent.h"
-//#include "../Ecs/Systems/RenderSystem.h"
 
 class WindowManager;
 
@@ -40,7 +34,6 @@ namespace ascen
 		EcsSystem& ecs();
 
 		void reload();
-		// void updateModelData(std::unordered_map<uint32_t, ModelData>& modelData);
 
 		void drawFrame();
 

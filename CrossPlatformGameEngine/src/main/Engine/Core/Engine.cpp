@@ -56,13 +56,6 @@ void Engine::reload()
 	mFramePassRegistry.reconstruct();
 }
 
-/*
-void Engine::updateModelData(std::unordered_map<uint32_t, ModelData>& modelData)
-{
-	mRenderer.updateModels(modelData);
-}
-*/
-
 void Engine::drawFrame()
 {
 	mRenderer.drawFrame();

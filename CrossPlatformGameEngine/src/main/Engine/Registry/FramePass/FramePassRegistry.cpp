@@ -100,5 +100,5 @@ bool FramePassRegistry::isRegistered(const std::string& name) const
 
 bool FramePassRegistry::exists(const std::string& name) const
 {
-	return (mFramePasses.find(name) != mFramePasses.end());
+	return (mFramePasses.contains(name));
 }

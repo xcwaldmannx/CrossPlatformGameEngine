@@ -36,10 +36,9 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mEngine.ecs().registerComponent<ModelComponent>();
 
 	const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
-	const auto writeSig = mEngine.ecs().getSignature<ModelComponent>();
+	const auto writeSig = mEngine.ecs().getSignature<>();
 
 	mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
-	mEngine.ecs().registerSystem<SimpleRenderSystem>(readSig, writeSig, mEngine, models);
 
 	loadTextures();
 
@@ -60,11 +59,7 @@ float timeAccum = 0;
 void MyGame::run(float delta)
 {
 	updateCamera(delta);
-	// updateEntities(delta);
-
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
-	//mEngine.ecs().updateSystem<SimpleRenderSystem>(delta);
-
 	mEngine.drawFrame();
 
 	timeAccum += delta;
@@ -85,6 +80,7 @@ void MyGame::run(float delta)
 
 		timeAccum = 0;
 	}
+
 }
 
 void MyGame::cleanup()

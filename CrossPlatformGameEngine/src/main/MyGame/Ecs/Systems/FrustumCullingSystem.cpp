@@ -28,7 +28,7 @@ void FrustumCullingSystem::update(float deltaTime)
         e.mPosition  = transform.mPosition;
         e.mRotation  = transform.mRotation;
         e.mScale     = transform.mScale;
-        e.mIsVisible = 0;
+        e.mIsVisible = 1;
 
         if (!mModelToDrawCommands.contains(m.mModelId))
         {
@@ -58,7 +58,10 @@ void FrustumCullingSystem::update(float deltaTime)
 
     if (!mEntitiesToCull.empty() && !mDrawCommands.empty())
     {
-        mEngine.resource().uploadBuffer("BUFFER_ENTITY", &mEntitiesToCull[0], mEntitiesToCull.size(), sizeof(Entity));
-        mEngine.resource().uploadBuffer("BUFFER_DRAW_COMMANDS", &mDrawCommands[0], mDrawCommands.size(), sizeof(ascen::IndirectBuffer::IndexedIndirectCommand));
+        mEngine.resource().uploadBuffer("BUFFER_ENTITY",
+            &mEntitiesToCull[0], mEntitiesToCull.size(), sizeof(Entity));
+
+        mEngine.resource().uploadBuffer("BUFFER_DRAWS",
+            &mDrawCommands[0], mDrawCommands.size(), sizeof(ascen::IndirectBuffer::IndexedIndirectCommand));
     }
 }

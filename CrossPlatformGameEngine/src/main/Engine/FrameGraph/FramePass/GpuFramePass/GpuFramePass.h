@@ -56,9 +56,9 @@ namespace ascen
     {
         GpuFramePass(
             const FramePassType type,
-            const std::string pipeline,
-            const std::vector<std::string> descriptorSets,
-            const std::vector<GpuResource> resources);
+            const std::string& pipeline,
+            const std::vector<std::string>& descriptorSets,
+            const std::vector<GpuResource>& resources);
 
         const std::string mPipeline;
         const std::vector<std::string> mDescriptorSets;

@@ -15,9 +15,7 @@ MeshCommandRecorder::MeshCommandRecorder(
 void MeshCommandRecorder::record(
     VkCommandBuffer commandBuffer,
     const GraphicsGpuFramePass* pass,
-    uint32_t frameIndex,
-    VkBuffer indirectBuffer,
-    uint32_t drawCommandCount)
+    uint32_t frameIndex)
 {
     const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, pass->mPipeline);
     const auto& pipelineLayout = pipeline->getLayout();
@@ -31,6 +29,8 @@ void MeshCommandRecorder::record(
 
     std::vector<VkBuffer> vertexBuffers;
     VkBuffer indexBuffer = VK_NULL_HANDLE;
+    VkBuffer indirectBuffer = VK_NULL_HANDLE;
+    uint32_t indirectCount = 0;
 
     for (const auto & resource : pass->mResources)
     {
@@ -43,8 +43,17 @@ void MeshCommandRecorder::record(
                 break;
             }
             case ResourceUsage::BUFFER_INDEX:
+            {
                 indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName)->handle();
                 break;
+            }
+            case ResourceUsage::BUFFER_INDIRECT:
+            {
+                const auto& buf = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
+                indirectBuffer = buf->handle();
+                indirectCount = static_cast<uint32_t>(buf->getItemCount());
+                break;
+            }
             default:
                 break;
         }
@@ -86,6 +95,6 @@ void MeshCommandRecorder::record(
         commandBuffer,
         indirectBuffer,
         0,
-        drawCommandCount,
+        indirectCount,
         sizeof(VkDrawIndexedIndirectCommand));
 }
