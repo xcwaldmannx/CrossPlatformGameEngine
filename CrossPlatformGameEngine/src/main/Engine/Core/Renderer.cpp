@@ -286,7 +286,6 @@ void Renderer::drawFrame()
 			const auto& pass = reinterpret_cast<const ComputeGpuFramePass*>(exec.get());
 
 			mComputeCommandRecorder.record(commandBuffer, pass, mFrameIndex);
-
 			break;
 		}
 		case FramePassType::SYNC:

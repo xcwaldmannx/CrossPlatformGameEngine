@@ -18,18 +18,14 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.reload();
 
-	mModelHandler.loadModels({ "assets/models/submarine.model", "assets/models/test.model" });
+	mModelHandler.loadModels({ "assets/models/test.model" });
 
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
 	const auto& indices = mModelHandler.getIndices();
-	const auto& transforms = mModelHandler.getTransforms();
-	const auto& bounds = mModelHandler.getBounds();
 
-	mEngine.resource().uploadBuffer("BUFFER_VERTEX", &vertices, vertices.size(), sizeof(float));
-	mEngine.resource().uploadBuffer("BUFFER_INDEX", &indices, indices.size(), sizeof(uint32_t));
-	mEngine.resource().uploadBuffer("BUFFER_TRANSFORM", &transforms, transforms.size(), sizeof(float));
-	mEngine.resource().uploadBuffer("BUFFER_BBOX", &bounds, bounds.size(), sizeof(float));
+	mEngine.resource().uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float));
+	mEngine.resource().uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t));
 
 	// initialize ECS
 	mEngine.ecs().registerComponent<TransformComponent>();
@@ -44,11 +40,11 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.resource().updateTexture("TEXTURE", mPixels);
 
-	for (int i = 0; i < 360; i += (360 / 10))
+	for (int i = 0; i < 360; i += (360 / 8))
 	{
 		float angle = i * (M_PI / 180.0);
-		float x = 25 * cos(angle);
-		float z = 25 * sin(angle);
+		float x = 5 * cos(angle);
+		float z = 5 * sin(angle);
 
 		createModel({ x, 0, z });
 	}
@@ -170,7 +166,7 @@ void MyGame::createModel(const glm::vec3 position)
 
 	ModelComponent m{};
 	m.mName = "assets/models/test.model";
-	m.mModelId = TEST;
+	m.mModelId = 0;
 	m.mTextureId = 0;
 	m.mIsHidden = false;
 	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });

@@ -2,15 +2,6 @@
 
 #include <Mass.h>
 
-struct MyMesh
-{
-    uint32_t mVertexOffset    = 0;
-    uint32_t mIndexOffset     = 0;
-    uint32_t mIndexCount      = 0;
-    uint32_t mTransformOffset = 0;
-    uint32_t mBoundsOffset    = 0;
-};
-
 struct MyModel
 {
     uint32_t mModelId = 0;
@@ -19,7 +10,6 @@ struct MyModel
     uint32_t mIndexCount      = 0;
     uint32_t mTransformOffset = 0;
     uint32_t mBoundsOffset    = 0;
-    std::vector<MyMesh> mMeshes;
 };
 
 class ModelHandler
@@ -27,7 +17,7 @@ class ModelHandler
 public:
     ModelHandler();
 
-    void loadModels(std::vector<std::string> filepaths);
+    void loadModels(const std::vector<std::string>& filepaths);
 
     const std::unordered_map<std::string, MyModel>& getModels();
     const std::vector<float>& getVertices();

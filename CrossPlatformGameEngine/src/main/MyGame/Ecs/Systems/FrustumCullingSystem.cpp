@@ -28,7 +28,6 @@ void FrustumCullingSystem::update(float deltaTime)
         e.mPosition  = transform.mPosition;
         e.mRotation  = transform.mRotation;
         e.mScale     = transform.mScale;
-        e.mIsVisible = 1;
 
         if (!mModelToDrawCommands.contains(m.mModelId))
         {

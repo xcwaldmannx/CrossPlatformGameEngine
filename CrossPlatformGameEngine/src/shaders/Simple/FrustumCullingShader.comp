@@ -4,13 +4,17 @@ layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 struct Entity
 {
     vec3 position;
+    uint _pad0;
     vec3 rotation;
+    uint _pad1;
     vec3 scale;
 
     uint isVisible;
     uint meshCount;
     uint meshOffset;
+    uint _pad2[2];
 };
+
 
 layout(std140, set = 0, binding = 0x00) uniform Camera
 {
@@ -89,5 +93,5 @@ void main()
         (pos.y >= -pos.w && pos.y <= pos.w) &&
         (pos.z >= -pos.w && pos.z <= pos.w);
 
-    entities[entityIdx].isVisible = inside ? 1 : 1;
+    entities[entityIdx].isVisible = inside ? 1 : 0;
 }

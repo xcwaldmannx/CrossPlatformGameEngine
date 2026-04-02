@@ -27,21 +27,11 @@ void MyPipeline::initResources()
 
     mEngine.vertex().registerVertex({ "VERTEX_TRIANGLES", vertexBindingTri, vertexAttribTri });
 
-    const ascen::VertexBinding vertexBindingLine{ 0, sizeof(float) * 6, VK_VERTEX_INPUT_RATE_VERTEX };
-
-    const std::vector<ascen::VertexAttribute> vertexAttribLine =
-    {
-        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 }
-    };
-
-    mEngine.vertex().registerVertex({ "VERTEX_LINES", vertexBindingLine, vertexAttribLine });
-
     // Buffers
-    mEngine.resource().registerBuffer({ "BUFFER_CAMERA",    ascen::BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
-    mEngine.resource().registerBuffer({ "BUFFER_VERTEX",    ascen::BufferType::VERTEX,  100000, sizeof(float) * 8 });
-    mEngine.resource().registerBuffer({ "BUFFER_INDEX",     ascen::BufferType::INDEX,   100000, sizeof(uint32_t) });
-    mEngine.resource().registerBuffer({ "BUFFER_TRANSFORM", ascen::BufferType::STORAGE, 100000, sizeof(float) });
-    mEngine.resource().registerBuffer({ "BUFFER_BBOX",      ascen::BufferType::STORAGE, 100000, sizeof(float) * 6 });
+    mEngine.resource().registerBuffer({ "BUFFER_CAMERA", ascen::BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
+
+    mEngine.resource().registerBuffer({ "BUFFER_VERTEX", ascen::BufferType::VERTEX,  100000, sizeof(float) * 8 });
+    mEngine.resource().registerBuffer({ "BUFFER_INDEX",  ascen::BufferType::INDEX,   100000, sizeof(uint32_t) });
 
     mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  10, sizeof(FrustumCullingSystem::Entity) });
     mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 10, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
@@ -93,15 +83,15 @@ void MyPipeline::initStages()
 
 void MyPipeline::initFramePasses()
 {
-    // mEngine.frame().registerCompute(
-    //     { "FRAMEPASS_FRUSTUM_CULL",
-    //     { "DESC_FRUSTUM_CULL" },
-    //     "PIPELINE_FRUSTUM_CULL",
-    //     {
-    //         { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ, ascen::ResourceStage::COMPUTE },
-    //         { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
-    //     },
-    //     { (10'000 + 63) / 64, 1, 1 }});
+    mEngine.frame().registerCompute(
+        { "FRAMEPASS_FRUSTUM_CULL",
+        { "DESC_FRUSTUM_CULL" },
+        "PIPELINE_FRUSTUM_CULL",
+        {
+            { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ, ascen::ResourceStage::COMPUTE },
+            { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
+        },
+        { (10'000 + 63) / 64, 1, 1 }});
 
 
     mEngine.frame().registerGraphics(

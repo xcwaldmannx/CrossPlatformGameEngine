@@ -2,7 +2,7 @@
 
 ModelHandler::ModelHandler() {}
 
-void ModelHandler::loadModels(std::vector<std::string> filepaths)
+void ModelHandler::loadModels(const std::vector<std::string>& filepaths)
 {
     mass::Configuration config{};
     config.mVertexLayout.mAttributes =
@@ -35,25 +35,6 @@ void ModelHandler::loadModels(std::vector<std::string> filepaths)
         model.mIndexOffset = globalIndexOffset;
         model.mIndexCount = modelLayout.mIndices.size();
         model.mTransformOffset = globalTransformOffset;
-        model.mBoundsOffset = globalBoundsOffset;
-
-
-        for (const auto& meshLayout : modelLayout.mMeshLayouts)
-        {
-            MyMesh mesh{};
-
-            const auto bbox = generateBoundingBox(meshLayout.mBoundsNeg, meshLayout.mBoundsPos);
-            mBounds.append_range(bbox);
-            globalBoundsOffset = mBounds.size() / floatsPerBoundingBox;
-
-            mesh.mVertexOffset = globalVertexOffset + meshLayout.mVertexOffset;
-            mesh.mIndexOffset = globalIndexOffset + meshLayout.mIndexOffset;
-            mesh.mIndexCount = meshLayout.mIndexCount;
-            mesh.mTransformOffset = globalTransformOffset + meshLayout.mTransformOffset;
-            mesh.mBoundsOffset = globalBoundsOffset;
-
-            model.mMeshes.push_back(mesh);
-        }
 
         mModels[filepath] = model;
 
