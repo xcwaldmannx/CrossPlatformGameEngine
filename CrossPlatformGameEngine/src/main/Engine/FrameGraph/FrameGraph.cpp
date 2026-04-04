@@ -71,7 +71,11 @@ void FrameGraph::compile()
                         std::string syncName = resourcePrevFramePass[resource.mName] + "__TO__" + name;
 
                         const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
-                        mFramePassRegistry.registerSync({ syncName, buffer->handle(), srcAccess, srcStage, dstAccess, dstStage });
+                        try
+                        {
+                            mFramePassRegistry.registerSync({ syncName, buffer->handle(), srcAccess, srcStage, dstAccess, dstStage });
+                        }
+                        catch (...) {}
 
                         mFramePassRegistry.reconstruct();
 

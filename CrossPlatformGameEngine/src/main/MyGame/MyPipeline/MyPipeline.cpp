@@ -33,8 +33,8 @@ void MyPipeline::initResources()
     mEngine.resource().registerBuffer({ "BUFFER_VERTEX", ascen::BufferType::VERTEX,  100000, sizeof(float) * 8 });
     mEngine.resource().registerBuffer({ "BUFFER_INDEX",  ascen::BufferType::INDEX,   100000, sizeof(uint32_t) });
 
-    mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  10, sizeof(FrustumCullingSystem::Entity) });
-    mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 10, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
+    mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  10000, sizeof(FrustumCullingSystem::Entity) });
+    mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 10000, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
 
     // Samplers
     mEngine.resource().registerSampler({ "SAMPLER" });

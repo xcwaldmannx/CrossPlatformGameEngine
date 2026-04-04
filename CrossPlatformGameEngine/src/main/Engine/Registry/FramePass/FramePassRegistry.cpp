@@ -21,6 +21,7 @@ void FramePassRegistry::registerGraphics(GraphicsFramePassEntry entry)
 		throw std::runtime_error("A frame pass with that name already exists!");
 	}
 
+	mRegisteredNames.push_back(entry.mName);
 	mGraphicsEntries.emplace_back(std::move(entry));
 }
 
@@ -31,6 +32,7 @@ void FramePassRegistry::registerCompute(ComputeFramePassEntry entry)
 		throw std::runtime_error("A frame pass with that name already exists!");
 	}
 
+	mRegisteredNames.push_back(entry.mName);
 	mComputeEntries.emplace_back(std::move(entry));
 }
 
@@ -41,6 +43,7 @@ void FramePassRegistry::registerSync(SyncFramePassEntry entry)
 		throw std::runtime_error("A frame pass with that name already exists!");
 	}
 
+	mRegisteredNames.push_back(entry.mName);
 	mSyncEntries.emplace_back(std::move(entry));
 }
 

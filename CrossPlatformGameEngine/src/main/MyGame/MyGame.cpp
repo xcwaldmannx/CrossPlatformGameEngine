@@ -18,7 +18,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.reload();
 
-	mModelHandler.loadModels({ "assets/models/test.model" });
+	mModelHandler.loadModels({ "assets/models/test.model", "assets/models/submarine.model" });
 
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
@@ -40,43 +40,23 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.resource().updateTexture("TEXTURE", mPixels);
 
-	for (int i = 0; i < 360; i += (360 / 8))
-	{
-		float angle = i * (M_PI / 180.0);
-		float x = 5 * cos(angle);
-		float z = 5 * sin(angle);
+	float r = 50.0f;
 
-		createModel({ x, 0, z });
+	for (float i = 0; i < 1440.0f; i += (1440.0f / 256.0f))
+	{
+		float angle = i * (M_PI / 180.0f);
+		float x = (r - (i / r) * 0.5f) * cos(angle);
+		float z = (r - (i / r) * 0.5f) * sin(angle);
+
+		createModel({ x, i * 0.01f, z });
 	}
 }
-
-float timeAccum = 0;
 
 void MyGame::run(float delta)
 {
 	updateCamera(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
 	mEngine.drawFrame();
-
-	timeAccum += delta;
-
-	if (timeAccum >= 1)
-	{
-		std::vector<FrustumCullingSystem::Entity> data;
-		data.resize(10);
-		mEngine.resource().downloadBuffer<FrustumCullingSystem::Entity>("BUFFER_ENTITY", &data[0], data.size());
-
-		std::cout << "BREAK BREAK BREAK\n";
-		for (const auto& d : data)
-		{
-			std::cout << "entity, " << "visible=" << d.mIsVisible << ", position={ " << d.mPosition.x << ", " << d.mPosition.y << ", " << d.mPosition.z << " }" <<
-				", rotation={ " << d.mRotation.x << ", " << d.mRotation.y << ", " << d.mRotation.z << " }" <<
-				", scale={ " << d.mScale.x << ", " << d.mScale.y << ", " << d.mScale.z << " }"	<< std::endl;
-		}
-
-		timeAccum = 0;
-	}
-
 }
 
 void MyGame::cleanup()
@@ -169,9 +149,6 @@ void MyGame::createModel(const glm::vec3 position)
 	m.mModelId = 0;
 	m.mTextureId = 0;
 	m.mIsHidden = false;
-	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
-	m.mMeshTransforms.push_back({ {0, 0, 1}, {0, 0, 0}, {1, 1, 1} });
-	m.mMeshTransforms.push_back({ {0, 0, 2}, {0, 0, 0}, {1, 1, 1} });
 
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
