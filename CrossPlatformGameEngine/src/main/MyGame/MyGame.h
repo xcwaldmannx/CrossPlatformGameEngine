@@ -68,10 +68,10 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 100'000;
+	double mEntityCount = 100;
 
 	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
-	glm::vec3 camPosition{ 0.0f };
+	glm::vec3 camPosition{ 0.0f, 2.0f, 0.0f };
 	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
-	float camSpeed = 50.0f;
+	float camSpeed = 15.0f;
 };

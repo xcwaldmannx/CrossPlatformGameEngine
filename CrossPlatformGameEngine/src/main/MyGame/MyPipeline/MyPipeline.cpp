@@ -1,7 +1,6 @@
 #include "MyPipeline.h"
 
 #include "../Ecs/Systems/FrustumCullingSystem.h"
-#include "../Ecs/Systems/SimpleRenderSystem.h"
 
 #include <glm/glm.hpp>
 
@@ -33,8 +32,8 @@ void MyPipeline::initResources()
     mEngine.resource().registerBuffer({ "BUFFER_VERTEX", ascen::BufferType::VERTEX,  100000, sizeof(float) * 8 });
     mEngine.resource().registerBuffer({ "BUFFER_INDEX",  ascen::BufferType::INDEX,   100000, sizeof(uint32_t) });
 
-    mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  100'000, sizeof(FrustumCullingSystem::Entity) });
-    mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 100'000, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
+    mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  1'000'000, sizeof(FrustumCullingSystem::Entity) });
+    mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 1'000'000, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });
 
     // Samplers
     mEngine.resource().registerSampler({ "SAMPLER" });
@@ -91,7 +90,7 @@ void MyPipeline::initFramePasses()
             { "BUFFER_CAMERA", ascen::ResourceUsage::BUFFER_UNIFORM, ascen::ResourceAccess::READ, ascen::ResourceStage::COMPUTE },
             { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
         },
-        { (100'000 + 63) / 64, 1, 1 }});
+        { (1'000'000 + 63) / 64, 1, 1 }});
 
 
     mEngine.frame().registerGraphics(

@@ -40,7 +40,7 @@ public:
 public:
     FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, MyModel>& models);
 
-    void update(float deltaTime) override;
+    void update(const float delta) override;
 
 private:
     ascen::Engine& mEngine;

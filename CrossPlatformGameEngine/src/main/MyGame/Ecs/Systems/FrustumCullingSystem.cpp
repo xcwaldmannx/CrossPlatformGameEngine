@@ -7,7 +7,7 @@ FrustumCullingSystem::FrustumCullingSystem(ascen::Engine& engine, const std::uno
     mEngine(engine),
     mModels(models){}
 
-void FrustumCullingSystem::update(float deltaTime)
+void FrustumCullingSystem::update(const float delta)
 {
     mDrawCommands.clear();
     mDrawCommands.reserve(mEntities.size());
@@ -17,8 +17,8 @@ void FrustumCullingSystem::update(float deltaTime)
 
     for (const auto& entityId : mDirtyEntities)
     {
-        const auto& transform = mComponentManager->getComponent<TransformComponent>(entityId);
-        const auto& model = mComponentManager->getComponent<ModelComponent>(entityId);
+        const auto& transform = mSystem->getComponent<TransformComponent>(entityId);
+        const auto& model = mSystem->getComponent<ModelComponent>(entityId);
 
         const auto& m = mModels.at(model.mName);
 

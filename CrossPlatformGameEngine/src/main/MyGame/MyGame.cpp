@@ -9,7 +9,7 @@
 #include "Ecs/Components/TransformComponent.h"
 
 #include "Ecs/Systems/FrustumCullingSystem.h"
-#include "Ecs/Systems/SimpleRenderSystem.h"
+#include "Ecs/Systems/PhysicsSystem.h"
 
 MyGame::MyGame(WindowManager& windowManager) :
 	mWindowManager(windowManager),
@@ -33,32 +33,35 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mEngine.ecs().registerComponent<TransformComponent>();
 	mEngine.ecs().registerComponent<ModelComponent>();
 
-	const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
-	const auto writeSig = mEngine.ecs().getSignature<>();
+	{
+		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<>();
 
-	mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
+		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig);
+	}
+
+	{
+		const auto readSig = mEngine.ecs().getSignature<>();
+		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
+
+		mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
+	}
 
 	loadTextures();
 
 	mEngine.resource().updateTexture("TEXTURE", mPixels);
 
-	double r = 128;
-	double deg = 20'000;
+	double r = 25;
+	double deg = 720;
 	unsigned int entityCount = 0;
 
 	for (double i = 0; i < deg; i += (deg / mEntityCount))
 	{
 		const double angle = i * (M_PI / 180);
-		double x = (r * i / deg) * std::cos(angle);
-		double z = (r * i / deg) * std::sin(angle);
+		double x = r * std::cos(angle);
+		double z = r * std::sin(angle);
 
-		glm::vec3 scale = { 1, 1, 1 };
-		if (entityCount % 107 == 0)
-		{
-			scale = { 2, 2, 2 };
-		}
-
-		createModel({ x, r + (-i * 0.01f), z }, scale);
+		createModel({ x, 5, z }, { 1, 1, 1 });
 
 		entityCount++;
 	}
@@ -68,10 +71,11 @@ void MyGame::run(float delta)
 {
 	updateCamera(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
+	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(mEntityCount); i++)
 	{
-		if (i % 107 == 0)
+		if (i % 5 == 0)
 		{
 			auto& transform = mEngine.ecs().getComponent<TransformComponent>(i);
 			transform.mRotation.x += 4 * delta;
