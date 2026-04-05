@@ -9,7 +9,8 @@ struct MyModel
     uint32_t mIndexOffset     = 0;
     uint32_t mIndexCount      = 0;
     uint32_t mTransformOffset = 0;
-    uint32_t mBoundsOffset    = 0;
+    glm::vec3 mBoundsPos;
+    glm::vec3 mBoundsNeg;
 };
 
 class ModelHandler
@@ -23,7 +24,6 @@ public:
     const std::vector<float>& getVertices();
     const std::vector<uint32_t>& getIndices();
     const std::vector<float>& getTransforms();
-    const std::vector<float>& getBounds();
 
 private:
     std::vector<float> generateBoundingBox(glm::vec3 min, glm::vec3 max);
@@ -34,5 +34,4 @@ private:
     std::vector<float> mVertices;
     std::vector<uint32_t> mIndices;
     std::vector<float> mTransforms;
-    std::vector<float> mBounds;
 };

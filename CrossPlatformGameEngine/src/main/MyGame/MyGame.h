@@ -30,7 +30,7 @@ private:
 	// void loadModels();
 	void createEntities();
 	void createHelicopter(glm::vec3 position);
-	void createModel(const glm::vec3 position);
+	void createModel(const glm::vec3 position, const glm::vec3 scale);
 	void updateEntities(float delta);
 	void updateCamera(float delta);
 
@@ -68,8 +68,10 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
+	double mEntityCount = 100'000;
+
 	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 camPosition{ 0.0f };
 	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
-	float camSpeed = 15.0f;
+	float camSpeed = 50.0f;
 };

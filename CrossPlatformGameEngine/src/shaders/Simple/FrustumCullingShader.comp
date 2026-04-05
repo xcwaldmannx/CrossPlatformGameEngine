@@ -8,11 +8,17 @@ struct Entity
     vec3 rotation;
     uint _pad1;
     vec3 scale;
+    uint _pad2;
+
+    vec3 boundsPos;
+    uint _pad3;
+    vec3 boundsNeg;
 
     uint isVisible;
+
     uint meshCount;
     uint meshOffset;
-    uint _pad2[2];
+    uint _pad4[2];
 };
 
 
@@ -27,22 +33,121 @@ layout(std430, set = 0, binding = 0x01) buffer Entities
     Entity entities[];
 };
 
+mat4 eulerRotationToMat4(vec3 euler)
+{
+    float cx = cos(euler.x);
+    float sx = sin(euler.x);
+    float cy = cos(euler.y);
+    float sy = sin(euler.y);
+    float cz = cos(euler.z);
+    float sz = sin(euler.z);
+
+    mat3 Rz = mat3(
+        cz, -sz, 0.0,
+        sz,  cz, 0.0,
+        0.0, 0.0, 1.0
+    );
+
+    mat3 Ry = mat3(
+         cy, 0.0, sy,
+         0.0, 1.0, 0.0,
+        -sy, 0.0, cy
+    );
+
+    mat3 Rx = mat3(
+        1.0, 0.0, 0.0,
+        0.0,  cx, -sx,
+        0.0,  sx,  cx
+    );
+
+    mat3 R = Rz * Ry * Rx;
+
+    mat4 M = mat4(1.0);
+    M[0].xyz = R[0];
+    M[1].xyz = R[1];
+    M[2].xyz = R[2];
+    return M;
+}
+
+mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
+{
+    mat4 R = eulerRotationToMat4(rotEuler);
+
+    R[0] *= scale.x;
+    R[1] *= scale.y;
+    R[2] *= scale.z;
+
+    R[3].xyz = pos;
+
+    return R;
+}
+
+void generateBoundingBox(vec3 min, vec3 max, out vec3 bounds[8])
+{
+    bounds[0] = vec3(min.x, min.y, min.z);
+    bounds[1] = vec3(max.x, min.y, min.z);
+    bounds[2] = vec3(max.x, max.y, min.z);
+    bounds[3] = vec3(min.x, max.y, min.z);
+
+    bounds[4] = vec3(min.x, min.y, max.z);
+    bounds[5] = vec3(max.x, min.y, max.z);
+    bounds[6] = vec3(max.x, max.y, max.z);
+    bounds[7] = vec3(min.x, max.y, max.z);
+}
+
 void main()
 {
     uint entityIdx = gl_GlobalInvocationID.x;
     if (entityIdx >= entities.length())
-    {
         return;
+
+    entities[entityIdx].isVisible = 0;
+
+    vec3 bounds[8];
+    generateBoundingBox(entities[entityIdx].boundsNeg, entities[entityIdx].boundsPos, bounds);
+
+    const mat4 entityTransform = buildTRS(entities[entityIdx].position, entities[entityIdx].rotation, entities[entityIdx].scale);
+
+    const mat4 VP = camera.proj * camera.view * entityTransform;
+
+    vec2 minXY = vec2( 1e20);
+    vec2 maxXY = vec2(-1e20);
+
+    bool insideFrustum = false;
+
+    for (uint i = 0; i < 8; i++)
+    {
+        vec4 clip = VP * vec4(bounds[i], 1.0);
+
+        if (clip.w <= 0.0)
+            continue;
+
+        vec3 ndc = clip.xyz / clip.w;
+
+        // frustum test
+        if ((clip.x >= -clip.w && clip.x <= clip.w) &&
+            (clip.y >= -clip.w && clip.y <= clip.w) &&
+            (clip.z >= 0.0 && clip.z <= clip.w))
+        {
+            insideFrustum = true;
+        }
+
+        // track NDC bounds
+        minXY = min(minXY, ndc.xy);
+        maxXY = max(maxXY, ndc.xy);
     }
 
-    Entity entity = entities[entityIdx];
+    if (!insideFrustum)
+        return;
 
-    vec4 pos = (camera.proj * camera.view) * vec4(entity.position, 1.0);
+    // ---- NDC size culling ----
 
-    bool inside =
-        (pos.x >= -pos.w && pos.x <= pos.w) &&
-        (pos.y >= -pos.w && pos.y <= pos.w) &&
-        (pos.z >= -pos.w && pos.z <= pos.w);
+    vec2 ndcSize = maxXY - minXY;
+    float maxSize = max(ndcSize.x, ndcSize.y);
 
-    entities[entityIdx].isVisible = inside ? 1 : 0;
+    // threshold in NDC space (tune this)
+    if (maxSize < 0.005)
+        return;
+
+    entities[entityIdx].isVisible = 1;
 }

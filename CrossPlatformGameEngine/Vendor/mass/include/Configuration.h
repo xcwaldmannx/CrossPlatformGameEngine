@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include "glm/vec3.hpp"
+
 namespace mass
 {
 	inline constexpr std::string_view API_VERSION = "1.1.0";
@@ -34,6 +36,10 @@ namespace mass
 	inline constexpr std::string_view ANIMATIONS = "animations";
 	inline constexpr std::string_view MESHES     = "meshes";
 
+	inline constexpr std::string_view BOUNDS_POS  = "boundsPos";
+	inline constexpr std::string_view BOUNDS_NEG  = "boundsNeg";
+
+
 	inline constexpr std::string_view FLAGS          = "flags";
 	inline constexpr std::string_view HAS_NORMALS    = "hasNormals";
 	inline constexpr std::string_view HAS_COLORS     = "hasColors";
@@ -62,11 +68,15 @@ namespace mass
 		size_t mIndexOffset     = 0;
 		size_t mIndexCount      = 0;
 		size_t mTransformOffset = 0;
+		glm::vec3 mBoundsPos = glm::vec3(0);
+		glm::vec3 mBoundsNeg = glm::vec3(0);
 	};
 
 	struct ModelLayout
 	{
 		VertexLayout mVertexLayout;
+		glm::vec3 mBoundsPos = glm::vec3(0);
+		glm::vec3 mBoundsNeg = glm::vec3(0);
 		std::vector<MeshLayout> mMeshLayouts;
 		std::vector<float> mVertices;
 		std::vector<uint32_t> mIndices;

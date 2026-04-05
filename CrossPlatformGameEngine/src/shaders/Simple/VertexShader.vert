@@ -9,11 +9,17 @@ struct Entity
     vec3 rotation;
     uint _pad1;
     vec3 scale;
+    uint _pad2;
+
+    vec3 boundsPos;
+    uint _pad3;
+    vec3 boundsNeg;
 
     uint isVisible;
+
     uint meshCount;
     uint meshOffset;
-    uint _pad2[2];
+    uint _pad4[2];
 };
 
 layout(std140, set = 0, binding = 0x00) uniform Camera

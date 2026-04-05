@@ -27,7 +27,6 @@ void ModelHandler::loadModels(const std::vector<std::string>& filepaths)
 
         const size_t floatsPerVertex = modelLayout.mVertexLayout.mStride / sizeof(float);
         const size_t floatsPerTransform = 16;
-        const size_t floatsPerBoundingBox = 6;
 
         MyModel model{};
         model.mModelId = std::hash<std::string>()(filepath);
@@ -35,6 +34,8 @@ void ModelHandler::loadModels(const std::vector<std::string>& filepaths)
         model.mIndexOffset = globalIndexOffset;
         model.mIndexCount = modelLayout.mIndices.size();
         model.mTransformOffset = globalTransformOffset;
+        model.mBoundsPos = modelLayout.mBoundsPos;
+        model.mBoundsNeg = modelLayout.mBoundsNeg;
 
         mModels[filepath] = model;
 
@@ -66,11 +67,6 @@ const std::vector<uint32_t>& ModelHandler::getIndices()
 const std::vector<float>& ModelHandler::getTransforms()
 {
     return mTransforms;
-}
-
-const std::vector<float>& ModelHandler::getBounds()
-{
-    return mBounds;
 }
 
 std::vector<float> ModelHandler::generateBoundingBox(glm::vec3 min, glm::vec3 max)

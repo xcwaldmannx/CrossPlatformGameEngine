@@ -1,5 +1,7 @@
 #include "MyGame.h"
 
+#include <cmath>
+
 #include "../WindowManager/WindowManager.h"
 #include "../Utility/ImageLoader/ImageLoader.h"
 
@@ -40,15 +42,25 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.resource().updateTexture("TEXTURE", mPixels);
 
-	float r = 50.0f;
+	double r = 128;
+	double deg = 20'000;
+	unsigned int entityCount = 0;
 
-	for (float i = 0; i < 1440.0f; i += (1440.0f / 256.0f))
+	for (double i = 0; i < deg; i += (deg / mEntityCount))
 	{
-		float angle = i * (M_PI / 180.0f);
-		float x = (r - (i / r) * 0.5f) * cos(angle);
-		float z = (r - (i / r) * 0.5f) * sin(angle);
+		const double angle = i * (M_PI / 180);
+		double x = (r * i / deg) * std::cos(angle);
+		double z = (r * i / deg) * std::sin(angle);
 
-		createModel({ x, i * 0.01f, z });
+		glm::vec3 scale = { 1, 1, 1 };
+		if (entityCount % 107 == 0)
+		{
+			scale = { 2, 2, 2 };
+		}
+
+		createModel({ x, r + (-i * 0.01f), z }, scale);
+
+		entityCount++;
 	}
 }
 
@@ -56,7 +68,19 @@ void MyGame::run(float delta)
 {
 	updateCamera(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
+
+	for (unsigned int i = 0; i < static_cast<unsigned int>(mEntityCount); i++)
+	{
+		if (i % 107 == 0)
+		{
+			auto& transform = mEngine.ecs().getComponent<TransformComponent>(i);
+			transform.mRotation.x += 4 * delta;
+			transform.mRotation.z += 4 * delta;
+		}
+	}
+
 	mEngine.drawFrame();
+
 }
 
 void MyGame::cleanup()
@@ -135,14 +159,14 @@ void MyGame::createHelicopter(glm::vec3 position)
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 }
 
-void MyGame::createModel(const glm::vec3 position)
+void MyGame::createModel(const glm::vec3 position, const glm::vec3 scale)
 {
 	const auto e = mEngine.ecs().addEntity();
 
 	TransformComponent t{};
 	t.mPosition = position;
 	t.mRotation = { 0, 0, 0 };
-	t.mScale = { 1, 1, 1 };
+	t.mScale = scale;
 
 	ModelComponent m{};
 	m.mName = "assets/models/test.model";

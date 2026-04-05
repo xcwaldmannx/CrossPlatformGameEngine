@@ -9,37 +9,46 @@ FrustumCullingSystem::FrustumCullingSystem(ascen::Engine& engine, const std::uno
 
 void FrustumCullingSystem::update(float deltaTime)
 {
-    mModelToDrawCommands.clear();
     mDrawCommands.clear();
-
-    mModelToEntities.clear();
+    mDrawCommands.reserve(mEntities.size());
 
     mEntitiesToCull.clear();
     mEntitiesToCull.reserve(mEntities.size());
 
-    for (const auto& entityId : mEntities)
+    for (const auto& entityId : mDirtyEntities)
     {
         const auto& transform = mComponentManager->getComponent<TransformComponent>(entityId);
         const auto& model = mComponentManager->getComponent<ModelComponent>(entityId);
 
         const auto& m = mModels.at(model.mName);
 
-        Entity e{};
-        e.mPosition  = transform.mPosition;
-        e.mRotation  = transform.mRotation;
-        e.mScale     = transform.mScale;
+        ascen::IndirectBuffer::IndexedIndirectCommand drawCommand{};
+        drawCommand.vertexOffset = static_cast<int32_t>(m.mVertexOffset);
+        drawCommand.firstIndex = m.mIndexOffset;
+        drawCommand.indexCount = m.mIndexCount;
 
         if (!mModelToDrawCommands.contains(m.mModelId))
         {
-            ascen::IndirectBuffer::IndexedIndirectCommand drawCommand{};
-            drawCommand.vertexOffset = static_cast<int32_t>(m.mVertexOffset);
-            drawCommand.firstIndex = m.mIndexOffset;
-            drawCommand.indexCount = m.mIndexCount;
-
             mModelToDrawCommands[m.mModelId] = drawCommand;
+
+            Entity e{};
+            e.mPosition  = transform.mPosition;
+            e.mRotation  = transform.mRotation;
+            e.mScale     = transform.mScale;
+            e.mBoundsPos = m.mBoundsPos;
+            e.mBoundsNeg = m.mBoundsNeg;
+            mModelToEntities[m.mModelId][entityId] = e;
+        }
+        else
+        {
+            Entity& e = mModelToEntities[m.mModelId][entityId];
+            e.mPosition  = transform.mPosition;
+            e.mRotation  = transform.mRotation;
+            e.mScale     = transform.mScale;
+            e.mBoundsPos = m.mBoundsPos;
+            e.mBoundsNeg = m.mBoundsNeg;
         }
 
-        mModelToEntities[m.mModelId].push_back(e);
     }
 
     uint32_t firstInstance = 0;
@@ -50,7 +59,10 @@ void FrustumCullingSystem::update(float deltaTime)
         mModelToDrawCommands[model].instanceCount = entities.size();
 
         mDrawCommands.push_back(mModelToDrawCommands[model]);
-        mEntitiesToCull.append_range(entities);
+
+        for (auto const& [key, value] : entities) {
+            mEntitiesToCull.push_back(value);
+        }
 
         firstInstance += entities.size();
     }

@@ -24,11 +24,17 @@ public:
         glm::vec3 mRotation;
         uint32_t _pad1;
         glm::vec3 mScale;
+        uint32_t _pad2;
+
+        glm::vec3 mBoundsPos;
+        uint32_t _pad3;
+        glm::vec3 mBoundsNeg;
+
         uint32_t mIsVisible;
 
         uint32_t mMeshCount;
         uint32_t mMeshOffset;
-        uint32_t _pad2[2];
+        uint32_t _pad4[2];
     };
 
 public:
@@ -41,7 +47,7 @@ private:
     const std::unordered_map<std::string, MyModel>& mModels;
 
     std::map<uint32_t, ascen::IndirectBuffer::IndexedIndirectCommand> mModelToDrawCommands;
-    std::unordered_map<uint32_t, std::vector<Entity>> mModelToEntities;
+    std::unordered_map<uint32_t, std::unordered_map<uint32_t, Entity>> mModelToEntities;
 
     std::vector<ascen::IndirectBuffer::IndexedIndirectCommand> mDrawCommands;
     std::vector<Entity> mEntitiesToCull;

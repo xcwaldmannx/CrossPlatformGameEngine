@@ -31,6 +31,9 @@ namespace mass
 		size_t mIndexCount = 0;
 
 		size_t mTransformOffset = 0;
+
+		glm::vec3 mBoundsPos = glm::vec3(0);
+		glm::vec3 mBoundsNeg = glm::vec3(0);
 	};
 
 	struct Model
@@ -40,6 +43,9 @@ namespace mass
 		std::vector<uint32_t> mIndices;
 		std::vector<glm::mat4> mTransforms;
 		std::vector<Animation> mAnimations;
+
+		glm::vec3 mBoundsPos = glm::vec3(0);
+		glm::vec3 mBoundsNeg = glm::vec3(0);
 	};
 
 }
