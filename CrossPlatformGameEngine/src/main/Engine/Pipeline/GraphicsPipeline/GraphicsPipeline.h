@@ -125,11 +125,6 @@ namespace ascen
         }
 
     public:
-        void create(VkDevice device) override
-        {
-            // remove later
-        }
-
         void destroy(VkDevice device) override
         {
             vkDestroyPipeline(device, mHandle, nullptr);

@@ -24,7 +24,6 @@ namespace ascen
 			VkBufferUsageFlags usageFlags,
 			VkMemoryPropertyFlags memoryFlags);
 
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 		void upload(

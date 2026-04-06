@@ -44,11 +44,6 @@ Buffer::Buffer(
 	vkBindBufferMemory(device, mHandle, mMemory, 0);
 }
 
-void Buffer::create(VkDevice device)
-{
-	// TODO: remove
-}
-
 void Buffer::destroy(VkDevice device)
 {
 	vkDestroyBuffer(device, mHandle, nullptr);

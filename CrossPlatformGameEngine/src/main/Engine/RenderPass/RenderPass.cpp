@@ -8,6 +8,7 @@ using namespace ascen;
 
 RenderPass::RenderPass(
 	VkPhysicalDevice physicalDevice,
+	VkDevice device,
 	VkFormat colorFormat,
     VkFormat depthFormat)
 {
@@ -72,10 +73,7 @@ RenderPass::RenderPass(
     mRenderPassInfo.pSubpasses = &mSubPassDesc;
     mRenderPassInfo.dependencyCount = 1;
     mRenderPassInfo.pDependencies = &mSubPassDependency;
-}
 
-void RenderPass::create(VkDevice device)
-{
     if (vkCreateRenderPass(device, &mRenderPassInfo, nullptr, &mHandle) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create render pass!");

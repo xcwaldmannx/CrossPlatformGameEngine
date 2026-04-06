@@ -21,7 +21,6 @@ namespace ascen
 			const std::vector<Binding>& bindings);
 
 	public:
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 	private:

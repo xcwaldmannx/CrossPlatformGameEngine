@@ -35,7 +35,6 @@ namespace ascen
 			uint32_t queueFamilyIndex);
 
 	public:
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 		VkCommandBuffer beginCommand(uint32_t frameIndex);

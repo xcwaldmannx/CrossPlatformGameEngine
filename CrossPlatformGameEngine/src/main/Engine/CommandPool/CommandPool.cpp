@@ -39,11 +39,6 @@ CommandPool::CommandPool(
     }
 }
 
-void CommandPool::create(VkDevice device)
-{
-    // remove later
-}
-
 void CommandPool::destroy(VkDevice device)
 {
     vkDestroyCommandPool(device, mHandle, nullptr);

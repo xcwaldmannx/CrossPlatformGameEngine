@@ -20,11 +20,11 @@ namespace ascen
 	private:
 		RenderPass(
 			VkPhysicalDevice physicalDevice,
+			VkDevice device,
 			VkFormat colorFormat,
 			VkFormat depthFormat);
 
 	public:
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 	protected:

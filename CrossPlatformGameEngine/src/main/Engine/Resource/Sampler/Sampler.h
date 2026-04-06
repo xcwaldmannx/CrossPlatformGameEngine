@@ -10,7 +10,6 @@ namespace ascen
 	public:
 		Sampler(VkPhysicalDevice physicalDevice, VkDevice device);
 
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 	};

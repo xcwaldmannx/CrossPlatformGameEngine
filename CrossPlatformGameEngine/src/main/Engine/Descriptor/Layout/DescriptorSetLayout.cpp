@@ -19,11 +19,6 @@ DescriptorSetLayout::DescriptorSetLayout(
 	}
 }
 
-void DescriptorSetLayout::create(VkDevice device)
-{
-	// remove later
-}
-
 void DescriptorSetLayout::destroy(VkDevice device)
 {
 	vkDestroyDescriptorSetLayout(device, mHandle, nullptr);

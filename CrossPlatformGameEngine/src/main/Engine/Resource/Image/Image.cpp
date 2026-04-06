@@ -100,11 +100,6 @@ void Image::update(
 	stagingBuffer.destroy(device);
 }
 
-void Image::create(VkDevice device)
-{
-	// not used, remove later
-}
-
 void Image::destroy(VkDevice device)
 {
 	vkDestroyImage(device, mHandle, nullptr);

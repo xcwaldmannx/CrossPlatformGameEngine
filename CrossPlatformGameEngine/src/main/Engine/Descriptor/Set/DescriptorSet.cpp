@@ -51,10 +51,6 @@ DescriptorSet::DescriptorSet(
 	vkUpdateDescriptorSets(device, static_cast<uint32_t>(vkWrites.size()), vkWrites.data(), 0, nullptr);
 }
 
-void DescriptorSet::create(VkDevice device)
-{
-}
-
 void DescriptorSet::destroy(VkDevice device)
 {
 	// not used, destroyed by its pool

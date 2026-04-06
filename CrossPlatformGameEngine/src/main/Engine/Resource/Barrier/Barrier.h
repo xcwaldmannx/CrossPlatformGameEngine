@@ -36,7 +36,6 @@ namespace ascen
 			VkPipelineStageFlags2 dstStage,
 			VkImageAspectFlags aspectFlags);
 
-	private:
 	};
 
 }

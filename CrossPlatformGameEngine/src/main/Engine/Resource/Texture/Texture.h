@@ -28,7 +28,6 @@ namespace ascen
 			const CommandPoolPtr& commandPool,
 			const std::vector<unsigned char>& pixels);
 
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 	protected:

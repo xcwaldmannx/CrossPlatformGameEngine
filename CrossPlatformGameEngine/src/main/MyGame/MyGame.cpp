@@ -51,8 +51,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.resource().uploadTexture("TEXTURE", mPixels);
 
-	double r = 25;
-	double deg = 720;
+	double r = 40;
+	double deg = 360;
 	unsigned int entityCount = 0;
 
 	for (double i = 0; i < deg; i += (deg / mEntityCount))
@@ -61,7 +61,14 @@ MyGame::MyGame(WindowManager& windowManager) :
 		double x = r * std::cos(angle);
 		double z = r * std::sin(angle);
 
-		createModel({ x, 5, z }, { 1, 1, 1 });
+		if (i > 180)
+		{
+			createModel("assets/models/test.model", { x, 5, z }, { 1, 1, 1 });
+		}
+		else
+		{
+			createModel("assets/models/submarine.model", { x, 5, z }, { 1, 1, 1 });
+		}
 
 		entityCount++;
 	}
@@ -115,55 +122,7 @@ void MyGame::loadTextures()
 	}
 }
 
-void MyGame::createEntities()
-{
-	{
-		auto e = mEngine.ecs().addEntity();
-
-		TransformComponent t{};
-		t.mPosition = { 0, 0, -10 };
-		t.mRotation = { 0.25, 0, 0 };
-		t.mScale = { 1, 1, 1 };
-
-		ModelComponent m{};
-		m.mModelId = HELICOPTER;
-		m.mTextureId = 0;
-		m.mIsHidden = false;
-		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
-		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // main
-		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // tail
-		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
-		m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
-
-		mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
-		mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
-	}
-}
-
-void MyGame::createHelicopter(glm::vec3 position)
-{
-	auto e = mEngine.ecs().addEntity();
-
-	TransformComponent t{};
-	t.mPosition = position;
-	t.mRotation = { 0, 0, 0 };
-	t.mScale = { 1, 1, 1 };
-
-	ModelComponent m{};
-	m.mModelId = HELICOPTER;
-	m.mTextureId = 0;
-	m.mIsHidden = false;
-	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // body
-	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // main
-	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} }); // tail
-	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
-	m.mMeshTransforms.push_back({ {0, 0, 0}, {0, 0, 0}, {1, 1, 1} });
-
-	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
-	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
-}
-
-void MyGame::createModel(const glm::vec3 position, const glm::vec3 scale)
+void MyGame::createModel(const std::string& model, const glm::vec3 position, const glm::vec3 scale)
 {
 	const auto e = mEngine.ecs().addEntity();
 
@@ -173,26 +132,13 @@ void MyGame::createModel(const glm::vec3 position, const glm::vec3 scale)
 	t.mScale = scale;
 
 	ModelComponent m{};
-	m.mName = "assets/models/test.model";
+	m.mName = model;
 	m.mModelId = 0;
 	m.mTextureId = 0;
 	m.mIsHidden = false;
 
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
-}
-
-void MyGame::updateEntities(float delta)
-{
-	for (int i = 0; i < 2000; i++)
-	{ // helicopters
-		auto& t = mEngine.ecs().getComponent<TransformComponent>(i);
-		t.mRotation += glm::vec3(0, 1.0f, 0) * delta;
-
-		auto& m = mEngine.ecs().getComponent<ModelComponent>(i);
-		//m.mMeshTransforms[1].mRotation += glm::vec3(0, 10.0f, 0) * delta; // main
-		m.mMeshTransforms[2].mRotation += glm::vec3(0, 10, 0) * delta; // tail
-	}
 }
 
 void MyGame::updateCamera(float delta)
@@ -237,10 +183,8 @@ void MyGame::updateCamera(float delta)
 			width / height, 0.01f, 100'000.0f);
 		ubo.mProj[1][1] *= -1;
 
-		glm::mat4 vp = ubo.mProj * ubo.mView;
-		mEngine.pipeline().pushConstants("PIPELINE_FRUSTUM_CULL", "PUSH_0", &vp);
+		const glm::mat4 vp = ubo.mProj * ubo.mView;
+		mEngine.pipeline().pushConstants("PIPELINE_FRUSTUM_CULL",  "PUSH_0", &vp);
 		mEngine.pipeline().pushConstants("PIPELINE_RENDER_ENTITY", "PUSH_0", &vp);
-
-		// mEngine.resource().uploadBuffer("BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
 	}
 }

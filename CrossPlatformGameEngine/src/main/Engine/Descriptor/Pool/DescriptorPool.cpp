@@ -18,11 +18,6 @@ DescriptorPool::DescriptorPool(VkDevice device, const std::vector<Size>& sizes)
 	}
 }
 
-void DescriptorPool::create(VkDevice device)
-{
-	// remove later
-}
-
 void DescriptorPool::destroy(VkDevice device)
 {
 	vkDestroyDescriptorPool(device, mHandle, nullptr);

@@ -15,7 +15,6 @@ RenderPassPtr RenderPassFactory::create(
 	VkFormat colorFormat) const
 {
 	VkFormat depthFormat = PhysicalDevice::findDepthFormat(mPhysicalDevice);
-	RenderPassPtr ptr(new RenderPass(mPhysicalDevice, colorFormat, depthFormat));
-	ptr->create(mDevice);
+	RenderPassPtr ptr(new RenderPass(mPhysicalDevice, mDevice, colorFormat, depthFormat));
 	return ptr;
 }

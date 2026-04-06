@@ -27,11 +27,7 @@ public:
 
 private:
 	void loadTextures();
-	// void loadModels();
-	void createEntities();
-	void createHelicopter(glm::vec3 position);
-	void createModel(const glm::vec3 position, const glm::vec3 scale);
-	void updateEntities(float delta);
+	void createModel(const std::string& model, const glm::vec3 position, const glm::vec3 scale);
 	void updateCamera(float delta);
 
 private:

@@ -27,10 +27,11 @@ void MyPipeline::initResources()
     mEngine.vertex().registerVertex({ "VERTEX_TRIANGLES", vertexBindingTri, vertexAttribTri });
 
     // Buffers
-    mEngine.resource().registerBuffer({ "BUFFER_CAMERA", ascen::BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
+    // mEngine.resource().registerBuffer({ "BUFFER_CAMERA", ascen::BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
 
     mEngine.resource().registerBuffer({ "BUFFER_VERTEX", ascen::BufferType::VERTEX,  100000, sizeof(float) * 8 });
     mEngine.resource().registerBuffer({ "BUFFER_INDEX",  ascen::BufferType::INDEX,   100000, sizeof(uint32_t) });
+    mEngine.resource().registerBuffer({ "BUFFER_VERTEX_BOUNDS", ascen::BufferType::VERTEX, 100000, sizeof(float) * 3 });
 
     mEngine.resource().registerBuffer({ "BUFFER_ENTITY", ascen::BufferType::STORAGE,  1'000'000, sizeof(FrustumCullingSystem::Entity) });
     mEngine.resource().registerBuffer({ "BUFFER_DRAWS",  ascen::BufferType::INDIRECT, 1'000'000, sizeof(ascen::IndirectBuffer::IndexedIndirectCommand) });

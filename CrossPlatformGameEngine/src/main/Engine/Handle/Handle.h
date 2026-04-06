@@ -17,7 +17,6 @@ namespace ascen
 		Handle(const Handle&) = delete;
 		Handle& operator=(const Handle&) = delete;
 
-		virtual void create(VkDevice device) override = 0;
 		virtual void destroy(VkDevice device) override = 0;
 
 		T& handle()

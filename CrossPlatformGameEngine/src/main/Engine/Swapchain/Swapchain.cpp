@@ -74,11 +74,6 @@ Swapchain::Swapchain(
     createImageViews(device);
 }
 
-void Swapchain::create(VkDevice device)
-{
-    // remove later
-}
-
 void Swapchain::destroy(VkDevice device)
 {
     destroyFrameBuffers(device);

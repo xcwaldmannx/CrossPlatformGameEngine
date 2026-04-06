@@ -33,11 +33,6 @@ Sampler::Sampler(VkPhysicalDevice physicalDevice, VkDevice device)
 	}
 }
 
-void Sampler::create(VkDevice device)
-{
-	// not used, remove later
-}
-
 void Sampler::destroy(VkDevice device)
 {
 	vkDestroySampler(device, mHandle, nullptr);

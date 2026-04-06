@@ -10,7 +10,6 @@ namespace ascen
 	class Buffer_I : public Handle<VkBuffer>
 	{
 	public:
-		virtual void create(VkDevice device) override = 0;
 		virtual void destroy(VkDevice device) override = 0;
 
 		VkDeviceMemory getMemory() const

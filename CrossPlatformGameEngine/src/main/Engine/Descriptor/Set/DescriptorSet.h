@@ -29,7 +29,6 @@ namespace ascen
 			std::vector<Write> writes);
 
 	public:
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 	private:

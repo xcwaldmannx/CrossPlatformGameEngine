@@ -49,11 +49,6 @@ void Texture::update(
 	mImage.update(physicalDevice, device, queue, commandPool, pixels);
 }
 
-void Texture::create(VkDevice device)
-{
-	// remove later
-}
-
 void Texture::destroy(VkDevice device)
 {
 	vkDestroyImageView(device, mHandle, nullptr);

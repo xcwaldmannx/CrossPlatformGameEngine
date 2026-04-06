@@ -33,7 +33,6 @@ namespace ascen
 			uint32_t presentFamily);
 
 	public:
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 		//void recreate(VkDevice device);

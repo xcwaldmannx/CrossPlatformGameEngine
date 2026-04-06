@@ -16,7 +16,6 @@ namespace ascen
 		DescriptorPool(VkDevice device, const std::vector<Size>& sizes);
 
 	public:
-		void create(VkDevice device) override;
 		void destroy(VkDevice device) override;
 
 	private:
