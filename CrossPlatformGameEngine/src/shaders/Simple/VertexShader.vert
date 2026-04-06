@@ -22,16 +22,15 @@ struct Entity
     uint _pad4[2];
 };
 
-layout(std140, set = 0, binding = 0x00) uniform Camera
-{
-    mat4 view;
-    mat4 proj;
-} camera;
-
-layout(std430, set = 0, binding = 0x01) readonly buffer Entities
+layout(std430, set = 0, binding = 0x00) readonly buffer Entities
 {
     Entity entities[];
 };
+
+layout(push_constant) uniform PushConstants
+{
+    mat4 cameraVP;
+} pushConstants;
 
 mat4 eulerRotationToMat4(vec3 euler)
 {
@@ -69,7 +68,7 @@ mat4 eulerRotationToMat4(vec3 euler)
     return M;
 }
 
-mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
+mat4 buildTransform(vec3 pos, vec3 rotEuler, vec3 scale)
 {
     mat4 R = eulerRotationToMat4(rotEuler);
 
@@ -99,11 +98,9 @@ void main()
     }
     else
     {
-        const mat4 cameraTransform = camera.proj * camera.view;
+        const mat4 entityTransform = buildTransform(entity.position, entity.rotation, entity.scale);
 
-        const mat4 entityTransform = buildTRS(entity.position, entity.rotation, entity.scale);
-
-        gl_Position = cameraTransform * entityTransform * vec4(inPosition, 1.0);
+        gl_Position = pushConstants.cameraVP * entityTransform * vec4(inPosition, 1.0);
     }
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);

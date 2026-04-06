@@ -5,13 +5,14 @@
 #include "../Registry_I.h"
 #include "../../Core/Types.h"
 
+#include "../../Resource/Buffer/Buffer.h"
+
 #include <string>
 #include <unordered_map>
 #include <vector>
 
 #include <vulkan/vulkan.h>
 
-#include "../../Resource/Buffer/Buffer.h"
 
 namespace ascen
 {
@@ -22,7 +23,6 @@ namespace ascen
 	class BufferFactory;
 	class TextureFactory;
 	class SamplerFactory;
-
 
 	enum class BufferType
 	{
@@ -82,6 +82,12 @@ namespace ascen
 
 		void reconstruct() override;
 
+		void uploadPushConstant(
+			const std::string& name,
+			const void* data,
+			uint32_t dataSize,
+			uint32_t offset) const;
+
 		template<typename T>
 		std::span<T> getMappedBuffer(const std::string& name)
 		{
@@ -120,7 +126,7 @@ namespace ascen
 			buf->download(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, data, count, sizeof(T));
 		}
 
-		void updateTexture(
+		void uploadTexture(
 			const std::string& name,
 			const std::vector<unsigned char>& pixels) const;
 
@@ -130,6 +136,7 @@ namespace ascen
 
 	private:
 		bool isRegistered(const std::string& name) const;
+		bool pushConstantExists(const std::string& name) const;
 		bool bufferExists(const std::string& name) const;
 		bool textureExists(const std::string& name) const;
 		bool samplerExists(const std::string& name) const;
@@ -139,6 +146,7 @@ namespace ascen
 		const VkDevice mDevice;
 		const VkQueue mGraphicsQueue;
 		const CommandPoolPtr& mCommandPool;
+
 		const BufferFactory& mBufferFactory;
 		const TextureFactory& mTextureFactory;
 		const SamplerFactory& mSamplerFactory;

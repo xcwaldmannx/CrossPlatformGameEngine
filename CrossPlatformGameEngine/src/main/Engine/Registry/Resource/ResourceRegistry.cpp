@@ -2,7 +2,6 @@
 
 #include "../../Core/VulkanContext.h"
 #include "../../Core/RenderContext.h"
-#include "../../Resource/Buffer/Buffer.h"
 #include "../../Resource/Texture/Texture.h"
 #include "../../Resource/Sampler/Sampler.h"
 
@@ -27,7 +26,7 @@ void ResourceRegistry::registerBuffer(BufferEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("A buffer with that name already exists!");
+		throw std::runtime_error("A resource with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -38,7 +37,7 @@ void ResourceRegistry::registerTexture(TextureEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("A texture with that name already exists!");
+		throw std::runtime_error("A resource with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -49,7 +48,7 @@ void ResourceRegistry::registerSampler(SamplerEntry entry)
 {
 	if (isRegistered(entry.mName))
 	{
-		throw std::runtime_error("A sampler with that name already exists!");
+		throw std::runtime_error("A resource with that name already exists!");
 	}
 
 	mRegisteredNames.push_back(entry.mName);
@@ -139,7 +138,7 @@ void ResourceRegistry::uploadBuffer(
 	}
 }
 
-void ResourceRegistry::updateTexture(const std::string& name, const std::vector<unsigned char>& pixels) const
+void ResourceRegistry::uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const
 {
 	if (textureExists(name))
 	{
@@ -187,16 +186,16 @@ bool ResourceRegistry::isRegistered(const std::string& name) const
 
 bool ResourceRegistry::bufferExists(const std::string& name) const
 {
-	return (mBuffers.find(name) != mBuffers.end());
+	return (mBuffers.contains(name));
 }
 
 bool ResourceRegistry::textureExists(const std::string& name) const
 {
-	return (mTextures.find(name) != mTextures.end());
+	return (mTextures.contains(name));
 }
 
 bool ResourceRegistry::samplerExists(const std::string& name) const
 {
-	return (mSamplers.find(name) != mSamplers.end());
+	return (mSamplers.contains(name));
 }
 

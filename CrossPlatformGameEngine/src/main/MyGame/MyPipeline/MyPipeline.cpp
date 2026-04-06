@@ -45,21 +45,26 @@ void MyPipeline::initResources()
 void MyPipeline::initStages()
 {
     // Frustum culling stage
-    mEngine.descriptor().registerDescriptor({ "BUFFER_CAMERA", "DESC_FRUSTUM_CULL",
-        0x00, sizeof(glm::mat4) * 2, ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::COMPUTE });
+    // mEngine.descriptor().registerDescriptor({ "BUFFER_CAMERA", "DESC_FRUSTUM_CULL",
+    //     0x00, sizeof(glm::mat4) * 2, ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::COMPUTE });
 
     mEngine.descriptor().registerDescriptor({ "BUFFER_ENTITY", "DESC_FRUSTUM_CULL",
-        0x01, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::COMPUTE });
+        0x00, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::COMPUTE });
 
-    mEngine.pipeline().registerComputePipeline({ "PIPELINE_FRUSTUM_CULL",
-        "src/shaders/Simple/FrustumCullingShader.spv", { "DESC_FRUSTUM_CULL" } });
+    ascen::ComputePipelineEntry computePipelineEntry;
+    computePipelineEntry.mName = "PIPELINE_FRUSTUM_CULL";
+    computePipelineEntry.mComputeShader = "src/shaders/Simple/FrustumCullingShader.spv";
+    computePipelineEntry.mDescriptorSetLayouts = { "DESC_FRUSTUM_CULL" };
+    computePipelineEntry.mParams.mPushConstantRange =
+    {
+        "PUSH_0", 0, sizeof(glm::mat4)
+    };
+
+    mEngine.pipeline().registerComputePipeline(computePipelineEntry);
 
     // Render visible geometry stage
-    mEngine.descriptor().registerDescriptor({ "BUFFER_CAMERA", "DESC_RENDER_ENTITY",
-        0x00, sizeof(glm::mat4) * 2,ascen::DescriptorType::UBO_DYNAMIC, ascen::DescriptorStage::VERTEX });
-
     mEngine.descriptor().registerDescriptor({ "BUFFER_ENTITY", "DESC_RENDER_ENTITY",
-        0x01, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX });
+        0x00, VK_WHOLE_SIZE, ascen::DescriptorType::SSBO, ascen::DescriptorStage::VERTEX });
 
     mEngine.descriptor().registerDescriptor({ "SAMPLER", "DESC_RENDER_ENTITY",
         0x02, 0,ascen::DescriptorType::SAMPLER, ascen::DescriptorStage::PIXEL });
@@ -76,6 +81,10 @@ void MyPipeline::initStages()
     graphicsPipelineEntryTriangles.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
     graphicsPipelineEntryTriangles.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
     graphicsPipelineEntryTriangles.mParams.mCullMode = VK_CULL_MODE_BACK_BIT;
+    graphicsPipelineEntryTriangles.mParams.mPushConstantRange =
+    {
+        "PUSH_0", 0, sizeof(glm::mat4)
+    };
 
     mEngine.pipeline().registerGraphicsPipeline(graphicsPipelineEntryTriangles);
 }

@@ -29,6 +29,9 @@ namespace ascen
 	class ComputePipeline_I;
 	using ComputePipelinePtr = std::shared_ptr<ComputePipeline_I>;
 
+	class PushConstant;
+	using PushConstantPtr = std::shared_ptr<PushConstant>;
+
 	class Buffer;
 	using BufferPtr = std::shared_ptr<Buffer>;
 

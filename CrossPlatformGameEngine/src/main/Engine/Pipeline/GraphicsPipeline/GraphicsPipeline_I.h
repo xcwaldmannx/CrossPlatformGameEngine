@@ -9,7 +9,7 @@
 namespace ascen
 {
 
-	struct GraphicsPipelineParams
+	struct GraphicsPipelineParams : PipelineParams
 	{
 		uint32_t mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		uint32_t mPolygonMode = VK_POLYGON_MODE_FILL;

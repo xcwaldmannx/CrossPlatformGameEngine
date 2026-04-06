@@ -68,6 +68,7 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	mRenderPassFactory       = RenderPassFactory(mPhysicalDevice, mDevice);
 	mGraphicsPipelineFactory = GraphicsPipelineFactory(mDevice);
 	mComputePipelineFactory  = ComputePipelineFactory(mDevice);
+	mPushConstantFactory     = PushConstantFactory();
 	mBufferFactory           = BufferFactory(mPhysicalDevice, mDevice);
 	mTextureFactory          = TextureFactory(mPhysicalDevice, mDevice);
 	mSamplerFactory          = SamplerFactory(mPhysicalDevice, mDevice);
@@ -141,6 +142,11 @@ const GraphicsPipelineFactory& VulkanContext::getGraphicsPipelineFactory() const
 const ComputePipelineFactory& VulkanContext::getComputePipelineFactory() const
 {
 	return mComputePipelineFactory;
+}
+
+const PushConstantFactory& VulkanContext::getPushConstantFactory() const
+{
+	return mPushConstantFactory;
 }
 
 const BufferFactory& VulkanContext::getBufferFactory() const

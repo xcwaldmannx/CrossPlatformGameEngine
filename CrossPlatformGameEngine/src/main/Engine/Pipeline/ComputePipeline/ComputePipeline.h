@@ -7,7 +7,6 @@
 #include "ComputePipeline_I.h"
 #include "../../Descriptor/Layout/DescriptorSetLayout.h"
 
-#include <concepts>
 #include <stdexcept>
 
 #include <memory>
@@ -25,9 +24,10 @@ namespace ascen
     private:
         ComputePipeline(
             VkDevice device,
+            const ComputePipelineParams& params,
             const std::string& computeShaderFilepath,
             const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts) :
-            ComputePipeline_I(computeShaderFilepath)
+            ComputePipeline_I(params, computeShaderFilepath)
         {
             std::vector<VkDescriptorSetLayout> vkLayouts;
             for (const auto& layout : descriptorSetLayouts)
@@ -96,6 +96,21 @@ namespace ascen
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             mLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
             mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
+            mLayoutInfo.pushConstantRangeCount = 0;
+            mLayoutInfo.pPushConstantRanges = nullptr;
+
+            const auto& pc = mParams.mPushConstantRange;
+
+            if (!pc.mName.empty() && pc.mSize > 0)
+            {
+                mPushConstantRange = VkPushConstantRange(
+                    VK_SHADER_STAGE_COMPUTE_BIT,
+                    mParams.mPushConstantRange.mOffset,
+                    mParams.mPushConstantRange.mSize);
+
+                mLayoutInfo.pushConstantRangeCount = 1;
+                mLayoutInfo.pPushConstantRanges = &mPushConstantRange;
+            }
 
             // pipeline creation
             mCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;

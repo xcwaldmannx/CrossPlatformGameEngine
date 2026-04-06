@@ -4,6 +4,7 @@
 #include "../Descriptor/DescriptorFactory.h"
 #include "../Swapchain/SwapchainFactory.h"
 #include "../RenderPass/RenderPassFactory.h"
+#include "../Pipeline/PushConstant/PushConstantFactory.h"
 #include "../Pipeline/GraphicsPipeline/GraphicsPipelineFactory.h"
 #include "../Pipeline/ComputePipeline/ComputePipelineFactory.h"
 #include "../Resource/Buffer/BufferFactory.h"
@@ -39,6 +40,7 @@ namespace ascen
 		const RenderPassFactory& getRenderPassFactory() const;
 		const GraphicsPipelineFactory& getGraphicsPipelineFactory() const;
 		const ComputePipelineFactory& getComputePipelineFactory() const;
+		const PushConstantFactory& getPushConstantFactory() const;
 		const BufferFactory& getBufferFactory() const;
 		const TextureFactory& getTextureFactory() const;
 		const SamplerFactory& getSamplerFactory() const;
@@ -71,6 +73,7 @@ namespace ascen
 		RenderPassFactory mRenderPassFactory;
 		GraphicsPipelineFactory mGraphicsPipelineFactory;
 		ComputePipelineFactory mComputePipelineFactory;
+		PushConstantFactory mPushConstantFactory;
 		BufferFactory mBufferFactory;
 		TextureFactory mTextureFactory;
 		SamplerFactory mSamplerFactory;

@@ -264,8 +264,22 @@ namespace ascen
             mLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
             mLayoutInfo.setLayoutCount = static_cast<uint32_t>(descriptorSetLayouts.size());
             mLayoutInfo.pSetLayouts = descriptorSetLayouts.data();
-            mLayoutInfo.pushConstantRangeCount = 0; // Optional
-            mLayoutInfo.pPushConstantRanges = nullptr; // Optional
+            mLayoutInfo.pushConstantRangeCount = 0;
+            mLayoutInfo.pPushConstantRanges = nullptr;
+
+            const auto& pc = mParams.mPushConstantRange;
+
+            if (!pc.mName.empty() && pc.mSize > 0)
+            {
+                mPushConstantRange = VkPushConstantRange(
+                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                    mParams.mPushConstantRange.mOffset,
+                    mParams.mPushConstantRange.mSize);
+
+                mLayoutInfo.pushConstantRangeCount = 1;
+                mLayoutInfo.pPushConstantRanges = &mPushConstantRange;
+            }
+
 
             mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());

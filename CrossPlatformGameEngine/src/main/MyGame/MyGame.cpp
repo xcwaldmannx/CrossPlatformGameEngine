@@ -49,7 +49,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	loadTextures();
 
-	mEngine.resource().updateTexture("TEXTURE", mPixels);
+	mEngine.resource().uploadTexture("TEXTURE", mPixels);
 
 	double r = 25;
 	double deg = 720;
@@ -237,6 +237,10 @@ void MyGame::updateCamera(float delta)
 			width / height, 0.01f, 100'000.0f);
 		ubo.mProj[1][1] *= -1;
 
-		mEngine.resource().uploadBuffer("BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
+		glm::mat4 vp = ubo.mProj * ubo.mView;
+		mEngine.pipeline().pushConstants("PIPELINE_FRUSTUM_CULL", "PUSH_0", &vp);
+		mEngine.pipeline().pushConstants("PIPELINE_RENDER_ENTITY", "PUSH_0", &vp);
+
+		// mEngine.resource().uploadBuffer("BUFFER_CAMERA", &ubo, 1, sizeof(Camera), mEngine.getFrameIndex());
 	}
 }
