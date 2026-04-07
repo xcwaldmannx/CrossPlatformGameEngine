@@ -2,8 +2,7 @@
 
 #include "../../Core/Types.h"
 
-#include <concepts>
-#include <cstdint>
+#include "../../Registry/Resource/ResourceRegistry.h"
 
 #include <vulkan/vulkan.h>
 
@@ -17,30 +16,11 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device);
 
-		BufferPtr createVertex(
-			const CommandPoolPtr& commandPool,
+		BufferPtr create(
 			uint32_t itemCount,
-			uint32_t itemSize) const;
-
-		BufferPtr createIndex(
-			const CommandPoolPtr& commandPool,
-			uint32_t itemCount,
-			uint32_t itemSize) const;
-
-
-		BufferPtr createUniform(
-			uint32_t itemCount,
-			uint32_t itemSize) const;
-
-		BufferPtr createStorage(
-			const CommandPoolPtr& commandPool,
-			uint32_t itemCount,
-			uint32_t itemSize) const;
-
-		BufferPtr createIndirect(
-			const CommandPoolPtr& commandPool,
-			uint32_t itemCount,
-			uint32_t itemSize) const;
+			uint32_t itemSize,
+			BufferUsageFlags usageFlags,
+			BufferMemoryFlags memoryFlags) const;
 
 	private:
 		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;

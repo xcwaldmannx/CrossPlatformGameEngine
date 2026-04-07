@@ -34,7 +34,7 @@ namespace ascen
 			const void* items,
 			uint32_t itemCount,
 			uint32_t itemSize,
-			uint32_t offset = 0);
+			uint32_t offset = 0) const;
 
 		void download(
 			VkPhysicalDevice physicalDevice,
@@ -43,25 +43,17 @@ namespace ascen
 			const CommandPoolPtr& commandPool,
 			void* items,
 			uint32_t itemCount,
-			uint32_t itemSize);
+			uint32_t itemSize) const;
 
 		size_t getItemCount() const;
 
 		size_t getItemSize() const;
 
 	private:
-		void copy(
-			VkDevice device,
-			VkQueue queue,
-			const CommandPoolPtr& commandPool,
-			Buffer& src,
-			Buffer& dest,
-			bool insertBarrier);
-
 		Memory getMemoryInfo(
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
-			VkBuffer buffer);
+			VkBuffer buffer) const;
 
 		size_t mItemCount = 0;      // number of items
 		size_t mItemSize = 0;       // byte size of item

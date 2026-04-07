@@ -22,7 +22,7 @@ void FrustumCullingSystem::update(const float delta)
 
         const auto& m = mModels.at(model.mName);
 
-        ascen::IndirectBuffer::IndexedIndirectCommand drawCommand{};
+        ascen::IndexedIndirectDraw drawCommand{};
         drawCommand.vertexOffset = static_cast<int32_t>(m.mVertexOffset);
         drawCommand.firstIndex = m.mIndexOffset;
         drawCommand.indexCount = m.mIndexCount;
@@ -73,6 +73,6 @@ void FrustumCullingSystem::update(const float delta)
             &mEntitiesToCull[0], mEntitiesToCull.size(), sizeof(Entity));
 
         mEngine.resource().uploadBuffer("BUFFER_DRAWS",
-            &mDrawCommands[0], mDrawCommands.size(), sizeof(ascen::IndirectBuffer::IndexedIndirectCommand));
+            &mDrawCommands[0], mDrawCommands.size(), sizeof(ascen::IndexedIndirectDraw));
     }
 }

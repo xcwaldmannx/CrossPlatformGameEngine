@@ -39,6 +39,8 @@ void FrameGraph::compile()
     std::unordered_map<std::string, ResourceAccess> resourcePrevAccess;
     std::unordered_map<std::string, ResourceStage> resourcePrevStage;
 
+    FramePassType previousPassType = FramePassType::NONE;
+
     for (auto& [name, framePass] : framePasses)
     {
         // insert a SyncFramePass for GPU frame passes
@@ -68,18 +70,21 @@ void FrameGraph::compile()
                         const auto dstStage = sResourceStageMap.at(currStage);
 
                         // insert SyncFramePass that will generate a barrier
-                        std::string syncName = resourcePrevFramePass[resource.mName] + "__TO__" + name;
-
-                        const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
-                        try
+                        if (previousPassType != FramePassType::GRAPHICS)
                         {
-                            mFramePassRegistry.registerSync({ syncName, buffer->handle(), srcAccess, srcStage, dstAccess, dstStage });
+                            std::string syncName = resourcePrevFramePass[resource.mName] + "__TO__" + name;
+
+                            const auto& buffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
+                            try
+                            {
+                                mFramePassRegistry.registerSync({ syncName, buffer->handle(), srcAccess, srcStage, dstAccess, dstStage });
+                            }
+                            catch (...) {}
+
+                            mFramePassRegistry.reconstruct();
+
+                            mExecutions.push_back(FramePassRegistryBackend::getFramePass(mFramePassRegistry, syncName));
                         }
-                        catch (...) {}
-
-                        mFramePassRegistry.reconstruct();
-
-                        mExecutions.push_back(FramePassRegistryBackend::getFramePass(mFramePassRegistry, syncName));
                     }
                 }
 
@@ -87,6 +92,8 @@ void FrameGraph::compile()
                 resourcePrevStage[resource.mName] = resource.mStage;
                 resourcePrevFramePass[resource.mName] = name;
             }
+
+            previousPassType = framePass->mType;
         }
 
         mExecutions.push_back(framePass);

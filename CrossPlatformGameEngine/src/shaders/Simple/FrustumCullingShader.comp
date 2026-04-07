@@ -26,6 +26,16 @@ layout(std430, set = 0, binding = 0x00) buffer Entities
     Entity entities[];
 };
 
+layout(std430, set = 0, binding = 0x01) buffer VertexBounds
+{
+    vec4 vertexBounds[];
+};
+
+layout(std430, set = 0, binding = 0x02) buffer IndexBounds
+{
+    uint indexBounds[];
+};
+
 layout(push_constant) uniform PushConstants
 {
     mat4 cameraVP;
@@ -67,30 +77,53 @@ mat4 eulerRotationToMat4(vec3 euler)
     return M;
 }
 
-mat4 buildTransform(vec3 pos, vec3 rotEuler, vec3 scale)
+mat4 buildTransform(vec3 pos, vec3 rot, vec3 scale)
 {
-    mat4 R = eulerRotationToMat4(rotEuler);
+    mat4 T = mat4(1.0);
+    T[3].xyz = pos;
 
-    R[0] *= scale.x;
-    R[1] *= scale.y;
-    R[2] *= scale.z;
+    mat4 R = eulerRotationToMat4(rot);
 
-    R[3].xyz = pos;
+    mat4 S = mat4(1.0);
+    S[0][0] = scale.x;
+    S[1][1] = scale.y;
+    S[2][2] = scale.z;
 
-    return R;
+    return T * R * S;
 }
 
-void generateBoundingBox(vec3 min, vec3 max, out vec3 bounds[8])
+void generateBoundingBoxVertices(vec3 min, vec3 max, out vec3 v[8])
 {
-    bounds[0] = vec3(min.x, min.y, min.z);
-    bounds[1] = vec3(max.x, min.y, min.z);
-    bounds[2] = vec3(max.x, max.y, min.z);
-    bounds[3] = vec3(min.x, max.y, min.z);
+    v[0] = vec3(min.x, min.y, min.z);
+    v[1] = vec3(max.x, min.y, min.z);
+    v[2] = vec3(max.x, max.y, min.z);
+    v[3] = vec3(min.x, max.y, min.z);
 
-    bounds[4] = vec3(min.x, min.y, max.z);
-    bounds[5] = vec3(max.x, min.y, max.z);
-    bounds[6] = vec3(max.x, max.y, max.z);
-    bounds[7] = vec3(min.x, max.y, max.z);
+    v[4] = vec3(min.x, min.y, max.z);
+    v[5] = vec3(max.x, min.y, max.z);
+    v[6] = vec3(max.x, max.y, max.z);
+    v[7] = vec3(min.x, max.y, max.z);
+}
+
+void generateBoundingBoxIndices(uint baseVertex, out uint indices[24])
+{
+    // Bottom face
+    indices[0]  = baseVertex + 0; indices[1]  = baseVertex + 1;
+    indices[2]  = baseVertex + 1; indices[3]  = baseVertex + 2;
+    indices[4]  = baseVertex + 2; indices[5]  = baseVertex + 3;
+    indices[6]  = baseVertex + 3; indices[7]  = baseVertex + 0;
+
+    // Top face
+    indices[8]  = baseVertex + 4; indices[9]  = baseVertex + 5;
+    indices[10] = baseVertex + 5; indices[11] = baseVertex + 6;
+    indices[12] = baseVertex + 6; indices[13] = baseVertex + 7;
+    indices[14] = baseVertex + 7; indices[15] = baseVertex + 4;
+
+    // Vertical edges
+    indices[16] = baseVertex + 0; indices[17] = baseVertex + 4;
+    indices[18] = baseVertex + 1; indices[19] = baseVertex + 5;
+    indices[20] = baseVertex + 2; indices[21] = baseVertex + 6;
+    indices[22] = baseVertex + 3; indices[23] = baseVertex + 7;
 }
 
 void main()
@@ -101,28 +134,33 @@ void main()
 
     entities[entityIdx].isVisible = 0;
 
-    vec3 bounds[8];
-    generateBoundingBox(entities[entityIdx].boundsNeg, entities[entityIdx].boundsPos, bounds);
+    vec3 boundsVertices[8];
+    generateBoundingBoxVertices(entities[entityIdx].boundsNeg, entities[entityIdx].boundsPos, boundsVertices);
+    uint vertexBase = entityIdx * 8;
+
+    uint boundsIndices[24];
+    generateBoundingBoxIndices(vertexBase, boundsIndices);
+    uint indexBase = entityIdx * 24;
 
     const mat4 entityTransform = buildTransform(entities[entityIdx].position, entities[entityIdx].rotation, entities[entityIdx].scale);
-
-    const mat4 MVP = pushConstants.cameraVP * entityTransform;
 
     vec2 minXY = vec2( 1e20);
     vec2 maxXY = vec2(-1e20);
 
     bool insideFrustum = false;
 
+    vec4 worldBounds[8];
+
     for (uint i = 0; i < 8; i++)
     {
-        vec4 clip = MVP * vec4(bounds[i], 1.0);
+        worldBounds[i] = entityTransform * vec4(boundsVertices[i], 1.0);
+        vec4 clip = pushConstants.cameraVP * worldBounds[i];
 
         if (clip.w <= 0.0)
             continue;
 
         vec3 ndc = clip.xyz / clip.w;
 
-        // frustum test
         if ((clip.x >= -clip.w && clip.x <= clip.w) &&
             (clip.y >= -clip.w && clip.y <= clip.w) &&
             (clip.z >= 0.0 && clip.z <= clip.w))
@@ -130,7 +168,6 @@ void main()
             insideFrustum = true;
         }
 
-        // track NDC bounds
         minXY = min(minXY, ndc.xy);
         maxXY = max(maxXY, ndc.xy);
     }
@@ -138,14 +175,21 @@ void main()
     if (!insideFrustum)
         return;
 
-    // ---- NDC size culling ----
-
     vec2 ndcSize = maxXY - minXY;
-    float maxSize = max(ndcSize.x, ndcSize.y);
-
-    // threshold in NDC space (tune this)
-    if (maxSize < 0.005)
+    if (max(ndcSize.x, ndcSize.y) < 0.005)
         return;
 
     entities[entityIdx].isVisible = 1;
+
+    // write vertices
+    for (uint i = 0; i < 8; i++)
+    {
+        vertexBounds[vertexBase + i] = worldBounds[i];
+    }
+
+    // write indices
+    for (uint i = 0; i < 24; i++)
+    {
+        indexBounds[indexBase + i] = boundsIndices[i];
+    }
 }

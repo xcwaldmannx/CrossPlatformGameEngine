@@ -20,7 +20,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.reload();
 
-	mModelHandler.loadModels({ "assets/models/test.model", "assets/models/submarine.model" });
+	mModelHandler.loadModels({ "assets/models/test.model", "assets/models/submarine.model", "assets/models/sphere.model" });
 
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
@@ -51,7 +51,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.resource().uploadTexture("TEXTURE", mPixels);
 
-	double r = 40;
+	double r = 50;
 	double deg = 360;
 	unsigned int entityCount = 0;
 
@@ -61,13 +61,13 @@ MyGame::MyGame(WindowManager& windowManager) :
 		double x = r * std::cos(angle);
 		double z = r * std::sin(angle);
 
-		if (i > 180)
+		if (i < 180)
 		{
-			createModel("assets/models/test.model", { x, 5, z }, { 1, 1, 1 });
+			createModel("assets/models/test.model", { x, 15, z }, { 1, 1, 1 });
 		}
 		else
 		{
-			createModel("assets/models/submarine.model", { x, 5, z }, { 1, 1, 1 });
+			createModel("assets/models/submarine.model", { x, 15, z }, { 1, 1, 1 });
 		}
 
 		entityCount++;
@@ -85,13 +85,18 @@ void MyGame::run(float delta)
 		if (i % 5 == 0)
 		{
 			auto& transform = mEngine.ecs().getComponent<TransformComponent>(i);
-			transform.mRotation.x += 4 * delta;
-			transform.mRotation.z += 4 * delta;
+
+			transform.mRotation.x += 2.0f * delta;
+			transform.mRotation.y += 2.0f * delta;
+			transform.mRotation.z += 2.0f * delta;
+
+			transform.mScale.x = 2.0f;
+			transform.mScale.y = 2.0f;
+			transform.mScale.z = 2.0f;
 		}
 	}
 
 	mEngine.drawFrame();
-
 }
 
 void MyGame::cleanup()
@@ -186,5 +191,6 @@ void MyGame::updateCamera(float delta)
 		const glm::mat4 vp = ubo.mProj * ubo.mView;
 		mEngine.pipeline().pushConstants("PIPELINE_FRUSTUM_CULL",  "PUSH_0", &vp);
 		mEngine.pipeline().pushConstants("PIPELINE_RENDER_ENTITY", "PUSH_0", &vp);
+		mEngine.pipeline().pushConstants("PIPELINE_RENDER_BOUNDS", "PUSH_0", &vp);
 	}
 }

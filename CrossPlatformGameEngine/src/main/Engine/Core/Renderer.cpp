@@ -12,7 +12,6 @@
 #include "../FrameGraph/FramePass/GpuFramePass/ComputeGpuFramePass/ComputeGpuFramePass.h"
 #include "../Resource/Barrier/Barrier.h"
 #include "../Resource/Buffer/Buffer.h"
-#include "../Resource/Buffer/Indirect/IndirectBuffer.h"
 #include "../Registry/Vertex/VertexRegistry.h"
 #include "../Registry/Resource/ResourceRegistry.h"
 #include "../Registry/Resource/ResourceRegistryBackend.h"
@@ -121,9 +120,7 @@ void Renderer::drawFrame()
 			}
 			else if (pass->mMode == GraphicsMode::LINES)
 			{
-				// const auto& drawBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, "ENGINE_BUFFER_DRAW_BBOX");
-
-				// mLineCommandRecorder.record(commandBuffer, pass, mFrameIndex, drawBuffer->handle(), mDrawCommandCount);
+				mLineCommandRecorder.record(commandBuffer, pass, mFrameIndex);
 			}
 			break;
 		}

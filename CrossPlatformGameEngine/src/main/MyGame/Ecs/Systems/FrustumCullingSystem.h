@@ -4,8 +4,6 @@
 
 #include "../../../EcsSystem/SystemManager/System/System_I.h"
 
-#include "../../../Engine/Resource/Buffer/Indirect/IndirectBuffer.h"
-
 #include "../../../Engine/Core/Engine.h"
 #include "../../ModelHandler/ModelHandler.h"
 
@@ -46,9 +44,9 @@ private:
     ascen::Engine& mEngine;
     const std::unordered_map<std::string, MyModel>& mModels;
 
-    std::map<uint32_t, ascen::IndirectBuffer::IndexedIndirectCommand> mModelToDrawCommands;
+    std::map<uint32_t, ascen::IndexedIndirectDraw> mModelToDrawCommands;
     std::unordered_map<uint32_t, std::unordered_map<uint32_t, Entity>> mModelToEntities;
 
-    std::vector<ascen::IndirectBuffer::IndexedIndirectCommand> mDrawCommands;
+    std::vector<ascen::IndexedIndirectDraw> mDrawCommands;
     std::vector<Entity> mEntitiesToCull;
 };

@@ -18,9 +18,7 @@ LineCommandRecorder::LineCommandRecorder(
 void LineCommandRecorder::record(
     VkCommandBuffer commandBuffer,
     const GraphicsGpuFramePass* pass,
-    uint32_t frameIndex,
-    VkBuffer indirectBuffer,
-    uint32_t drawCommandCount)
+    uint32_t frameIndex)
 {
     const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, pass->mPipeline);
     const auto& pipelineLayout = pipeline->getLayout();
@@ -33,6 +31,7 @@ void LineCommandRecorder::record(
     }
 
     std::vector<VkBuffer> vertexBuffers;
+    VkBuffer indexBuffer = VK_NULL_HANDLE;
 
     for (const auto & resource : pass->mResources)
     {
@@ -42,6 +41,11 @@ void LineCommandRecorder::record(
             {
                 const auto& vertexBufferPtr = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
                 vertexBuffers.push_back(vertexBufferPtr->handle());
+                break;
+            }
+            case ResourceUsage::BUFFER_INDEX:
+            {
+                indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName)->handle();
                 break;
             }
             default:
@@ -59,36 +63,30 @@ void LineCommandRecorder::record(
         vertexBuffers.data(),
         vertexOffsets.data());
 
-    /*
     vkCmdBindIndexBuffer(
         commandBuffer,
-        framePass->mIndexBuffer,
+        indexBuffer,
         0,
         VK_INDEX_TYPE_UINT32);
-    */
 
     // TODO: create dynamic offsets for dynamic buffers. This is currently hard-coded
     std::vector<uint32_t> dynamicOffets =
     {
-        frameIndex * 64 * 2 // camera UBO, 2 mat4s, 64 bytes each
+        // frameIndex * 64 * 2 // camera UBO, 2 mat4s, 64 bytes each
     };
 
-    vkCmdBindDescriptorSets(
-        commandBuffer,
-        VK_PIPELINE_BIND_POINT_GRAPHICS,
-        pipelineLayout,
-        0,
-        descriptorSets.size(),
-        descriptorSets.data(),
-        static_cast<uint32_t>(dynamicOffets.size()),
-        &dynamicOffets[0]);
+    if (!descriptorSets.empty())
+    {
+        vkCmdBindDescriptorSets(
+            commandBuffer,
+            VK_PIPELINE_BIND_POINT_GRAPHICS,
+            pipelineLayout,
+            0,
+            descriptorSets.size(),
+            descriptorSets.data(),
+            static_cast<uint32_t>(dynamicOffets.size()),
+            nullptr); //&dynamicOffets[0]);
+    }
 
-    vkCmdDrawIndirect(
-        commandBuffer,
-        indirectBuffer,
-        0,
-        drawCommandCount,
-        sizeof(VkDrawIndexedIndirectCommand));
+    vkCmdDrawIndexed(commandBuffer, 10'000, 1, 0, 0, 0);
 }
-
-using namespace ascen;

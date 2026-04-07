@@ -23,7 +23,7 @@ Buffer::Buffer(
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = static_cast<VkDeviceSize>(mItemCount * mItemSize);
-	bufferInfo.usage = usageFlags;
+	bufferInfo.usage = mUsageFlags;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	if (vkCreateBuffer(device, &bufferInfo, nullptr, &mHandle) != VK_SUCCESS) {
@@ -42,6 +42,13 @@ Buffer::Buffer(
 	}
 
 	vkBindBufferMemory(device, mHandle, mMemory, 0);
+
+	if ((mUsageFlags & VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT) &&
+		(mMemoryFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT))
+	{
+		const VkDeviceSize sizeBytes = itemCount * itemSize;
+		vkMapMemory(device, mMemory, 0, sizeBytes, 0, &mMappedMemory);
+	}
 }
 
 void Buffer::destroy(VkDevice device)
@@ -58,13 +65,13 @@ void Buffer::upload(
 	const void* items,
 	uint32_t itemCount,
 	uint32_t itemSize,
-	uint32_t offset)
+	uint32_t offset) const
 {
 
-	if (mMemoryFlags & VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT)
+	if (mMemoryFlags & BUFFER_MEMORY_HOST)
 	{
-		size_t size = static_cast<size_t>(itemCount * itemSize);
-		size_t itemOffset = static_cast<size_t>(itemSize * offset);
+		const auto size = itemCount * itemSize;
+		const auto itemOffset = itemSize * offset;
 
 		memcpy(static_cast<uint8_t*>(mMappedMemory) + itemOffset, items, size);
 	}
@@ -75,8 +82,8 @@ void Buffer::upload(
 			device,
 			itemCount,
 			itemSize,
-			VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+			BUFFER_USAGE_TRANSFER_SRC,
+			BUFFER_MEMORY_HOST);
 
 		const VkDeviceSize sizeBytes = itemCount * itemSize;
 
@@ -93,21 +100,6 @@ void Buffer::upload(
 		copyRegion.size = itemCount * itemSize;
 		vkCmdCopyBuffer(commandBuffer, stagingBuffer.mHandle, mHandle, 1, &copyRegion);
 
-		bool tempInsertBarrier = false;
-
-		if (tempInsertBarrier)
-		{
-			Barrier::buffer(
-				commandBuffer,
-				mHandle,
-				VK_ACCESS_2_TRANSFER_WRITE_BIT,
-				VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-				VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
-				VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
-				VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
-				VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT);
-		}
-
 		commandPool->endSingle(device, queue, commandBuffer);
 
 		stagingBuffer.destroy(device);
@@ -121,11 +113,16 @@ void Buffer::download(
 	const CommandPoolPtr& commandPool,
 	void* items,
 	uint32_t itemCount,
-	uint32_t itemSize)
+	uint32_t itemSize) const
 {
-	if (!(mMemoryFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT))
+	if (!(mMemoryFlags & BUFFER_MEMORY_LOCAL))
 	{
 		throw std::runtime_error("Cannot copy from CPU for a non-device-local buffer.");
+	}
+
+	if (!(mUsageFlags & BUFFER_USAGE_TRANSFER_SRC))
+	{
+		throw std::runtime_error("Cannot copy from a non-copyable source.");
 	}
 
 	Buffer stagingBuffer(
@@ -133,18 +130,19 @@ void Buffer::download(
 		device,
 		itemCount,
 		itemSize,
-		VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		BUFFER_USAGE_TRANSFER_DST,
+		BUFFER_MEMORY_HOST);
 
 	const VkDeviceSize sizeBytes = itemCount * itemSize;
 
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 
+	// TODO: make this more flexible
 	Barrier::buffer(
 	commandBuffer,
 	mHandle,
 	VK_ACCESS_2_SHADER_WRITE_BIT,
-	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT, // or vertex/fragment depending on where it's written
+	VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT,
 	VK_ACCESS_2_TRANSFER_READ_BIT,
 	VK_PIPELINE_STAGE_2_TRANSFER_BIT);
 
@@ -174,42 +172,10 @@ size_t Buffer::getItemSize() const
 	return mItemSize;
 }
 
-void Buffer::copy(
-	VkDevice device,
-	VkQueue queue,
-	const CommandPoolPtr& commandPool,
-	Buffer& src,
-	Buffer& dest,
-	bool insertBarrier)
-{
-	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
-
-	VkBufferCopy copyRegion{};
-	copyRegion.srcOffset = 0;
-	copyRegion.dstOffset = 0;
-	copyRegion.size = src.mItemCount * src.mItemSize;
-	vkCmdCopyBuffer(commandBuffer, src.mHandle, dest.mHandle, 1, &copyRegion);
-
-	if (insertBarrier)
-	{
-		Barrier::buffer(
-			commandBuffer,
-			dest.mHandle,
-			VK_ACCESS_2_TRANSFER_WRITE_BIT,
-			VK_PIPELINE_STAGE_2_TRANSFER_BIT,
-			VK_ACCESS_2_SHADER_READ_BIT | VK_ACCESS_2_SHADER_WRITE_BIT,
-			VK_PIPELINE_STAGE_2_VERTEX_SHADER_BIT |
-			VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT |
-			VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT);
-	}
-
-	commandPool->endSingle(device, queue, commandBuffer);
-}
-
 Buffer::Memory Buffer::getMemoryInfo(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
-	VkBuffer buffer)
+	VkBuffer buffer) const
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);

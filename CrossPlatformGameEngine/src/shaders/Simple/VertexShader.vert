@@ -68,17 +68,19 @@ mat4 eulerRotationToMat4(vec3 euler)
     return M;
 }
 
-mat4 buildTransform(vec3 pos, vec3 rotEuler, vec3 scale)
+mat4 buildTransform(vec3 pos, vec3 rot, vec3 scale)
 {
-    mat4 R = eulerRotationToMat4(rotEuler);
+    mat4 T = mat4(1.0);
+    T[3].xyz = pos;
 
-    R[0] *= scale.x;
-    R[1] *= scale.y;
-    R[2] *= scale.z;
+    mat4 R = eulerRotationToMat4(rot);
 
-    R[3].xyz = pos;
+    mat4 S = mat4(1.0);
+    S[0][0] = scale.x;
+    S[1][1] = scale.y;
+    S[2][2] = scale.z;
 
-    return R;
+    return T * R * S;
 }
 
 layout(location = 0) in vec3 inPosition;

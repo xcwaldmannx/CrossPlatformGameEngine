@@ -24,22 +24,13 @@ namespace ascen
 	class TextureFactory;
 	class SamplerFactory;
 
-	enum class BufferType
-	{
-		NONE,
-		VERTEX,
-		INDEX,
-		UNIFORM,
-		STORAGE,
-		INDIRECT,
-	};
-
 	struct BufferEntry
 	{
 		std::string mName;
-		BufferType mType = BufferType::NONE;
 		uint32_t mCapacity = 1; // default must be > 0
 		uint32_t mStride = 1;   // default must be > 0
+		BufferUsageFlags mUsageFlags = 0;
+		BufferMemoryFlags mMemoryFlags = 0;
 	};
 
 	enum class TextureType
@@ -81,12 +72,6 @@ namespace ascen
 		// void registerMaterial(MaterialEntry&& entry);
 
 		void reconstruct() override;
-
-		void uploadPushConstant(
-			const std::string& name,
-			const void* data,
-			uint32_t dataSize,
-			uint32_t offset) const;
 
 		template<typename T>
 		std::span<T> getMappedBuffer(const std::string& name)

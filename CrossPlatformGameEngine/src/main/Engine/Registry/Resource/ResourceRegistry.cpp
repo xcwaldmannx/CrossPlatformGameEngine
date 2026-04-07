@@ -59,40 +59,45 @@ void ResourceRegistry::reconstruct()
 {
 	cleanup();
 
-	for (auto& entry : mBufferEntries)
+	for (const auto& entry : mBufferEntries)
 	{
-		switch (entry.mType)
-		{
-		case BufferType::VERTEX:
-			mBuffers.emplace(entry.mName, mBufferFactory.createVertex(
-				mCommandPool,
-				entry.mCapacity,
-				entry.mStride));
-			break;
-		case BufferType::INDEX:
-			mBuffers.emplace(entry.mName, mBufferFactory.createIndex(
-				mCommandPool,
-				entry.mCapacity,
-				entry.mStride));
-			break;
-		case BufferType::UNIFORM:
-			mBuffers.emplace(entry.mName, mBufferFactory.createUniform(
-				entry.mCapacity,
-				entry.mStride));
-			break;
-		case BufferType::STORAGE:
-			mBuffers.emplace(entry.mName, mBufferFactory.createStorage(
-				mCommandPool,
-				entry.mCapacity,
-				entry.mStride));
-			break;
-		case BufferType::INDIRECT:
-			mBuffers.emplace(entry.mName, mBufferFactory.createIndirect(
-				mCommandPool,
-				entry.mCapacity,
-				entry.mStride));
-			break;
-		}
+		mBuffers.emplace(entry.mName, mBufferFactory.create(
+			entry.mCapacity,
+			entry.mStride,
+			entry.mUsageFlags,
+			entry.mMemoryFlags));
+
+		// switch (entry.mType)
+		// {
+		// case BufferType::VERTEX:
+		// 	mBuffers.emplace(entry.mName, mBufferFactory.createVertex(
+		// 		entry.mCapacity,
+		// 		entry.mStride));
+		// 	break;
+		// case BufferType::INDEX:
+		// 	mBuffers.emplace(entry.mName, mBufferFactory.createIndex(
+		// 		mCommandPool,
+		// 		entry.mCapacity,
+		// 		entry.mStride));
+		// 	break;
+		// case BufferType::UNIFORM:
+		// 	mBuffers.emplace(entry.mName, mBufferFactory.createUniform(
+		// 		entry.mCapacity,
+		// 		entry.mStride));
+		// 	break;
+		// case BufferType::STORAGE:
+		// 	mBuffers.emplace(entry.mName, mBufferFactory.createStorage(
+		// 		mCommandPool,
+		// 		entry.mCapacity,
+		// 		entry.mStride));
+		// 	break;
+		// case BufferType::INDIRECT:
+		// 	mBuffers.emplace(entry.mName, mBufferFactory.createIndirect(
+		// 		mCommandPool,
+		// 		entry.mCapacity,
+		// 		entry.mStride));
+		// 	break;
+		// }
 	}
 
 	for (auto& entry : mTextureEntries)
