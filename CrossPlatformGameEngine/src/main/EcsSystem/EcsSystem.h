@@ -23,7 +23,7 @@ public:
 		mSystemManager.registerSystem<T>(
 			readSignature,
 			writeSignature,
-			mComponentManager,
+			this,
 			std::forward<Args>(args)...);
 		std::cout << "Registered new system!" << std::endl;
 	}

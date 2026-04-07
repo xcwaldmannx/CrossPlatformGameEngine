@@ -1,0 +1,36 @@
+#version 450
+
+#extension GL_KHR_vulkan_glsl : enable
+
+struct Instance
+{
+	mat4 mTransform;
+	uint mTextureIndex;
+	uint _pad[3];
+};
+
+layout(std140, set = 0, binding = 0x00) uniform Camera
+{
+    mat4 view;
+    mat4 proj;
+} camera;
+
+layout(std430, set = 0, binding = 0x01) readonly buffer Instances
+{
+    Instance instances[];
+};
+
+layout(location = 0) in vec3 inPosition;
+layout(location = 1) in vec3 inColor;
+
+layout(location = 0) out vec3 outColor;
+
+void main() {
+    const Instance instance = instances[gl_InstanceIndex];
+
+    const mat4 cameraTransform = camera.proj * camera.view;
+
+    gl_Position = cameraTransform * instance.mTransform * vec4(inPosition, 1.0);
+
+    outColor = inColor;
+}

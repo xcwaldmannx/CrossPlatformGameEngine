@@ -19,7 +19,7 @@ public:
 	void registerSystem(
 		Signature readSignature,
 		Signature writeSignature,
-		ComponentManager& componentManager,
+		EcsSystem* system,
 		Args&&... args) 
 	{
 		std::type_index id = typeid(T);
@@ -28,7 +28,7 @@ public:
 		mSystems[id] = std::make_shared<T>(std::forward<Args>(args)...);
 		mSystemReadSignatures[id] = readSignature;
 		mSystemWriteSignatures[id] = writeSignature;
-		mSystems[id]->mComponentManager = &componentManager;
+		mSystems[id]->mSystem = system;
 
 		scheduleSystemUpdate<T>(readSignature, writeSignature);
 	}

@@ -31,13 +31,20 @@ struct Mesh
 	uint mTextureIndex;
 	uint mInstanceBaseOffset;
 	uint _pad2[2];
+
+	vec3 mBoundsPos;
+	uint _pad3;
+
+	vec3 mBoundsNeg;
+	uint _pad4;
 };
 
 struct Instance
 {
 	mat4 mTransform;
 	uint mTextureIndex;
-	uint _pad[3];
+	bool mIsVisible;
+	uint _pad[2];
 };
 
 struct DrawCommand
@@ -124,6 +131,61 @@ mat4 buildTRS(vec3 pos, vec3 rotEuler, vec3 scale)
     return R;
 }
 
+vec4 getRow(mat4 m, int r)
+{
+    return vec4(m[0][r], m[1][r], m[2][r], m[3][r]);
+}
+
+vec4 normalizePlane(vec4 p)
+{
+    float invLen = inversesqrt(max(dot(p.xyz, p.xyz), 1e-20));
+    return p * invLen;
+}
+
+bool boundsCheck(mat4 model, vec3 boundsPos, vec3 boundsNeg, float marginWorld)
+{
+    vec3 localCenter  = 0.5 * (boundsPos + boundsNeg);
+    vec3 localExtents = 0.5 * (boundsPos - boundsNeg);
+
+    vec3 worldCenter = (model * vec4(localCenter, 1.0)).xyz;
+
+    mat3 M = mat3(model);
+    mat3 absM = mat3(abs(M[0]), abs(M[1]), abs(M[2]));
+    vec3 worldExtents = absM * localExtents;
+
+    // Expand the box a bit in WORLD units for debug purposes
+    worldExtents += vec3(marginWorld);
+
+    mat4 VP = camera.proj * camera.view;
+
+    vec4 r0 = vec4(VP[0][0], VP[1][0], VP[2][0], VP[3][0]);
+    vec4 r1 = vec4(VP[0][1], VP[1][1], VP[2][1], VP[3][1]);
+    vec4 r2 = vec4(VP[0][2], VP[1][2], VP[2][2], VP[3][2]);
+    vec4 r3 = vec4(VP[0][3], VP[1][3], VP[2][3], VP[3][3]);
+
+    vec4 planes[6];
+    planes[0] = normalizePlane(r3 + r0);
+    planes[1] = normalizePlane(r3 - r0);
+    planes[2] = normalizePlane(r3 + r1);
+    planes[3] = normalizePlane(r3 - r1);
+    planes[4] = normalizePlane(r2);       // Vulkan near (z >= 0)
+    planes[5] = normalizePlane(r3 - r2);  // Vulkan far  (z <= w)
+
+    for (int i = 0; i < 6; ++i)
+    {
+        vec3 n = planes[i].xyz;
+        float d = planes[i].w;
+
+        float dist   = dot(n, worldCenter) + d;
+        float radius = dot(abs(n), worldExtents);
+
+        if (dist + radius < 0.0)
+            return false;
+    }
+
+    return true;
+}
+
 void main()
 {
 	const uint entityId = gl_GlobalInvocationID.x;
@@ -138,9 +200,19 @@ void main()
 	{
 		const Mesh mesh = meshes[entity.mMeshOffset + i];
 		const mat4 meshTRS = buildTRS(mesh.mPosition, mesh.mRotation, mesh.mScale);
-		
+
+        const mat4 finalTransform = entityTRS * transforms[mesh.mTransformOffset] * meshTRS;
+
 		uint instanceIndex = mesh.mInstanceBaseOffset + entity.mInstanceLocalOffset;
-		instances[instanceIndex].mTransform = entityTRS * transforms[mesh.mTransformOffset] * meshTRS;
+
+		if (!boundsCheck(finalTransform, mesh.mBoundsPos, mesh.mBoundsNeg, 0.0))
+		{
+		    instances[instanceIndex].mIsVisible = false;
+            continue;
+        }
+
+		instances[instanceIndex].mTransform = finalTransform;
 		instances[instanceIndex].mTextureIndex = mesh.mTextureIndex;
+		instances[instanceIndex].mIsVisible = true;
 	}
 }
