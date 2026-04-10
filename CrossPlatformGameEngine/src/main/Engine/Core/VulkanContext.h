@@ -3,13 +3,13 @@
 #include "../CommandPool/CommandPoolFactory.h"
 #include "../Descriptor/DescriptorFactory.h"
 #include "../Swapchain/SwapchainFactory.h"
-#include "../RenderPass/RenderPassFactory.h"
 #include "../Pipeline/PushConstant/PushConstantFactory.h"
 #include "../Pipeline/GraphicsPipeline/GraphicsPipelineFactory.h"
 #include "../Pipeline/ComputePipeline/ComputePipelineFactory.h"
 #include "../Resource/Buffer/BufferFactory.h"
 #include "../Resource/Texture/TextureFactory.h"
 #include "../Resource/Sampler/SamplerFactory.h"
+#include "../Resource/Render/RenderPass/RenderPassFactory.h"
 
 #include <vulkan/vulkan.h>
 

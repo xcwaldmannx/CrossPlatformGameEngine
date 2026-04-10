@@ -18,7 +18,7 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	mCommandPoolFactory(VK_NULL_HANDLE),
 	mDescriptorFactory(VK_NULL_HANDLE),
 	mSwapchainFactory(VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE),
-	mRenderPassFactory(VK_NULL_HANDLE, VK_NULL_HANDLE),
+	mRenderPassFactory(VK_NULL_HANDLE),
 	mGraphicsPipelineFactory(VK_NULL_HANDLE),
 	mComputePipelineFactory(VK_NULL_HANDLE),
 	mBufferFactory(VK_NULL_HANDLE, VK_NULL_HANDLE),
@@ -65,7 +65,7 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	mCommandPoolFactory      = CommandPoolFactory(mDevice);
 	mDescriptorFactory       = DescriptorFactory(mDevice);
 	mSwapchainFactory        = SwapchainFactory(mPhysicalDevice, mDevice, mSurface);
-	mRenderPassFactory       = RenderPassFactory(mPhysicalDevice, mDevice);
+	mRenderPassFactory       = RenderPassFactory(mDevice);
 	mGraphicsPipelineFactory = GraphicsPipelineFactory(mDevice);
 	mComputePipelineFactory  = ComputePipelineFactory(mDevice);
 	mPushConstantFactory     = PushConstantFactory();
