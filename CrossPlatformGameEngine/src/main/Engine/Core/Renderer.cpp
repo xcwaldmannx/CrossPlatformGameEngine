@@ -85,7 +85,7 @@ void Renderer::drawFrame()
 
 	if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
 	{
-		throw std::runtime_error("failed to acquire swapchain image!");
+		throw std::runtime_error("Failed to acquire swapchain image!");
 	}
 
 	vkResetFences(mDevice, 1, &mInFlightFences[mFrameIndex]);

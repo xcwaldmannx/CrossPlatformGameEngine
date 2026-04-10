@@ -20,9 +20,6 @@ namespace ascen
 	class Swapchain;
 	using SwapchainPtr = std::shared_ptr<Swapchain>;
 
-	class RenderPass;
-	using RenderPassPtr = std::shared_ptr<RenderPass>;
-
 	class GraphicsPipeline_I;
 	using GraphicsPipelinePtr = std::shared_ptr<GraphicsPipeline_I>;
 
@@ -43,6 +40,15 @@ namespace ascen
 
 	class Vertex;
 	using VertexPtr = std::shared_ptr<Vertex>;
+
+	class FrameBuffer;
+	using FrameBufferPtr = std::shared_ptr<FrameBuffer>;
+
+	class RenderPass;
+	using RenderPassPtr = std::shared_ptr<RenderPass>;
+
+	class RenderTarget;
+	using RenderTargetPtr = std::shared_ptr<RenderTarget>;
 
 	class FramePass;
 	using FramePassPtr = std::shared_ptr<FramePass>;

@@ -32,8 +32,8 @@ RenderContext::RenderContext(
 
 void RenderContext::resize()
 {
-	if (mWindowManager.getWidth() == 0 ||
-		mWindowManager.getHeight() == 0)
+	if (WindowManager::getWidth() == 0 ||
+		WindowManager::getHeight() == 0)
 	{
 		return;
 	}
@@ -65,7 +65,7 @@ void RenderContext::resize()
 	mWindowManager.setResized(false);
 }
 
-void RenderContext::cleanup()
+void RenderContext::cleanup() const
 {
 	mRenderPass->destroy(mDevice);
 	mDepthTexture->destroy(mDevice);

@@ -22,7 +22,7 @@ namespace ascen
 
 		void resize();
 
-		void cleanup();
+		void cleanup() const;
 
 		const CommandPoolPtr& getCommandPool() const;
 		const SwapchainPtr& getSwapchain() const;

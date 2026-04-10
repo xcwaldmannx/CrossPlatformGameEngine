@@ -9,14 +9,15 @@
 namespace ascen
 {
 
-	struct Attachment
-	{
-		VkAttachmentDescription mDesc{};
-		VkAttachmentReference mRef{};
-	};
-
 	class RenderPass : public Handle<VkRenderPass>
 	{
+	public:
+		struct Attachment
+		{
+			VkAttachmentDescription mDesc{};
+			VkAttachmentReference mRef{};
+		};
+
 	private:
 		RenderPass(
 			VkPhysicalDevice physicalDevice,
