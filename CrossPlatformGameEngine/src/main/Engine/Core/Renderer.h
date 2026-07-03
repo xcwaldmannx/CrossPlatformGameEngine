@@ -43,13 +43,7 @@ namespace ascen
 			WindowManager& windowManager,
 			EcsSystem& ecsSystem,
 			VulkanContext& vulkanContext,
-			RenderContext& renderContext,
-			VertexRegistry& vertexRegistry,
-			ResourceRegistry& resourceRegistry,
-			DescriptorRegistry& descriptorRegistry,
-			PipelineRegistry& pipelineRegistry,
-			FramePassRegistry& framePassRegistry,
-			RenderTargetRegistry& renderTargetRegistry);
+			RenderContext& renderContext);
 
 		// void updateRenderSystem();
 
@@ -72,12 +66,6 @@ namespace ascen
 		const VkQueue mPresentQueue;
 		const VkDevice mDevice;
 		RenderContext& mRenderContext;
-		VertexRegistry& mVertexRegistry;
-		ResourceRegistry& mResourceRegistry;
-		DescriptorRegistry& mDescriptorRegistry;
-		PipelineRegistry& mPipelineRegistry;
-		FramePassRegistry& mFramePassRegistry;
-		RenderTargetRegistry& mRenderTargetRegistry;
 
 		FrameGraph mFrameGraph;
 

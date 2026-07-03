@@ -25,8 +25,8 @@ namespace ascen
     {
     protected:
         GraphicsPipeline(
-            VkDevice device,
-            const GraphicsPipelineParams& params,
+            const VkDevice device,
+            const pipeline::GraphicsParams& params,
             const std::string& vertexShaderFilepath,
             const std::string& pixelShaderFilepath,
             const VertexPtr& vertex,
@@ -264,7 +264,7 @@ namespace ascen
 
             const auto& pc = mParams.mPushConstantRange;
 
-            if (!pc.mName.empty() && pc.mSize > 0)
+            if (pc.mSize > 0)
             {
                 mPushConstantRange = VkPushConstantRange(
                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,

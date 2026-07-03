@@ -10,10 +10,16 @@ namespace ascen
     class DescriptorSetLayoutRegistry : public Registry_I<registry::DescriptorSetLayoutEntry, DescriptorSetLayoutPtr>
     {
     public:
-        DescriptorSetLayoutRegistry(const DescriptorFactory& descriptorFactory) : mDescriptorFactory(descriptorFactory) {}
+        DescriptorSetLayoutRegistry(
+            const VkDevice device,
+            const DescriptorFactory& descriptorFactory) :
+            mDevice(device),
+            mDescriptorFactory(descriptorFactory) {}
 
         void reconstruct(const registry::DescriptorSetLayoutEntry& entry, DescriptorSetLayoutPtr& resource) override
         {
+            if (resource) resource->destroy(mDevice);
+
             std::vector<VkDescriptorSetLayoutBinding> bindings;
 
             for (const auto& binding : entry.mBindings)
@@ -28,6 +34,7 @@ namespace ascen
         }
 
     private:
+        const VkDevice mDevice;
         const DescriptorFactory& mDescriptorFactory;
     };
 

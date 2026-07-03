@@ -32,13 +32,7 @@ Renderer::Renderer(
 	WindowManager& windowManager,
 	EcsSystem& ecsSystem,
 	VulkanContext& vulkanContext,
-	RenderContext& renderContext,
-	VertexRegistry& vertexRegistry,
-	ResourceRegistry& resourceRegistry,
-	DescriptorRegistry& descriptorRegistry,
-	PipelineRegistry& pipelineRegistry,
-	FramePassRegistry& framePassRegistry,
-	RenderTargetRegistry& renderTargetRegistry) :
+	RenderContext& renderContext) :
 	mWindowManager(windowManager),
 	mEcsSystem(ecsSystem),
 	mPhysicalDevice(vulkanContext.getPhysicalDevice()),
@@ -46,12 +40,6 @@ Renderer::Renderer(
 	mPresentQueue(vulkanContext.getPresentQueue()),
 	mDevice(vulkanContext.getDevice()),
 	mRenderContext(renderContext),
-	mVertexRegistry(vertexRegistry),
-	mResourceRegistry(resourceRegistry),
-	mDescriptorRegistry(descriptorRegistry),
-	mPipelineRegistry(pipelineRegistry),
-	mFramePassRegistry(framePassRegistry),
-	mRenderTargetRegistry(renderTargetRegistry),
 	mFrameGraph(mFramePassRegistry, mResourceRegistry),
 	mLineCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
 	mMeshCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
@@ -100,7 +88,7 @@ void Renderer::drawFrame()
 	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
 
 	// upload all push constants
-	mPipelineRegistry.uploadAllPushConstants(commandBuffer);
+	// mPipelineRegistry.uploadAllPushConstants(commandBuffer);
 
 	VkRenderPass currentRenderPass = VK_NULL_HANDLE;
 	bool isRenderPassActive = false;

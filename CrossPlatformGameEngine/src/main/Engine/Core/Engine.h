@@ -5,12 +5,7 @@
 
 #include "Values.h"
 
-#include "../Registry/Vertex/VertexRegistry.h"
-#include "../Registry/Resource/ResourceRegistry.h"
-#include "../Registry/Descriptor/DescriptorRegistry.h"
-#include "../Registry/Pipeline/PipelineRegistry.h"
-#include "../Registry/FramePass/FramePassRegistry.h"
-#include "../Registry/RenderTarget/RenderTargetRegistry.h"
+#include "../Registry2/RegistryManager.h"
 
 #include "Renderer.h"
 
@@ -28,12 +23,11 @@ namespace ascen
 	public:
 		Engine(::WindowManager& windowManager);
 
-		VertexRegistry& vertex();
-		ResourceRegistry& resource();
-		DescriptorRegistry& descriptor();
-		PipelineRegistry& pipeline();
-		FramePassRegistry& frame();
-		RenderTargetRegistry& render();
+		template<Derived<registry::Entry> E>
+		uint64_t registerResource(const E& entry)
+		{
+			return mRegistryManager.registerResource<E>(entry);
+		}
 
 		EcsSystem& ecs();
 
@@ -56,12 +50,7 @@ namespace ascen
 		VulkanContext mVulkanContext;
 		RenderContext mRenderContext;
 
-		VertexRegistry mVertexRegistry;
-		ResourceRegistry mResourceRegistry;
-		DescriptorRegistry mDescriptorRegistry;
-		PipelineRegistry mPipelineRegistry;
-		FramePassRegistry mFramePassRegistry;
-		RenderTargetRegistry mRenderTargetRegistry;
+		RegistryManager mRegistryManager;
 
 		Renderer mRenderer;
 

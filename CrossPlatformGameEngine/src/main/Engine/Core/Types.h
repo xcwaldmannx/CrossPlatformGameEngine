@@ -60,8 +60,70 @@ namespace ascen
 	using VertexBinding = VkVertexInputBindingDescription;
 	using VertexAttribute = VkVertexInputAttributeDescription;
 
+	using IndexedIndirectDraw = VkDrawIndexedIndirectCommand;
+	using IndirectDraw = VkDrawIndirectCommand;
+
+	template<typename T, typename U>
+	concept Derived = std::is_base_of_v<U, T>;
+
+	namespace renderpass
+	{
+		struct Attachment
+		{
+			AttachmentType mType;
+			Format mFormat;
+			LoadOp mLoadOp;
+			StoreOp mStoreOp;
+			LoadOp mDepthStencilLoadOp;
+			StoreOp mDepthStencilStoreOp;
+		};
+
+		struct SubPassDependency
+		{
+			uint32_t mSrcSubpass;
+			uint32_t mDstSubpass;
+			PipelineStageFlag mSrcStageMask;
+			PipelineStageFlag mDstStageMask;
+			AccessMaskFlag mSrcAccessMask;
+			AccessMaskFlag mDstAccessMask;
+		};
+
+		struct SubPass
+		{
+			BindPoint mBindPoint;
+			std::vector<uint32_t> mColorAttachmentIndices;
+			std::vector<uint32_t> mInputAttachmentIndices;
+			int32_t mDepthAttachmentIndex;
+		};
+	}
+
+	namespace pipeline
+	{
+		struct PushConstantRange // might need rework
+		{
+			uint32_t mOffset = 0;
+			uint32_t mSize = 0;
+		};
+
+		struct Params
+		{
+			PushConstantRange mPushConstantRange{};
+		};
+
+		struct GraphicsParams : Params
+		{
+			uint32_t mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			uint32_t mPolygonMode = VK_POLYGON_MODE_FILL;
+			uint32_t mCullMode = VK_CULL_MODE_BACK_BIT;
+		};
+
+		struct ComputeParams : Params {};
+	}
+
 	namespace registry
 	{
+		using Resource = std::shared_ptr<void>;
+
 		struct Entry
 		{
 			std::string mName;
@@ -104,38 +166,61 @@ namespace ascen
 
 		struct DescriptorSetEntry : Entry
 		{
+			uint64_t mPoolId = 0;
+			uint64_t mLayoutId = 0;
 			std::vector<DescriptorResource> mResources;
 		};
 
-		using Resource = std::shared_ptr<void>;
+		struct BufferEntry : Entry
+		{
+			uint32_t mCapacity = 1; // default must be > 0
+			uint32_t mStride = 1;   // default must be > 0
+			BufferUsageFlags mUsageFlags = 0;
+			BufferMemoryFlags mMemoryFlags = 0;
+		};
+
+		struct SamplerEntry : Entry {};
+
+		struct TextureEntry : Entry
+		{
+			TextureType mType = TextureType::NONE;
+			uint32_t mWidth = 0;
+			uint32_t mHeight = 0;
+			uint32_t mLayers = 0;
+		};
+
+		struct RenderPassEntry : Entry
+		{
+			std::vector<renderpass::Attachment> mAttachments;
+			std::vector<renderpass::SubPass> mSubPasses;
+			std::vector<renderpass::SubPassDependency> mSubPassDependencies;
+		};
+
+		struct RenderTargetEntry : Entry
+		{
+			Format mFormat;
+			std::vector<VkImage> mImages;
+			uint32_t mImageCount;
+		};
+
+		struct PipelineEntry : Entry
+		{
+			std::vector<uint64_t> mDescriptorSetLayoutIds;
+		};
+
+		struct GraphicsPipelineEntry : PipelineEntry
+		{
+			std::string mVertexShaderPath;
+			std::string mPixelShaderPath;
+			uint64_t mVertexId;
+			pipeline::GraphicsParams mParams;
+		};
+
+		struct ComputePipelineEntry : PipelineEntry
+		{
+			std::string mComputeShaderPath;
+			pipeline::ComputeParams mParams;
+		};
 	}
-
-	struct Attachment
-	{
-		AttachmentType mType;
-		Format mFormat;
-		LoadOp mLoadOp;
-		StoreOp mStoreOp;
-		LoadOp mDepthStencilLoadOp;
-		StoreOp mDepthStencilStoreOp;
-	};
-
-	struct SubPassDependency
-	{
-		uint32_t mSrcSubpass;
-		uint32_t mDstSubpass;
-		PipelineStageFlag mSrcStageMask;
-		PipelineStageFlag mDstStageMask;
-		AccessMaskFlag mSrcAccessMask;
-		AccessMaskFlag mDstAccessMask;
-	};
-
-	struct SubPass
-	{
-		BindPoint mBindPoint;
-		std::vector<uint32_t> mColorAttachmentIndices;
-		std::vector<uint32_t> mInputAttachmentIndices;
-		int32_t mDepthAttachmentIndex;
-	};
 
 }

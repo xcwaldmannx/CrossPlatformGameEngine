@@ -23,22 +23,6 @@ namespace ascen
 	class TextureFactory;
 	class SamplerFactory;
 
-	struct BufferEntry
-	{
-		std::string mName;
-		uint32_t mCapacity = 1; // default must be > 0
-		uint32_t mStride = 1;   // default must be > 0
-		BufferUsageFlags mUsageFlags = 0;
-		BufferMemoryFlags mMemoryFlags = 0;
-	};
-
-	enum class TextureType
-	{
-		NONE,
-		IMAGE,
-		DEPTH,
-	};
-
 	struct TextureEntry
 	{
 		std::string mName;
@@ -46,11 +30,6 @@ namespace ascen
 		uint32_t mWidth = 0;
 		uint32_t mHeight = 0;
 		uint32_t mLayers = 0;
-	};
-
-	struct SamplerEntry
-	{
-		std::string mName;
 	};
 
 	struct MaterialEntry

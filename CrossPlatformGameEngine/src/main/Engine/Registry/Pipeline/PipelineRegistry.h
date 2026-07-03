@@ -17,28 +17,6 @@
 namespace ascen
 {
 
-	struct PipelineEntry
-	{
-		std::string mName;
-		std::vector<std::string> mDescriptorSetLayouts;
-	};
-
-	struct GraphicsPipelineEntry : PipelineEntry
-	{
-		std::string mVertexShader;
-		std::string mPixelShader;
-		std::string mVertex;
-
-		GraphicsPipelineParams mParams;
-	};
-
-	struct ComputePipelineEntry : PipelineEntry
-	{
-		std::string mComputeShader;
-
-		ComputePipelineParams mParams;
-	};
-
 	class PipelineRegistry : public Registry_I
 	{
 	public:

@@ -24,7 +24,7 @@ namespace ascen
     private:
         ComputePipeline(
             VkDevice device,
-            const ComputePipelineParams& params,
+            const pipeline::ComputeParams& params,
             const std::string& computeShaderFilepath,
             const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts) :
             ComputePipeline_I(params, computeShaderFilepath)
@@ -96,7 +96,7 @@ namespace ascen
 
             const auto& pc = mParams.mPushConstantRange;
 
-            if (!pc.mName.empty() && pc.mSize > 0)
+            if (pc.mSize > 0)
             {
                 mPushConstantRange = VkPushConstantRange(
                     VK_SHADER_STAGE_COMPUTE_BIT,

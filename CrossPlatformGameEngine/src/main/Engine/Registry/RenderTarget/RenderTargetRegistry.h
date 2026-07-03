@@ -18,22 +18,6 @@ namespace ascen
     class RenderPassFactory;
     class RenderTargetFactory;
 
-    struct RenderPassEntry
-    {
-        std::string mName;
-        std::vector<RenderPass::Attachment> mAttachments;
-        std::vector<RenderPass::SubPass> mSubPasses;
-        std::vector<RenderPass::SubPassDependency> mSubPassDependencies;
-    };
-
-    struct RenderTargetEntry
-    {
-        std::string mName;
-        Format mFormat;
-        std::vector<VkImage> mImages;
-        uint32_t mImageCount;
-    };
-
     class RenderTargetRegistry : public Registry_I
     {
     public:

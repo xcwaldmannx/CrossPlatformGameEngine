@@ -90,7 +90,7 @@ void ResourceRegistry::reconstruct()
 
 	for (auto& entry : mSamplerEntries)
 	{
-		mSamplers.emplace(entry.mName, mSamplerFactory.createSampler());
+		mSamplers.emplace(entry.mName, mSamplerFactory.create());
 	}
 }
 

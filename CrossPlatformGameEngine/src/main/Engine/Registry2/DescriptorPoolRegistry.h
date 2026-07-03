@@ -10,11 +10,16 @@ namespace ascen
     class DescriptorPoolRegistry : public Registry_I<registry::DescriptorPoolEntry, DescriptorPoolPtr>
     {
     public:
-        DescriptorPoolRegistry(const DescriptorFactory& descriptorFactory) :
+        DescriptorPoolRegistry(
+            const VkDevice device,
+            const DescriptorFactory& descriptorFactory) :
+            mDevice(device),
             mDescriptorFactory(descriptorFactory) {}
 
         void reconstruct(const registry::DescriptorPoolEntry& entry, DescriptorPoolPtr& resource) override
         {
+            if (resource) resource->destroy(mDevice);
+
             std::vector<DescriptorPool::Size> sizes;
 
             for (auto& [type, count] : entry.mDescriptorTypeCounts)
@@ -32,6 +37,7 @@ namespace ascen
         }
 
     private:
+        const VkDevice mDevice;
         const DescriptorFactory& mDescriptorFactory;
     };
 

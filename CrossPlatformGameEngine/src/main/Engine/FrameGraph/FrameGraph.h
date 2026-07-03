@@ -28,9 +28,6 @@ namespace ascen
 		std::vector<GpuResource> mResources;
 	};
 
-	/*
-	 The FrameGraph assumes that all frames were created sequentially. No sorting is performed.
-	 */
 	class FrameGraph
 	{
 	public:

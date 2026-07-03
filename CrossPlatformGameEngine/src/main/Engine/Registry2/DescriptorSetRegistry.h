@@ -19,13 +19,17 @@ namespace ascen
     {
     public:
         DescriptorSetRegistry(
+            const VkDevice device,
             const DescriptorFactory& descriptorFactory,
             std::unordered_map<uint64_t, registry::Resource>* idToResource) :
+            mDevice(device),
             mDescriptorFactory(descriptorFactory),
             mIdToResource(idToResource) {}
 
         void reconstruct(const registry::DescriptorSetEntry& entry, DescriptorSetPtr& resource) override
         {
+            if (resource) resource->destroy(mDevice);
+
             std::vector<DescriptorSet::Write> writes;
 
             for (const auto& r : entry.mResources)
@@ -34,7 +38,7 @@ namespace ascen
                 {
                     case IMAGE:
                     {
-                        const auto texture = std::any_cast<TexturePtr>(mIdToResource->at(r.mResourceId));
+                        const auto& texture = std::any_cast<TexturePtr>(mIdToResource->at(r.mResourceId));
 
                         writes.push_back(mDescriptorFactory.createImageWrite(
                             static_cast<VkDescriptorType>(r.mLocation.mType),
@@ -45,7 +49,7 @@ namespace ascen
                     }
                     case SAMPLER:
                     {
-                        const auto sampler = std::any_cast<SamplerPtr>(mIdToResource->at(r.mResourceId));
+                        const auto& sampler = std::any_cast<SamplerPtr>(mIdToResource->at(r.mResourceId));
 
                         writes.push_back(mDescriptorFactory.createImageWrite(
                             static_cast<VkDescriptorType>(r.mLocation.mType),
@@ -62,7 +66,7 @@ namespace ascen
                     case SSBO_DYNAMIC:
                     default:
                     {
-                        const auto buffer = std::any_cast<BufferPtr>(mIdToResource->at(r.mResourceId));
+                        const auto& buffer = std::any_cast<BufferPtr>(mIdToResource->at(r.mResourceId));
 
                         writes.push_back(mDescriptorFactory.createBufferWrite(
                             static_cast<VkDescriptorType>(r.mLocation.mType),
@@ -73,9 +77,15 @@ namespace ascen
                     }
                 }
             }
+
+            const auto& descriptorPool = std::any_cast<DescriptorPoolPtr>(mIdToResource->at(entry.mPoolId));
+            const auto& descriptorSetLayout = std::any_cast<DescriptorSetLayoutPtr>(mIdToResource->at(entry.mLayoutId));
+
+            resource = mDescriptorFactory.createSet(descriptorPool, descriptorSetLayout, writes);
         }
 
     private:
+        const VkDevice mDevice;
         const DescriptorFactory& mDescriptorFactory;
         std::unordered_map<uint64_t, registry::Resource>* mIdToResource = nullptr;
     };
