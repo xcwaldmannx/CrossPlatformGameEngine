@@ -9,7 +9,9 @@
 #include "../Resource/Buffer/BufferFactory.h"
 #include "../Resource/Texture/TextureFactory.h"
 #include "../Resource/Sampler/SamplerFactory.h"
-#include "../Resource/Render/RenderPass/RenderPassFactory.h"
+#include "../RenderTarget/FrameBuffer/FrameBufferFactory.h"
+#include "../RenderTarget/RenderPass/RenderPassFactory.h"
+#include "../RenderTarget/RenderTarget/RenderTargetFactory.h"
 
 #include <vulkan/vulkan.h>
 
@@ -37,13 +39,15 @@ namespace ascen
 		const CommandPoolFactory& getCommandPoolFactory() const;
 		const DescriptorFactory& getDescriptorFactory() const;
 		const SwapchainFactory& getSwapchainFactory() const;
-		const RenderPassFactory& getRenderPassFactory() const;
 		const GraphicsPipelineFactory& getGraphicsPipelineFactory() const;
 		const ComputePipelineFactory& getComputePipelineFactory() const;
 		const PushConstantFactory& getPushConstantFactory() const;
 		const BufferFactory& getBufferFactory() const;
 		const TextureFactory& getTextureFactory() const;
 		const SamplerFactory& getSamplerFactory() const;
+		const FrameBufferFactory& getFrameBufferFactory() const;
+		const RenderPassFactory& getRenderPassFactory() const;
+		const RenderTargetFactory& getRenderTargetFactory() const;
 
 		void waitIdle() const;
 
@@ -70,13 +74,15 @@ namespace ascen
 		CommandPoolFactory mCommandPoolFactory;
 		DescriptorFactory mDescriptorFactory;
 		SwapchainFactory mSwapchainFactory;
-		RenderPassFactory mRenderPassFactory;
 		GraphicsPipelineFactory mGraphicsPipelineFactory;
 		ComputePipelineFactory mComputePipelineFactory;
 		PushConstantFactory mPushConstantFactory;
 		BufferFactory mBufferFactory;
 		TextureFactory mTextureFactory;
 		SamplerFactory mSamplerFactory;
+		FrameBufferFactory mFrameBufferFactory;
+		RenderPassFactory mRenderPassFactory;
+		RenderTargetFactory mRenderTargetFactory;
 	};
 
 }

@@ -4,6 +4,8 @@
 
 #include <glm/glm.hpp>
 
+#include "../../Engine/Device/Physical/PhysicalDevice.h"
+
 MyPipeline::MyPipeline(ascen::Engine& engine) : mEngine(engine) {}
 
 void MyPipeline::init()
@@ -57,6 +59,48 @@ void MyPipeline::initResources()
 
     // Textures
     mEngine.resource().registerTexture({ "TEXTURE", ascen::TextureType::IMAGE, 1024, 1024, 1 });
+
+    // Render Targets
+
+    ascen::RenderPass::Attachment colorAttachment{};
+    colorAttachment.mType = ascen::ATTACHMENT_PRESENT;
+    colorAttachment.mFormat = ascen::FORMAT_RGBA8_SRGB;
+    colorAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+    colorAttachment.mStoreOp = ascen::STORE_OP_NA;
+
+    ascen::RenderPass::Attachment depthAttachment{};
+    depthAttachment.mType = ascen::ATTACHMENT_DEPTH;
+    depthAttachment.mFormat = mEngine.getDepthFormat();
+    depthAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+
+    ascen::RenderPass::SubPass subPass{};
+    subPass.mBindPoint = ascen::BIND_POINT_GRAPHICS;
+    subPass.mColorAttachmentIndices = { 0 };
+    subPass.mDepthAttachmentIndex = 1;
+
+    ascen::RenderPass::SubPassDependency subPassDependency{};
+    subPassDependency.mSrcSubpass = 0;
+    subPassDependency.mDstSubpass = 0;
+    subPassDependency.mSrcAccessMask = ascen::ACCESS_NONE;
+    subPassDependency.mDstAccessMask = ascen::ACCESS_COLOR_ATTACHMENT_WRITE | ascen::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE;
+    subPassDependency.mSrcStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
+    subPassDependency.mDstStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
+
+    ascen::RenderPassEntry renderPassEntry{};
+    renderPassEntry.mName = "RENDER_PASS";
+    renderPassEntry.mAttachments = { colorAttachment, depthAttachment };
+    renderPassEntry.mSubPasses = { subPass };
+    renderPassEntry.mSubPassDependencies = { subPassDependency };
+
+    mEngine.render().registerRenderPass(renderPassEntry);
+
+    ascen::RenderTargetEntry renderTargetEntry{};
+    renderTargetEntry.mName = "RENDER_TARGET";
+    renderTargetEntry.mFormat = mEngine.getImageFormat();
+    renderTargetEntry.mImages = mEngine.getPresentImages();
+    renderTargetEntry.mImageCount = mEngine.getPresentImages().size();
+
+    mEngine.render().registerRenderTarget(renderTargetEntry);
 }
 
 void MyPipeline::initStages()

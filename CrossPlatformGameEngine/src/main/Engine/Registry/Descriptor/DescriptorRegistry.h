@@ -2,6 +2,8 @@
 
 #include "../Registry_I.h"
 
+#include "../../Core/Values.h"
+
 #include "../../Core/VulkanContext.h"
 #include "../Resource/ResourceRegistry.h"
 
@@ -9,24 +11,6 @@
 
 namespace ascen
 {
-
-	enum DescriptorType
-	{
-		UBO = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-		UBO_DYNAMIC = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC,
-		SSBO = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-		SSBO_DYNAMIC = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC,
-		IMAGE = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-		SAMPLER = VK_DESCRIPTOR_TYPE_SAMPLER,
-		IMAGE_SAMPLER = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	};
-
-	enum DescriptorStage
-	{
-		VERTEX = VK_SHADER_STAGE_VERTEX_BIT,
-		PIXEL = VK_SHADER_STAGE_FRAGMENT_BIT,
-		COMPUTE = VK_SHADER_STAGE_COMPUTE_BIT,
-	};
 
 	struct DescriptorSetEntry
 	{

@@ -1,6 +1,6 @@
 #include "CommandPool.h"
 
-#include "../RenderPass/RenderPass.h"
+#include "../RenderTarget/RenderPass/RenderPass.h"
 #include "../Swapchain/Swapchain.h"
 #include "../FrameGraph/FrameGraph.h"
 
@@ -96,7 +96,7 @@ void CommandPool::beginRenderPass(
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass->handle();
-    renderPassInfo.framebuffer = swapchain->getFramebuffers()[currentImage];
+    //renderPassInfo.framebuffer = swapchain->getFramebuffers()[currentImage];
     renderPassInfo.renderArea.offset = { 0, 0 };
     renderPassInfo.renderArea.extent = renderArea;
 

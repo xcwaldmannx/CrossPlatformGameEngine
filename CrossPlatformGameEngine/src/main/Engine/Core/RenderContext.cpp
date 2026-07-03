@@ -1,6 +1,6 @@
 #include "RenderContext.h"
 
-#include "../Resource/Render/RenderPass/RenderPass.h"
+#include "../RenderTarget/RenderPass/RenderPass.h"
 #include "../Swapchain/Swapchain.h"
 #include "../Resource/Texture/Texture.h"
 
@@ -25,7 +25,7 @@ RenderContext::RenderContext(
 		mGraphicsFamilyIndex,
 		mPresentFamilyIndex);
 
-	mRenderPass = mRenderPassFactory.create(VK_FORMAT_R8G8B8A8_SRGB);
+	// mRenderPass = mRenderPassFactory.create(VK_FORMAT_R8G8B8A8_SRGB);
 
 	resize();
 }
@@ -47,20 +47,20 @@ void RenderContext::resize()
 		mGraphicsFamilyIndex,
 		mPresentFamilyIndex);
 
-	if (mDepthTexture)
-	{
-		mDepthTexture->destroy(mDevice);
-	}
+	// if (mDepthTexture)
+	// {
+	// 	mDepthTexture->destroy(mDevice);
+	// }
 
-	mDepthTexture = mTextureFactory.createDepth(
-		mCommandPool,
-		mSwapchain->getExtent().width,
-		mSwapchain->getExtent().height);
+	// mDepthTexture = mTextureFactory.createDepth(
+	// 	mCommandPool,
+	// 	mSwapchain->getExtent().width,
+	// 	mSwapchain->getExtent().height);
 
-	mSwapchain->createFrameBuffers(
-		mDevice,
-		mRenderPass->handle(),
-		mDepthTexture->handle());
+	// mSwapchain->createFrameBuffers(
+	// 	mDevice,
+	// 	mRenderPass->handle(),
+	// 	mDepthTexture->handle());
 
 	mWindowManager.setResized(false);
 }

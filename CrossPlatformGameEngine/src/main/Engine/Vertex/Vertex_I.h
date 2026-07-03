@@ -1,14 +1,13 @@
 #pragma once
 
+#include "../Core/Types.h"
+
 #include <vector>
 
 #include <vulkan/vulkan.h>
 
 namespace ascen
 {
-
-	using VertexBinding = VkVertexInputBindingDescription;
-	using VertexAttribute = VkVertexInputAttributeDescription;
 
 	struct Vertex_I
 	{

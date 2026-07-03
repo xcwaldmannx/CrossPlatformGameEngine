@@ -1,9 +1,6 @@
 #pragma once
 
 #include "../FrameGraph/FrameGraph.h"
-// #include "../Ecs/Systems/RenderSystem.h"
-
-#include <unordered_map>
 
 #include <Mass.h>
 #include <vulkan/vulkan.h>
@@ -23,6 +20,7 @@ namespace ascen
 	class ResourceRegistry;
 	class DescriptorRegistry;
 	class FramePassRegistry;
+	class RenderTargetRegistry;
 
 	class Renderer
 	{
@@ -50,7 +48,8 @@ namespace ascen
 			ResourceRegistry& resourceRegistry,
 			DescriptorRegistry& descriptorRegistry,
 			PipelineRegistry& pipelineRegistry,
-			FramePassRegistry& framePassRegistry);
+			FramePassRegistry& framePassRegistry,
+			RenderTargetRegistry& renderTargetRegistry);
 
 		// void updateRenderSystem();
 
@@ -78,6 +77,7 @@ namespace ascen
 		DescriptorRegistry& mDescriptorRegistry;
 		PipelineRegistry& mPipelineRegistry;
 		FramePassRegistry& mFramePassRegistry;
+		RenderTargetRegistry& mRenderTargetRegistry;
 
 		FrameGraph mFrameGraph;
 

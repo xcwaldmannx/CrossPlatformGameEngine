@@ -71,14 +71,14 @@ Swapchain::Swapchain(
     mImages.resize(mImageCount);
     vkGetSwapchainImagesKHR(device, mHandle, &mImageCount, mImages.data());
 
-    createImageViews(device);
+    // createImageViews(device);
 }
 
 void Swapchain::destroy(VkDevice device)
 {
-    destroyFrameBuffers(device);
+    // destroyFrameBuffers(device);
 
-    destroyImageViews(device);
+    // destroyImageViews(device);
 
     vkDestroySwapchainKHR(device, mHandle, nullptr);
 }
@@ -93,10 +93,20 @@ uint32_t Swapchain::getImageCount() const
     return mImageCount;
 }
 
-const std::vector<VkFramebuffer>& Swapchain::getFramebuffers()
+const std::vector<VkImage>& Swapchain::getImages() const
 {
-    return mFrameBuffers;
+    return mImages;
 }
+
+VkFormat Swapchain::getImageFormat() const
+{
+    return mImageFormat;
+}
+
+// const std::vector<VkFramebuffer>& Swapchain::getFramebuffers()
+// {
+//     return mFrameBuffers;
+// }
 
 SwapchainSupportDetails Swapchain::querySwapchainSupport(
     VkPhysicalDevice physicalDevice,
@@ -184,6 +194,7 @@ VkExtent2D Swapchain::chooseSwapExtent(
     }
 }
 
+/*
 void Swapchain::createFrameBuffers(
     VkDevice device,
     VkRenderPass renderPass,
@@ -259,3 +270,4 @@ void Swapchain::destroyImageViews(VkDevice device)
         vkDestroyImageView(device, imageView, nullptr);
     }
 }
+*/

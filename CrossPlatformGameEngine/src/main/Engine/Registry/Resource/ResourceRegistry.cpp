@@ -12,8 +12,8 @@
 using namespace ascen;
 
 ResourceRegistry::ResourceRegistry(
-	VulkanContext& vulkanContext,
-	RenderContext& renderContext) :
+	const VulkanContext& vulkanContext,
+	const RenderContext& renderContext) :
 	mPhysicalDevice(vulkanContext.getPhysicalDevice()),
 	mDevice(vulkanContext.getDevice()),
 	mGraphicsQueue(vulkanContext.getGraphicsQueue()),
@@ -66,38 +66,6 @@ void ResourceRegistry::reconstruct()
 			entry.mStride,
 			entry.mUsageFlags,
 			entry.mMemoryFlags));
-
-		// switch (entry.mType)
-		// {
-		// case BufferType::VERTEX:
-		// 	mBuffers.emplace(entry.mName, mBufferFactory.createVertex(
-		// 		entry.mCapacity,
-		// 		entry.mStride));
-		// 	break;
-		// case BufferType::INDEX:
-		// 	mBuffers.emplace(entry.mName, mBufferFactory.createIndex(
-		// 		mCommandPool,
-		// 		entry.mCapacity,
-		// 		entry.mStride));
-		// 	break;
-		// case BufferType::UNIFORM:
-		// 	mBuffers.emplace(entry.mName, mBufferFactory.createUniform(
-		// 		entry.mCapacity,
-		// 		entry.mStride));
-		// 	break;
-		// case BufferType::STORAGE:
-		// 	mBuffers.emplace(entry.mName, mBufferFactory.createStorage(
-		// 		mCommandPool,
-		// 		entry.mCapacity,
-		// 		entry.mStride));
-		// 	break;
-		// case BufferType::INDIRECT:
-		// 	mBuffers.emplace(entry.mName, mBufferFactory.createIndirect(
-		// 		mCommandPool,
-		// 		entry.mCapacity,
-		// 		entry.mStride));
-		// 	break;
-		// }
 	}
 
 	for (auto& entry : mTextureEntries)

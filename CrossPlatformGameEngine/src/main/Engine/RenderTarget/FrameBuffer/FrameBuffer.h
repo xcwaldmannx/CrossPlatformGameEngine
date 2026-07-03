@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../../Handle/Handle.h"
-#include "../../../Core/Types.h"
+#include "../../Handle/Handle.h"
+#include "../../Core/Types.h"
 
 #include <vector>
 
@@ -17,9 +17,12 @@ namespace ascen
         const VkDevice device,
         const RenderPassPtr& renderPass,
         const RenderTargetPtr& renderTarget,
-        const VkExtent2D extent);
+        const VkExtent2D& extent);
 
         void destroy(const VkDevice device) override;
+
+    private:
+        const VkExtent2D& mExtent;
     };
 
 }

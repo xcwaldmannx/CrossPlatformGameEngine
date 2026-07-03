@@ -1,20 +1,22 @@
 #include "RenderTarget.h"
 
+#include "../../Swapchain/Swapchain.h"
+
 #include <stdexcept>
 
 using namespace ascen;
 
 RenderTarget::RenderTarget(
     const VkDevice device,
-    const VkFormat imageFormat,
+    const Format format,
     const std::vector<VkImage>& images) :
-    mImageFormat(imageFormat),
+    mFormat(format),
     mImages(images)
 {
     resize(device);
 }
 
-void RenderTarget::destroy(const VkDevice device) const
+void RenderTarget::destroy(const VkDevice device)
 {
     if (!mImageViews.empty()) destroyImageViews(device);
 }
@@ -41,7 +43,7 @@ void RenderTarget::createImageViews(const VkDevice device)
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         createInfo.image = mImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = mImageFormat;
+        createInfo.format = static_cast<VkFormat>(mFormat);
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -59,10 +61,11 @@ void RenderTarget::createImageViews(const VkDevice device)
     }
 }
 
-void RenderTarget::destroyImageViews(const VkDevice device) const
+void RenderTarget::destroyImageViews(const VkDevice device)
 {
     for (const auto imageView : mImageViews)
     {
         vkDestroyImageView(device, imageView, nullptr);
     }
+    mImageViews.clear();
 }

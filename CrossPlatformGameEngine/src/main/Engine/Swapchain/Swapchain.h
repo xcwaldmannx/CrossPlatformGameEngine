@@ -39,7 +39,9 @@ namespace ascen
 
 		const VkExtent2D& getExtent();
 		uint32_t getImageCount() const;
-		const std::vector<VkFramebuffer>& getFramebuffers();
+		const std::vector<VkImage>& getImages() const;
+		VkFormat getImageFormat() const;
+		// const std::vector<VkFramebuffer>& getFramebuffers();
 
 		static SwapchainSupportDetails querySwapchainSupport(
 			VkPhysicalDevice physicalDevice,
@@ -55,21 +57,21 @@ namespace ascen
 			GLFWwindow* window,
 			const VkSurfaceCapabilitiesKHR& capabilities);
 
-		void createFrameBuffers(
-			VkDevice device,
-			VkRenderPass renderPass,
-			VkImageView depthImageView);
+		// void createFrameBuffers(
+		// 	VkDevice device,
+		// 	VkRenderPass renderPass,
+		// 	VkImageView depthImageView);
 
-		void destroyFrameBuffers(VkDevice device);
+		// void destroyFrameBuffers(VkDevice device);
 
-		void createImageViews(VkDevice device);
+		// void createImageViews(VkDevice device);
 
-		void destroyImageViews(VkDevice device);
+		// void destroyImageViews(VkDevice device);
 
 	private:
 		std::vector<VkImage> mImages;
-		std::vector<VkImageView> mImageViews;
-		std::vector<VkFramebuffer> mFrameBuffers;
+		// std::vector<VkImageView> mImageViews;
+		// std::vector<VkFramebuffer> mFrameBuffers;
 
 		uint32_t mImageCount;
 		VkFormat mImageFormat{};

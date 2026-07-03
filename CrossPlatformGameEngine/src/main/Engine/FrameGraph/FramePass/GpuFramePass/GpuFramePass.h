@@ -30,7 +30,7 @@ namespace ascen
         IMAGE_PRESENT
     };
 
-    enum class ResourceAccess : uint32_t
+    enum class ResourceAccess
     {
         READ       = 0x00,
         WRITE      = 0x01,
@@ -57,10 +57,12 @@ namespace ascen
         GpuFramePass(
             const FramePassType type,
             const std::string& pipeline,
+            const std::string& renderTarget,
             const std::vector<std::string>& descriptorSets,
             const std::vector<GpuResource>& resources);
 
         const std::string mPipeline;
+        const std::string mRenderTarget;
         const std::vector<std::string> mDescriptorSets;
         const std::vector<GpuResource> mResources;
     };

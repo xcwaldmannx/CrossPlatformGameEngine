@@ -1,5 +1,10 @@
 #pragma once
 
+#include <unordered_map>
+
+#include "../../Core/Values.h"
+#include "../../Core/Types.h"
+
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -7,15 +12,17 @@
 namespace ascen
 {
 
+    class Swapchain;
+
     class RenderTarget
     {
     public:
         RenderTarget(
             const VkDevice device,
-            const VkFormat imageFormat,
+            const Format format,
             const std::vector<VkImage>& images);
 
-        void destroy(const VkDevice device) const;
+        void destroy(const VkDevice device);
 
         void resize(const VkDevice device);
 
@@ -23,10 +30,10 @@ namespace ascen
 
     private:
         void createImageViews(const VkDevice device);
-        void destroyImageViews(const VkDevice device) const;
+        void destroyImageViews(const VkDevice device);
 
     private:
-        const VkFormat mImageFormat;
+        const Format mFormat;
         std::vector<VkImage> mImages;
         std::vector<VkImageView> mImageViews;
     };

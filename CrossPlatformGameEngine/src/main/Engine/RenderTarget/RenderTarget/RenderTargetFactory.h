@@ -1,6 +1,7 @@
 #pragma once
 
-#include "../../../Core/Types.h"
+#include "../../Core/Values.h"
+#include "../../Core/Types.h"
 
 #include <vector>
 
@@ -12,14 +13,14 @@ namespace ascen
     class RenderTargetFactory
     {
     public:
-        RenderTargetFactory(const VkDevice device);
+        RenderTargetFactory(VkDevice device);
 
         RenderTargetPtr create(
-            const VkFormat imageFormat,
+            const Format format,
             const std::vector<VkImage>& images) const;
 
     private:
-        const VkDevice mDevice;
+        VkDevice mDevice;
     };
 
 }

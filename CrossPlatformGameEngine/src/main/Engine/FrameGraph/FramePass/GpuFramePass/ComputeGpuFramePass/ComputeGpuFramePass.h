@@ -13,6 +13,7 @@ namespace ascen
         ComputeGpuFramePass(
             const FramePassType type,
             const std::string& pipeline,
+            const std::string& renderTarget,
             const std::vector<std::string>& descriptorSets,
             const std::vector<GpuResource>& resources,
             const std::array<uint32_t,3>& groups);

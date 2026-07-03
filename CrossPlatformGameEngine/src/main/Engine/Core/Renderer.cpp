@@ -18,10 +18,13 @@
 #include "../Registry/Descriptor/DescriptorRegistry.h"
 #include "../Registry/Pipeline/PipelineRegistry.h"
 #include "../Registry/FramePass/FramePassRegistry.h"
+#include "../Registry/RenderTarget/RenderTargetRegistry.h"
 
 #include <filesystem>
 
 #include <glm/glm.hpp>
+
+#include "../Registry/RenderTarget/RenderTargetRegistryBackend.h"
 
 using namespace ascen;
 
@@ -34,7 +37,8 @@ Renderer::Renderer(
 	ResourceRegistry& resourceRegistry,
 	DescriptorRegistry& descriptorRegistry,
 	PipelineRegistry& pipelineRegistry,
-	FramePassRegistry& framePassRegistry) :
+	FramePassRegistry& framePassRegistry,
+	RenderTargetRegistry& renderTargetRegistry) :
 	mWindowManager(windowManager),
 	mEcsSystem(ecsSystem),
 	mPhysicalDevice(vulkanContext.getPhysicalDevice()),
@@ -47,6 +51,7 @@ Renderer::Renderer(
 	mDescriptorRegistry(descriptorRegistry),
 	mPipelineRegistry(pipelineRegistry),
 	mFramePassRegistry(framePassRegistry),
+	mRenderTargetRegistry(renderTargetRegistry),
 	mFrameGraph(mFramePassRegistry, mResourceRegistry),
 	mLineCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
 	mMeshCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
@@ -57,14 +62,13 @@ Renderer::Renderer(
 
 void Renderer::drawFrame()
 {
-	if (mWindowManager.getWidth() == 0 ||
-		mWindowManager.getHeight() == 0)
+	if (::WindowManager::getWidth() == 0 ||
+		::WindowManager::getHeight() == 0)
 	{
 		return;
 	}
 
 	const auto& commandPool = mRenderContext.getCommandPool();
-	const auto& renderPass = mRenderContext.getRenderPass();
 	const auto& swapchain = mRenderContext.getSwapchain();
 
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
@@ -98,6 +102,7 @@ void Renderer::drawFrame()
 	// upload all push constants
 	mPipelineRegistry.uploadAllPushConstants(commandBuffer);
 
+	VkRenderPass currentRenderPass = VK_NULL_HANDLE;
 	bool isRenderPassActive = false;
 
 	for (const auto& exec : executions)
@@ -106,13 +111,24 @@ void Renderer::drawFrame()
 		{
 		case FramePassType::GRAPHICS:
 		{
-			if (!isRenderPassActive)
+			const auto& pass = reinterpret_cast<const GraphicsGpuFramePass*>(exec.get());
+
+			const auto& renderPass = RenderTargetRegistryBackend::getRenderPass(mRenderTargetRegistry, pass->mRenderPass);
+
+			if (!isRenderPassActive || currentRenderPass != renderPass->handle())
 			{
+				if (isRenderPassActive)
+				{
+					commandPool->endRenderPass(commandBuffer);
+				}
+
+				const auto& renderTarget = RenderTargetRegistryBackend::getRenderTarget(mRenderTargetRegistry, pass->mRenderTarget);
+
 				commandPool->beginRenderPass(commandBuffer, mImageIndex, renderPass, swapchain);
 				isRenderPassActive = true;
-			}
 
-			const auto& pass = reinterpret_cast<const GraphicsGpuFramePass*>(exec.get());
+				currentRenderPass = renderPass->handle();
+			}
 
 			if (pass->mMode == GraphicsMode::MESH)
 			{

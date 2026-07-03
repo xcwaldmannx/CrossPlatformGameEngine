@@ -11,7 +11,8 @@ FrameBuffer::FrameBuffer(
     const VkDevice device,
     const RenderPassPtr& renderPass,
     const RenderTargetPtr& renderTarget,
-    const VkExtent2D extent)
+    const VkExtent2D& extent) :
+    mExtent(extent)
 {
     const auto& attachments = renderTarget->getImageViews();
 

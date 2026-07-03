@@ -1,6 +1,10 @@
 #pragma once
 
+#include "Values.h"
+
 #include <memory>
+#include <unordered_map>
+#include <vector>
 
 namespace ascen
 {
@@ -52,5 +56,86 @@ namespace ascen
 
 	class FramePass;
 	using FramePassPtr = std::shared_ptr<FramePass>;
+
+	using VertexBinding = VkVertexInputBindingDescription;
+	using VertexAttribute = VkVertexInputAttributeDescription;
+
+	namespace registry
+	{
+		struct Entry
+		{
+			std::string mName;
+		};
+
+		struct VertexEntry : Entry
+		{
+			VertexBinding mBinding;
+			std::vector<VertexAttribute> mAttributes;
+		};
+
+		struct DescriptorPoolEntry : Entry
+		{
+			std::unordered_map<DescriptorType, uint32_t> mDescriptorTypeCounts;
+		};
+
+		struct DescriptorLocation
+		{
+			uint32_t mSlot = 0;
+			DescriptorType mType = SSBO;
+		};
+
+		struct DescriptorBinding
+		{
+			DescriptorLocation mLocation;
+			uint32_t mStage = 0;
+		};
+
+		struct DescriptorResource
+		{
+			uint64_t mResourceId = 0;
+			DescriptorLocation mLocation;
+			uint64_t mSize = 0;
+		};
+
+		struct DescriptorSetLayoutEntry : Entry
+		{
+			std::vector<DescriptorBinding> mBindings;
+		};
+
+		struct DescriptorSetEntry : Entry
+		{
+			std::vector<DescriptorResource> mResources;
+		};
+
+		using Resource = std::shared_ptr<void>;
+	}
+
+	struct Attachment
+	{
+		AttachmentType mType;
+		Format mFormat;
+		LoadOp mLoadOp;
+		StoreOp mStoreOp;
+		LoadOp mDepthStencilLoadOp;
+		StoreOp mDepthStencilStoreOp;
+	};
+
+	struct SubPassDependency
+	{
+		uint32_t mSrcSubpass;
+		uint32_t mDstSubpass;
+		PipelineStageFlag mSrcStageMask;
+		PipelineStageFlag mDstStageMask;
+		AccessMaskFlag mSrcAccessMask;
+		AccessMaskFlag mDstAccessMask;
+	};
+
+	struct SubPass
+	{
+		BindPoint mBindPoint;
+		std::vector<uint32_t> mColorAttachmentIndices;
+		std::vector<uint32_t> mInputAttachmentIndices;
+		int32_t mDepthAttachmentIndex;
+	};
 
 }

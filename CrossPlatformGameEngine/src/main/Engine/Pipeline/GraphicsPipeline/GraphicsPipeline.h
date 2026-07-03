@@ -8,7 +8,7 @@
 #include "../../Vertex/Vertex.h"
 #include "../../Descriptor/Layout/DescriptorSetLayout.h"
 #include "../../Swapchain/Swapchain.h"
-#include "../../RenderPass/RenderPass.h"
+#include "../../RenderTarget/RenderPass/RenderPass.h"
 
 #include <concepts>
 #include <stdexcept>

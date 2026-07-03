@@ -27,10 +27,12 @@ namespace ascen
 	struct GpuFramePassEntry : FramePassEntry
 	{
 		std::vector<GpuResource> mResources;
+		std::string mRenderTarget;
 	};
 
 	struct GraphicsFramePassEntry : GpuFramePassEntry
 	{
+		std::string mRenderPass;
 		GraphicsMode mFramePassMode = GraphicsMode::MESH;
 	};
 

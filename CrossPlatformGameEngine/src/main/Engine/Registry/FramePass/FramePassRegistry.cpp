@@ -57,6 +57,8 @@ void FramePassRegistry::reconstruct()
 			FramePassType::GRAPHICS,
 			entry.mFramePassMode,
 			entry.mPipeline,
+			entry.mRenderPass,
+			entry.mRenderTarget,
 			entry.mDescriptorSets,
 			entry.mResources);
 	}
@@ -66,6 +68,7 @@ void FramePassRegistry::reconstruct()
 		mFramePasses[entry.mName] = std::make_shared<ComputeGpuFramePass>(
 			FramePassType::COMPUTE,
 			entry.mPipeline,
+			entry.mRenderTarget,
 			entry.mDescriptorSets,
 			entry.mResources,
 			entry.mGroups);

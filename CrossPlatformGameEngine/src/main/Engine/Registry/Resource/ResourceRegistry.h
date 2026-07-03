@@ -4,7 +4,6 @@
 
 #include "../Registry_I.h"
 #include "../../Core/Types.h"
-
 #include "../../Resource/Buffer/Buffer.h"
 
 #include <string>
@@ -63,8 +62,8 @@ namespace ascen
 	{
 	public:
 		ResourceRegistry(
-			VulkanContext& vulkanContext,
-			RenderContext& renderContext);
+			const VulkanContext& vulkanContext,
+			const RenderContext& renderContext);
 
 		void registerBuffer(BufferEntry entry);
 		void registerTexture(TextureEntry entry);

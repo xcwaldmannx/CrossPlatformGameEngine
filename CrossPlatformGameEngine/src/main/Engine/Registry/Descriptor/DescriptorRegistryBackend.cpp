@@ -9,6 +9,8 @@ const DescriptorSetLayoutPtr& DescriptorRegistryBackend::getDescriptorSetLayout(
 	{
 		return registry.mDescriptorSetLayouts.at(name);
 	}
+
+	return nullptr;
 }
 
 const DescriptorSetPtr& DescriptorRegistryBackend::getDescriptorSet(
@@ -18,4 +20,6 @@ const DescriptorSetPtr& DescriptorRegistryBackend::getDescriptorSet(
 	{
 		return registry.mDescriptorSets.at(name);
 	}
+
+	return nullptr;
 }
