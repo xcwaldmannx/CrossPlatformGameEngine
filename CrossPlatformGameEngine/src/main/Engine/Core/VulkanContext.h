@@ -9,9 +9,9 @@
 #include "../Resource/Buffer/BufferFactory.h"
 #include "../Resource/Texture/TextureFactory.h"
 #include "../Resource/Sampler/SamplerFactory.h"
-#include "../RenderTarget/FrameBuffer/FrameBufferFactory.h"
-#include "../RenderTarget/RenderPass/RenderPassFactory.h"
-#include "../RenderTarget/RenderTarget/RenderTargetFactory.h"
+#include "../FrameBuffer/FrameBufferFactory.h"
+#include "../RenderPass/RenderPassFactory.h"
+#include "../RenderTarget/RenderTargetFactory.h"
 
 #include <vulkan/vulkan.h>
 

@@ -3,7 +3,7 @@
 #include "Registry_I.h"
 #include "../Core/Types.h"
 #include "../RenderTarget/RenderTarget/RenderTargetFactory.h"
-#include "../RenderTarget/RenderTarget/RenderTarget.h"
+#include "../RenderTarget/RenderTarget.h"
 
 namespace ascen
 {

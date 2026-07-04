@@ -11,8 +11,7 @@ FrameBuffer::FrameBuffer(
     const VkDevice device,
     const RenderPassPtr& renderPass,
     const RenderTargetPtr& renderTarget,
-    const VkExtent2D& extent) :
-    mExtent(extent)
+    const VkExtent2D& extent)
 {
     const auto& attachments = renderTarget->getImageViews();
 
@@ -25,8 +24,7 @@ FrameBuffer::FrameBuffer(
     framebufferInfo.height = extent.height;
     framebufferInfo.layers = 1;
 
-    if (vkCreateFramebuffer(
-        device, &framebufferInfo, nullptr, &mHandle) != VK_SUCCESS)
+    if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &mHandle) != VK_SUCCESS)
     {
         throw std::runtime_error("failed to create framebuffer!");
     }

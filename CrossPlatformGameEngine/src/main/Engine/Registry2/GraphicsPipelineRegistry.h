@@ -48,8 +48,6 @@ namespace ascen
                 layouts,
                 mSwapchain,
                 mRenderPass);
-
-            // implement push constants later
         }
 
     private:

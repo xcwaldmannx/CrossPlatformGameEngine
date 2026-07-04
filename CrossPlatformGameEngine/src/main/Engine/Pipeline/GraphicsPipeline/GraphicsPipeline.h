@@ -8,7 +8,7 @@
 #include "../../Vertex/Vertex.h"
 #include "../../Descriptor/Layout/DescriptorSetLayout.h"
 #include "../../Swapchain/Swapchain.h"
-#include "../../RenderTarget/RenderPass/RenderPass.h"
+#include "../../RenderPass/RenderPass.h"
 
 #include <concepts>
 #include <stdexcept>
@@ -129,6 +129,14 @@ namespace ascen
         {
             vkDestroyPipeline(device, mHandle, nullptr);
             vkDestroyPipelineLayout(device, mLayout, nullptr);
+        }
+
+        void uploadPushConstant(const VkCommandBuffer commandBuffer, const uint32_t id, const void* data) override
+        {
+            auto& [offset, size, flags] = mPushConstants.at(id);
+
+            vkCmdPushConstants(commandBuffer, mLayout, flags, offset, size, data);
+            mPushConstants.at(id);
         }
 
     private:
@@ -262,19 +270,20 @@ namespace ascen
             mLayoutInfo.pushConstantRangeCount = 0;
             mLayoutInfo.pPushConstantRanges = nullptr;
 
-            const auto& pc = mParams.mPushConstantRange;
+            mPushConstants = mParams.mPushConstants;
 
-            if (pc.mSize > 0)
+            std::vector<VkPushConstantRange> vkPushConstants;
+
+            for (const auto& [id, pc] : mPushConstants)
             {
-                mPushConstantRange = VkPushConstantRange(
-                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                    mParams.mPushConstantRange.mOffset,
-                    mParams.mPushConstantRange.mSize);
-
-                mLayoutInfo.pushConstantRangeCount = 1;
-                mLayoutInfo.pPushConstantRanges = &mPushConstantRange;
+                if (pc.mSize > 0)
+                {
+                    vkPushConstants.emplace_back(pc.mShaderStages, pc.mOffset, pc.mSize);
+                }
             }
 
+            mLayoutInfo.pushConstantRangeCount = vkPushConstants.size();
+            mLayoutInfo.pPushConstantRanges = vkPushConstants.data();
 
             mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());

@@ -13,6 +13,7 @@
 #include "SamplerRegistry.h"
 #include "RenderPassRegistry.h"
 #include "RenderTargetRegistry.h"
+#include "FrameBufferRegistry.h"
 #include "GraphicsPipelineRegistry.h"
 #include "ComputePipelineRegistry.h"
 
@@ -35,6 +36,7 @@ namespace ascen
         SamplerRegistry,
         RenderPassRegistry,
         RenderTargetRegistry,
+        FrameBufferRegistry,
         GraphicsPipelineRegistry,
         ComputePipelineRegistry>;
 
@@ -69,7 +71,41 @@ namespace ascen
 
         void reconstruct();
 
+        /*
+        template<typename T>
+        std::span<T> getMappedBuffer(const std::string& name)
+        {
+            auto it = mBuffers.find(name);
+            if (it == mBuffers.end())
+            {
+                throw std::runtime_error("Mapped buffer does not exist!");
+            }
+
+            const BufferPtr& buf = it->second;
+
+            void* mapped = buf->getMappedMemory();
+
+            auto* typed = reinterpret_cast<T*>(static_cast<uint8_t*>(mapped));
+
+            return std::span<T>(typed, buf->getItemCount());
+        }
+        */
+
+        void uploadBuffer(const std::string& name, const void* items, uint32_t itemCount, uint32_t itemSize, uint32_t offset) const;
+        void uploadBuffer(const uint64_t id, const void* items, uint32_t itemCount, uint32_t itemSize, uint32_t offset) const;
+
+        void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
+        void uploadTexture(const uint64_t id, const std::vector<unsigned char>& pixels) const;
+
+        void uploadGraphicsPushConstant(const VkCommandBuffer commandBuffer, const uint64_t id, const uint32_t pushConstantId, const void* data) const;
+        void uploadComputePushConstant(const VkCommandBuffer commandBuffer, const uint64_t id, const uint32_t pushConstantId, const void* data) const;
+
     private:
+        const VkPhysicalDevice mPhysicalDevice;
+        const VkDevice mDevice;
+        const VkQueue mGraphicsQueue;
+        const CommandPoolPtr& mCommandPool;
+
         std::vector<RegistryTypes> mRegistries;
 
         std::hash<std::string> mHasher;

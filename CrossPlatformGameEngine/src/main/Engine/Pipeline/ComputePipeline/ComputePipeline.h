@@ -84,6 +84,14 @@ namespace ascen
             vkDestroyPipelineLayout(device, mLayout, nullptr);
         }
 
+        void uploadPushConstant(const VkCommandBuffer commandBuffer, const uint32_t id, const void* data) override
+        {
+            auto& [offset, size, flags] = mPushConstants.at(id);
+
+            vkCmdPushConstants(commandBuffer, mLayout, flags, offset, size, data);
+            mPushConstants.at(id);
+        }
+
     private:
         void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts)
         {
@@ -94,18 +102,20 @@ namespace ascen
             mLayoutInfo.pushConstantRangeCount = 0;
             mLayoutInfo.pPushConstantRanges = nullptr;
 
-            const auto& pc = mParams.mPushConstantRange;
+            mPushConstants = mParams.mPushConstants;
 
-            if (pc.mSize > 0)
+            std::vector<VkPushConstantRange> vkPushConstants;
+
+            for (const auto& [id, pc] : mPushConstants)
             {
-                mPushConstantRange = VkPushConstantRange(
-                    VK_SHADER_STAGE_COMPUTE_BIT,
-                    mParams.mPushConstantRange.mOffset,
-                    mParams.mPushConstantRange.mSize);
-
-                mLayoutInfo.pushConstantRangeCount = 1;
-                mLayoutInfo.pPushConstantRanges = &mPushConstantRange;
+                if (pc.mSize > 0)
+                {
+                    vkPushConstants.emplace_back(pc.mShaderStages, pc.mOffset, pc.mSize);
+                }
             }
+
+            mLayoutInfo.pushConstantRangeCount = vkPushConstants.size();
+            mLayoutInfo.pPushConstantRanges = vkPushConstants.data();
 
             // pipeline creation
             mCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;

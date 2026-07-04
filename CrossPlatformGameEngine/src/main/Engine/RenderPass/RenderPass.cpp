@@ -6,9 +6,9 @@ using namespace ascen;
 
 RenderPass::RenderPass(
     const VkDevice device,
-    const std::vector<Attachment>& attachments,
-    const std::vector<SubPass>& subPasses,
-    const std::vector<SubPassDependency>& subPassDependencies)
+    const std::vector<renderpass::Attachment>& attachments,
+    const std::vector<renderpass::SubPass>& subPasses,
+    const std::vector<renderpass::SubPassDependency>& subPassDependencies)
 {
     createAttachments(attachments);
     createSubPassDescriptions(subPasses);
@@ -34,7 +34,7 @@ void RenderPass::destroy(const VkDevice device)
     vkDestroyRenderPass(device, mHandle, nullptr);
 }
 
-void RenderPass::createAttachments(const std::vector<Attachment>& attachments)
+void RenderPass::createAttachments(const std::vector<renderpass::Attachment>& attachments)
 {
     mAttachments.reserve(attachments.size());
 
@@ -66,7 +66,7 @@ void RenderPass::createAttachments(const std::vector<Attachment>& attachments)
     }
 }
 
-void RenderPass::createSubPassDescriptions(const std::vector<SubPass>& subPasses)
+void RenderPass::createSubPassDescriptions(const std::vector<renderpass::SubPass>& subPasses)
 {
     mSubPassDescriptions.reserve(subPasses.size());
     mInputAttachmentReferences.resize(subPasses.size());
@@ -117,7 +117,7 @@ void RenderPass::createSubPassDescriptions(const std::vector<SubPass>& subPasses
     }
 }
 
-void RenderPass::createSubPassDependencies(const std::vector<SubPassDependency>& subPassDependencies)
+void RenderPass::createSubPassDependencies(const std::vector<renderpass::SubPassDependency>& subPassDependencies)
 {
     mSubPassDependencies.reserve(subPassDependencies.size());
 

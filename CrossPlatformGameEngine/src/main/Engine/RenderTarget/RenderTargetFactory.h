@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../Core/Values.h"
-#include "../../Core/Types.h"
+#include "../Core/Values.h"
+#include "../Core/Types.h"
 
 #include <vector>
 

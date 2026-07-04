@@ -1,9 +1,7 @@
 #pragma once
 
-#include "../../Handle/Handle.h"
-#include "../../Core/Types.h"
-
-#include <vector>
+#include "../Handle/Handle.h"
+#include "../Core/Types.h"
 
 #include <vulkan/vulkan.h>
 
@@ -20,9 +18,6 @@ namespace ascen
         const VkExtent2D& extent);
 
         void destroy(const VkDevice device) override;
-
-    private:
-        const VkExtent2D& mExtent;
     };
 
 }

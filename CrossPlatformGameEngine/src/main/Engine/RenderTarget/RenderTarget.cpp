@@ -1,7 +1,5 @@
 #include "RenderTarget.h"
 
-#include "../../Swapchain/Swapchain.h"
-
 #include <stdexcept>
 
 using namespace ascen;

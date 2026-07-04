@@ -92,7 +92,7 @@ void MyPipeline::initResources()
     renderPassEntry.mSubPasses = { subPass };
     renderPassEntry.mSubPassDependencies = { subPassDependency };
 
-    mEngine.registerResource<ascen::registry::RenderPassEntry>(renderPassEntry);
+    mRenderPass = mEngine.registerResource<ascen::registry::RenderPassEntry>(renderPassEntry);
 
     ascen::registry::RenderTargetEntry renderTargetEntry{};
     renderTargetEntry.mName = "RENDER_TARGET";
@@ -100,7 +100,16 @@ void MyPipeline::initResources()
     renderTargetEntry.mImages = mEngine.getPresentImages();
     renderTargetEntry.mImageCount = mEngine.getPresentImages().size();
 
-    mEngine.registerResource<ascen::registry::RenderTargetEntry>(renderTargetEntry);
+    mRenderTarget = mEngine.registerResource<ascen::registry::RenderTargetEntry>(renderTargetEntry);
+
+    ascen::registry::FrameBufferEntry frameBufferEntry{};
+    frameBufferEntry.mName = "FRAMEBUFFER";
+    frameBufferEntry.mRenderPassId = mRenderPass;
+    frameBufferEntry.mRenderTargetId = mRenderTarget;
+    frameBufferEntry.mWidth = mEngine.getScreenWidth();
+    frameBufferEntry.mHeight = mEngine.getScreenHeight();
+
+    mFrameBuffer = mEngine.registerResource<ascen::registry::FrameBufferEntry>(frameBufferEntry);
 }
 
 void MyPipeline::initStages()
@@ -109,17 +118,17 @@ void MyPipeline::initStages()
     {
         ascen::registry::DescriptorPoolEntry descriptorPoolEntry{};
         descriptorPoolEntry.mName = "DESCRIPTOR_POOL_COMPUTE";
-        descriptorPoolEntry.mDescriptorTypeCounts = { { ascen::DescriptorType::SSBO, 3 } };
+        descriptorPoolEntry.mDescriptorTypeCounts = { { ascen::DESCRIPTOR_TYPE_SSBO, 3 } };
 
         mDescriptorPoolCompute = mEngine.registerResource<ascen::registry::DescriptorPoolEntry>(descriptorPoolEntry);
 
-        ascen::registry::DescriptorLocation l0 { 0, ascen::DescriptorType::SSBO };
-        ascen::registry::DescriptorLocation l1 { 1, ascen::DescriptorType::SSBO };
-        ascen::registry::DescriptorLocation l2 { 2, ascen::DescriptorType::SSBO };
+        ascen::registry::DescriptorLocation l0 { 0, ascen::DESCRIPTOR_TYPE_SSBO };
+        ascen::registry::DescriptorLocation l1 { 1, ascen::DESCRIPTOR_TYPE_SSBO };
+        ascen::registry::DescriptorLocation l2 { 2, ascen::DESCRIPTOR_TYPE_SSBO };
 
-        ascen::registry::DescriptorBinding b0 { l0, ascen::DescriptorStage::COMPUTE };
-        ascen::registry::DescriptorBinding b1 { l1, ascen::DescriptorStage::COMPUTE };
-        ascen::registry::DescriptorBinding b2 { l2, ascen::DescriptorStage::COMPUTE };
+        ascen::registry::DescriptorBinding b0 { l0, ascen::SHADER_STAGE_COMPUTE };
+        ascen::registry::DescriptorBinding b1 { l1, ascen::SHADER_STAGE_COMPUTE };
+        ascen::registry::DescriptorBinding b2 { l2, ascen::SHADER_STAGE_COMPUTE };
 
         ascen::registry::DescriptorSetLayoutEntry descriptorSetLayoutEntry{};
         descriptorSetLayoutEntry.mName = "DESCRIPTOR_SET_LAYOUT_COMPUTE";
@@ -140,13 +149,13 @@ void MyPipeline::initStages()
 
         mDescriptorSetCompute = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);
 
-        ascen::registry::ComputePipelineEntry computePipelineEntry;
+        ascen::registry::ComputePipelineEntry computePipelineEntry{};
         computePipelineEntry.mName = "PIPELINE_FRUSTUM_CULL";
         computePipelineEntry.mComputeShaderPath = "src/shaders/Simple/FrustumCullingShader.spv";
         computePipelineEntry.mDescriptorSetLayoutIds = { mDescriptorSetLayoutCompute };
-        computePipelineEntry.mParams.mPushConstantRange =
+        computePipelineEntry.mParams.mPushConstants =
         {
-            0, sizeof(glm::mat4)
+                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_COMPUTE } }
         };
 
         mEngine.registerResource<ascen::registry::ComputePipelineEntry>(computePipelineEntry);
@@ -158,20 +167,20 @@ void MyPipeline::initStages()
         descriptorPoolEntry.mName = "DESCRIPTOR_POOL_GRAPHICS";
         descriptorPoolEntry.mDescriptorTypeCounts =
         {
-            { ascen::DescriptorType::SSBO,    1 },
-            { ascen::DescriptorType::SAMPLER, 1 },
-            { ascen::DescriptorType::IMAGE,   1 },
+            { ascen::DESCRIPTOR_TYPE_SSBO,    1 },
+            { ascen::DESCRIPTOR_TYPE_SAMPLER, 1 },
+            { ascen::DESCRIPTOR_TYPE_IMAGE,   1 },
         };
 
         mDescriptorPoolGraphics = mEngine.registerResource<ascen::registry::DescriptorPoolEntry>(descriptorPoolEntry);
 
-        ascen::registry::DescriptorLocation l0 { 0, ascen::DescriptorType::SSBO };
-        ascen::registry::DescriptorLocation l1 { 2, ascen::DescriptorType::SAMPLER };
-        ascen::registry::DescriptorLocation l2 { 3, ascen::DescriptorType::IMAGE };
+        ascen::registry::DescriptorLocation l0 { 0, ascen::DESCRIPTOR_TYPE_SSBO };
+        ascen::registry::DescriptorLocation l1 { 2, ascen::DESCRIPTOR_TYPE_SAMPLER };
+        ascen::registry::DescriptorLocation l2 { 3, ascen::DESCRIPTOR_TYPE_IMAGE };
 
-        ascen::registry::DescriptorBinding b0 { l0, ascen::DescriptorStage::VERTEX };
-        ascen::registry::DescriptorBinding b1 { l1, ascen::DescriptorStage::PIXEL };
-        ascen::registry::DescriptorBinding b2 { l2, ascen::DescriptorStage::PIXEL };
+        ascen::registry::DescriptorBinding b0 { l0, ascen::SHADER_STAGE_VERTEX };
+        ascen::registry::DescriptorBinding b1 { l1, ascen::SHADER_STAGE_PIXEL };
+        ascen::registry::DescriptorBinding b2 { l2, ascen::SHADER_STAGE_PIXEL };
 
         ascen::registry::DescriptorSetLayoutEntry descriptorSetLayoutEntry{};
         descriptorSetLayoutEntry.mName = "DESCRIPTOR_SET_LAYOUT_GRAPHICS";
@@ -192,7 +201,7 @@ void MyPipeline::initStages()
 
         mDescriptorSetCompute = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);
 
-        ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryTriangles;
+        ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryTriangles{};
         graphicsPipelineEntryTriangles.mName = "PIPELINE_RENDER_ENTITY";
         graphicsPipelineEntryTriangles.mVertexShaderPath = "src/shaders/Simple/VertexShader.spv";
         graphicsPipelineEntryTriangles.mPixelShaderPath = "src/shaders/Simple/PixelShader.spv";
@@ -201,9 +210,9 @@ void MyPipeline::initStages()
         graphicsPipelineEntryTriangles.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         graphicsPipelineEntryTriangles.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
         graphicsPipelineEntryTriangles.mParams.mCullMode = VK_CULL_MODE_BACK_BIT;
-        graphicsPipelineEntryTriangles.mParams.mPushConstantRange =
+        graphicsPipelineEntryTriangles.mParams.mPushConstants =
         {
-            0, sizeof(glm::mat4)
+            { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX } }
         };
 
         mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryTriangles);
@@ -211,7 +220,7 @@ void MyPipeline::initStages()
 
     // Render bounding boxes stage
     {
-        ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryBounds;
+        ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryBounds{};
         graphicsPipelineEntryBounds.mName = "PIPELINE_RENDER_BOUNDS";
         graphicsPipelineEntryBounds.mVertexShaderPath = "src/shaders/Simple/BoundsVertexShader.spv";
         graphicsPipelineEntryBounds.mPixelShaderPath = "src/shaders/Simple/BoundsPixelShader.spv";
@@ -219,9 +228,9 @@ void MyPipeline::initStages()
         graphicsPipelineEntryBounds.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
         graphicsPipelineEntryBounds.mParams.mPolygonMode = VK_POLYGON_MODE_LINE;
         graphicsPipelineEntryBounds.mParams.mCullMode = VK_CULL_MODE_NONE;
-        graphicsPipelineEntryBounds.mParams.mPushConstantRange =
+        graphicsPipelineEntryBounds.mParams.mPushConstants =
         {
-            0, sizeof(glm::mat4)
+                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX } }
         };
 
         mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryBounds);
@@ -230,6 +239,11 @@ void MyPipeline::initStages()
 
 void MyPipeline::initFramePasses()
 {
+    ascen::registry::FramePassEntry framePassEntry;
+    framePassEntry.mName = "FRAMEPASS_0";
+
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassEntry);
+
     mEngine.frame().registerCompute(
         { "FRAMEPASS_FRUSTUM_CULL",
         { "DESC_FRUSTUM_CULL" },

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../Core/Types.h"
+#include "../Core/Types.h"
 
 #include <vector>
 
@@ -15,9 +15,9 @@ namespace ascen
         RenderPassFactory(VkDevice device);
 
         RenderPassPtr create(
-            const std::vector<Attachment>& attachments,
-            const std::vector<SubPass>& subPasses,
-            const std::vector<SubPassDependency>& subPassDependencies) const;
+            const std::vector<renderpass::Attachment>& attachments,
+            const std::vector<renderpass::SubPass>& subPasses,
+            const std::vector<renderpass::SubPassDependency>& subPassDependencies) const;
 
     private:
         VkDevice mDevice;

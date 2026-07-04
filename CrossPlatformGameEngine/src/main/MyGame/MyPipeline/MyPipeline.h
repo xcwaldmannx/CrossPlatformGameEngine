@@ -34,4 +34,8 @@ private:
     uint64_t mDescriptorPoolGraphics = 0;
     uint64_t mDescriptorSetLayoutGraphics = 0;
     uint64_t mDescriptorSetGraphics = 0;
+
+    uint64_t mRenderPass = 0;
+    uint64_t mRenderTarget = 0;
+    uint64_t mFrameBuffer = 0;
 };

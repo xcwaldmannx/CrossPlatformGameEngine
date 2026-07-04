@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../../Core/Types.h"
-#include "../../Handle/Handle.h"
+#include "../Core/Types.h"
+#include "../Handle/Handle.h"
 
 #include <vector>
 
@@ -15,16 +15,16 @@ namespace ascen
     public:
         RenderPass(
             const VkDevice device,
-            const std::vector<Attachment>& attachments,
-            const std::vector<SubPass>& subPasses,
-            const std::vector<SubPassDependency>& subPassDependencies);
+            const std::vector<renderpass::Attachment>& attachments,
+            const std::vector<renderpass::SubPass>& subPasses,
+            const std::vector<renderpass::SubPassDependency>& subPassDependencies);
 
         void destroy(const VkDevice device) override;
 
     private:
-        void createAttachments(const std::vector<Attachment>& attachments);
-        void createSubPassDescriptions(const std::vector<SubPass>& subPasses);
-        void createSubPassDependencies(const std::vector<SubPassDependency>& subPassDependencies);
+        void createAttachments(const std::vector<renderpass::Attachment>& attachments);
+        void createSubPassDescriptions(const std::vector<renderpass::SubPass>& subPasses);
+        void createSubPassDependencies(const std::vector<renderpass::SubPassDependency>& subPassDependencies);
 
     private:
         std::vector<VkAttachmentDescription> mAttachments;

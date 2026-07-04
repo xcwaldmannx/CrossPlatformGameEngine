@@ -19,9 +19,9 @@ namespace ascen
 		virtual void destroy(VkDevice device) override = 0;
 
 	protected:
-		VkPushConstantRange mPushConstantRange{};
-
 		VkPipelineLayout mLayout{};
+
+		std::unordered_map<uint32_t, pipeline::PushConstant> mPushConstants;
 	};
 
 }

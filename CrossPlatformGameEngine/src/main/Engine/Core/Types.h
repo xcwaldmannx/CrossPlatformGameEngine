@@ -99,15 +99,16 @@ namespace ascen
 
 	namespace pipeline
 	{
-		struct PushConstantRange // might need rework
+		struct PushConstant
 		{
 			uint32_t mOffset = 0;
 			uint32_t mSize = 0;
+			ShaderStageFlags mShaderStages = 0;
 		};
 
 		struct Params
 		{
-			PushConstantRange mPushConstantRange{};
+			std::unordered_map<uint32_t, PushConstant> mPushConstants;
 		};
 
 		struct GraphicsParams : Params
@@ -143,13 +144,13 @@ namespace ascen
 		struct DescriptorLocation
 		{
 			uint32_t mSlot = 0;
-			DescriptorType mType = SSBO;
+			DescriptorType mType = DESCRIPTOR_TYPE_SSBO;
 		};
 
 		struct DescriptorBinding
 		{
 			DescriptorLocation mLocation;
-			uint32_t mStage = 0;
+			ShaderStageFlags mStage = SHADER_STAGE_VERTEX;
 		};
 
 		struct DescriptorResource
@@ -203,6 +204,14 @@ namespace ascen
 			uint32_t mImageCount;
 		};
 
+		struct FrameBufferEntry : Entry
+		{
+			uint64_t mRenderPassId = 0;
+			uint64_t mRenderTargetId = 0;
+			uint32_t mWidth = 0;
+			uint32_t mHeight = 0;
+		};
+
 		struct PipelineEntry : Entry
 		{
 			std::vector<uint64_t> mDescriptorSetLayoutIds;
@@ -220,6 +229,14 @@ namespace ascen
 		{
 			std::string mComputeShaderPath;
 			pipeline::ComputeParams mParams;
+		};
+
+		struct FramePassEntry : Entry
+		{
+			std::vector<uint64_t> mDescriptorSetIds;
+			uint64_t mRenderPassId = 0;
+			uint64_t mRenderTargetId = 0;
+			uint64_t mPipelineId = 0;
 		};
 	}
 

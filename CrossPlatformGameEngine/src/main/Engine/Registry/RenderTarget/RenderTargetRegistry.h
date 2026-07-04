@@ -4,7 +4,7 @@
 #include "../../Core/Types.h"
 #include "../../RenderTarget/FrameBuffer/FrameBuffer.h"
 #include "../../RenderTarget/RenderPass/RenderPass.h"
-#include "../../RenderTarget/RenderTarget/RenderTarget.h"
+#include "../../RenderTarget/RenderTarget.h"
 
 #include <string>
 #include <unordered_map>
