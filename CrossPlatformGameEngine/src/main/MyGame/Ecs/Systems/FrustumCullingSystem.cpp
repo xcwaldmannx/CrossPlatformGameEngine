@@ -18,7 +18,7 @@ void FrustumCullingSystem::update(const float delta)
     mModelToEntities.clear();
     mModelToDrawCommands.clear();
 
-    for (const auto& entityId : mDirtyEntities)
+    for (const auto& entityId : mEntities)
     {
         const auto& transform = mSystem->getComponent<TransformComponent>(entityId);
         const auto& model = mSystem->getComponent<ModelComponent>(entityId);

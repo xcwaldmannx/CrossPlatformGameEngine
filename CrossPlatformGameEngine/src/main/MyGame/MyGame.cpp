@@ -41,8 +41,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 	}
 
 	{
-		const auto readSig = mEngine.ecs().getSignature<>();
-		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
+		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<>();
 
 		mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
 	}

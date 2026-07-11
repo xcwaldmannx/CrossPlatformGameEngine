@@ -96,36 +96,27 @@ void Renderer::drawFrame()
 
 
 					// temp
-					if (framePass->mIndirectBufferId != 0)
-					{
-						const auto& indirectBufferPtr =
-							mRegistryManager.getResource<Buffer>(framePass->mIndirectBufferId);
+					// The compute pass writes entity visibility and generated bounds. Make
+					// those writes visible to the vertex shader and vertex/index fetches.
+					VkMemoryBarrier computeToGraphics{};
+					computeToGraphics.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER;
+					computeToGraphics.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+					computeToGraphics.dstAccessMask =
+						VK_ACCESS_SHADER_READ_BIT |
+						VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT |
+						VK_ACCESS_INDEX_READ_BIT;
 
-						VkBufferMemoryBarrier barrier{};
-						barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-
-						barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-						barrier.dstAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
-
-						barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-						barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-						barrier.buffer = indirectBufferPtr->handle();
-						barrier.offset = 0;
-						barrier.size = VK_WHOLE_SIZE;
-
-						vkCmdPipelineBarrier(
-							commandBuffer,
-							VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-							VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,
-							0,
-							0,
-							nullptr,
-							1,
-							&barrier,
-							0,
-							nullptr);
-					}
+					vkCmdPipelineBarrier(
+						commandBuffer,
+						VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+						VK_PIPELINE_STAGE_VERTEX_SHADER_BIT | VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+						0,
+						1,
+						&computeToGraphics,
+						0,
+						nullptr,
+						0,
+						nullptr);
 					// temp
 
 

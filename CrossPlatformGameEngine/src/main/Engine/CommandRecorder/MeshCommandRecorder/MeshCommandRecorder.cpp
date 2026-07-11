@@ -55,6 +55,6 @@ void MeshCommandRecorder::record(
         commandBuffer,
         indirectBuffer,
         0,
-        indirectCount,
+        2,
         sizeof(VkDrawIndexedIndirectCommand));
 }
