@@ -26,7 +26,6 @@ namespace ascen
 
 		const CommandPoolPtr& getCommandPool() const;
 		const SwapchainPtr& getSwapchain() const;
-		const RenderPassPtr& getRenderPass() const;
 
 	private:
 		WindowManager& mWindowManager;
@@ -40,7 +39,6 @@ namespace ascen
 
 		CommandPoolPtr mCommandPool = nullptr;
 		SwapchainPtr mSwapchain     = nullptr;
-		RenderPassPtr mRenderPass   = nullptr;
 		TexturePtr mDepthTexture    = nullptr;
 	};
 

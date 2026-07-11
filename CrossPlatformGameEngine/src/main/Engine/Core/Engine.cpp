@@ -12,8 +12,22 @@ Engine::Engine(::WindowManager& windowManager) :
 	mVulkanContext(windowManager),
 	mRenderContext(windowManager, mVulkanContext),
 	mRegistryManager(mVulkanContext, mRenderContext),
-	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext)
-{}
+	mRenderer(windowManager, mEcs, mVulkanContext, mRenderContext, mRegistryManager) {}
+
+void Engine::uploadBuffer(
+	const std::string& name,
+	const void* items,
+	const uint32_t itemCount,
+	const uint32_t itemSize,
+	const uint32_t offset) const
+{
+	mRegistryManager.uploadBuffer(name, items, itemCount, itemSize, offset);
+}
+
+void Engine::uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const
+{
+	mRegistryManager.uploadTexture(name, pixels);
+}
 
 EcsSystem& Engine::ecs()
 {
@@ -34,6 +48,7 @@ void Engine::cleanup()
 {
 	mVulkanContext.waitIdle();
 
+	mRegistryManager.deconstruct();
 	mRenderer.cleanup();
 	mRenderContext.cleanup();
 	mVulkanContext.cleanup();

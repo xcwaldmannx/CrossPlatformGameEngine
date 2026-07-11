@@ -26,8 +26,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 	const auto& vertices = mModelHandler.getVertices();
 	const auto& indices = mModelHandler.getIndices();
 
-	mEngine.resource().uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float));
-	mEngine.resource().uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t));
+	mEngine.uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float), 0);
+	mEngine.uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t), 0);
 
 	// initialize ECS
 	mEngine.ecs().registerComponent<TransformComponent>();
@@ -49,11 +49,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	loadTextures();
 
-	mEngine.resource().uploadTexture("TEXTURE", mPixels);
+	mEngine.uploadTexture("TEXTURE", mPixels);
 
-	double r = 50;
-	double deg = 360;
-	unsigned int entityCount = 0;
+	constexpr double r = 50;
+	constexpr double deg = 360;
 
 	for (double i = 0; i < deg; i += (deg / mEntityCount))
 	{
@@ -69,16 +68,12 @@ MyGame::MyGame(WindowManager& windowManager) :
 		{
 			createModel("assets/models/submarine.model", { x, 15, z }, { 1, 1, 1 });
 		}
-
-		entityCount++;
 	}
 }
 
 void MyGame::run(float delta)
 {
 	updateCamera(delta);
-	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
-	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(mEntityCount); i++)
 	{
@@ -96,6 +91,9 @@ void MyGame::run(float delta)
 		}
 	}
 
+	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
+	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
+
 	mEngine.drawFrame();
 }
 
@@ -106,9 +104,7 @@ void MyGame::cleanup()
 
 void MyGame::loadTextures()
 {
-	ImageLoader il;
-
-	std::vector<const char*> mTextureFilepaths =
+	const std::vector<const char*> mTextureFilepaths =
 	{
 		"assets/textures/metal.jpg",
 	};
@@ -122,7 +118,7 @@ void MyGame::loadTextures()
 	for (const auto& filepath : mTextureFilepaths)
 	{
 		RawImage raw;
-		il.loadImage(filepath, &raw);
+		ImageLoader::loadImage(filepath, &raw);
 		mPixels.insert(mPixels.end(), raw.mPixels.begin(), raw.mPixels.end());
 	}
 }
@@ -189,8 +185,8 @@ void MyGame::updateCamera(float delta)
 		ubo.mProj[1][1] *= -1;
 
 		const glm::mat4 vp = ubo.mProj * ubo.mView;
-		mEngine.pipeline().pushConstants("PIPELINE_FRUSTUM_CULL",  "PUSH_0", &vp);
-		mEngine.pipeline().pushConstants("PIPELINE_RENDER_ENTITY", "PUSH_0", &vp);
-		mEngine.pipeline().pushConstants("PIPELINE_RENDER_BOUNDS", "PUSH_0", &vp);
+		mEngine.setPushConstant<glm::mat4>("PIPELINE_FRUSTUM_CULL",  0, vp);
+		mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_ENTITY", 0, vp);
+		mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_BOUNDS", 0, vp);
 	}
 }

@@ -29,6 +29,21 @@ namespace ascen
 			return mRegistryManager.registerResource<E>(entry);
 		}
 
+		template<typename T>
+		void setPushConstant(const std::string& name, uint32_t pushConstantId, const T& data)
+		{
+			mRegistryManager.setPushConstant<T>(name, pushConstantId, data);
+		}
+
+		void uploadBuffer(
+			const std::string& name,
+			const void* items,
+			const uint32_t itemCount,
+			const uint32_t itemSize,
+			const uint32_t offset) const;
+
+		void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
+
 		EcsSystem& ecs();
 
 		void reload();

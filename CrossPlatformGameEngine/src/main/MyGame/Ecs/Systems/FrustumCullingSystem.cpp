@@ -15,6 +15,9 @@ void FrustumCullingSystem::update(const float delta)
     mEntitiesToCull.clear();
     mEntitiesToCull.reserve(mEntities.size());
 
+    mModelToEntities.clear();
+    mModelToDrawCommands.clear();
+
     for (const auto& entityId : mDirtyEntities)
     {
         const auto& transform = mSystem->getComponent<TransformComponent>(entityId);
@@ -69,10 +72,10 @@ void FrustumCullingSystem::update(const float delta)
 
     if (!mEntitiesToCull.empty() && !mDrawCommands.empty())
     {
-        mEngine.resource().uploadBuffer("BUFFER_ENTITY",
-            &mEntitiesToCull[0], mEntitiesToCull.size(), sizeof(Entity));
+        mEngine.uploadBuffer("BUFFER_ENTITY",
+            &mEntitiesToCull[0], mEntitiesToCull.size(), sizeof(Entity), 0);
 
-        mEngine.resource().uploadBuffer("BUFFER_DRAWS",
-            &mDrawCommands[0], mDrawCommands.size(), sizeof(ascen::IndexedIndirectDraw));
+        mEngine.uploadBuffer("BUFFER_DRAWS",
+            &mDrawCommands[0], mDrawCommands.size(), sizeof(ascen::IndexedIndirectDraw), 0);
     }
 }

@@ -16,18 +16,19 @@ RegistryManager::RegistryManager(
 {
     const VkDevice device = vulkanContext.getDevice();
 
-    mRegistries.push_back(VertexRegistry{});
-    mRegistries.push_back(DescriptorPoolRegistry{ device, vulkanContext.getDescriptorFactory() });
-    mRegistries.push_back(DescriptorSetLayoutRegistry{ device, vulkanContext.getDescriptorFactory() });
-    mRegistries.push_back(DescriptorSetRegistry{ device, vulkanContext.getDescriptorFactory(), &mIdToResource });
-    mRegistries.push_back(BufferRegistry{ device, vulkanContext.getBufferFactory() });
-    mRegistries.push_back(TextureRegistry{ device, renderContext.getCommandPool(), vulkanContext.getTextureFactory() });
-    mRegistries.push_back(SamplerRegistry{ device, vulkanContext.getSamplerFactory() });
-    mRegistries.push_back(RenderPassRegistry{ device, vulkanContext.getRenderPassFactory() });
-    mRegistries.push_back(RenderTargetRegistry{ device, vulkanContext.getRenderTargetFactory() });
-    mRegistries.push_back(FrameBufferRegistry{ device, vulkanContext.getFrameBufferFactory(), &mIdToResource });
-    mRegistries.push_back(GraphicsPipelineRegistry{ device, renderContext.getSwapchain(), renderContext.getRenderPass(), vulkanContext.getGraphicsPipelineFactory(), &mIdToResource });
-    mRegistries.push_back(ComputePipelineRegistry{ device, vulkanContext.getComputePipelineFactory(), &mIdToResource });
+    mRegistries.emplace_back(VertexRegistry{});
+    mRegistries.emplace_back(BufferRegistry{ device, vulkanContext.getBufferFactory() });
+    mRegistries.emplace_back(TextureRegistry{ device, renderContext.getCommandPool(), vulkanContext.getTextureFactory() });
+    mRegistries.emplace_back(SamplerRegistry{ device, vulkanContext.getSamplerFactory() });
+    mRegistries.emplace_back(DescriptorPoolRegistry{ device, vulkanContext.getDescriptorFactory() });
+    mRegistries.emplace_back(DescriptorSetLayoutRegistry{ device, vulkanContext.getDescriptorFactory() });
+    mRegistries.emplace_back(DescriptorSetRegistry{ device, vulkanContext.getDescriptorFactory(), &mIdToResource });
+    mRegistries.emplace_back(RenderPassRegistry{ device, vulkanContext.getRenderPassFactory() });
+    mRegistries.emplace_back(RenderTargetRegistry{ device, vulkanContext.getRenderTargetFactory() });
+    mRegistries.emplace_back(FrameBufferRegistry{ device, vulkanContext.getFrameBufferFactory(), &mIdToResource });
+    mRegistries.emplace_back(GraphicsPipelineRegistry{ device, renderContext.getSwapchain(), vulkanContext.getGraphicsPipelineFactory(), &mIdToResource });
+    mRegistries.emplace_back(ComputePipelineRegistry{ device, vulkanContext.getComputePipelineFactory(), &mIdToResource });
+    mRegistries.emplace_back(FramePassRegistry{});
 
 };
 
@@ -41,24 +42,32 @@ void RegistryManager::reconstruct()
             using CurrentEntryType = ConcreteRegistryType::EntryType;
             using CurrentResourceType = ConcreteRegistryType::ResourceType;
 
-            const std::type_index typeId = std::type_index(typeid(CurrentEntryType));
+            const std::type_index typeId = std::type_index(typeid(CurrentResourceType));
 
-            auto it = mTypeToIds.find(typeId);
+            const auto it = mTypeToIds.find(typeId);
             if (it == mTypeToIds.end()) return;
 
             const std::vector<uint64_t>& ids = it->second;
+
             for (const uint64_t id : ids)
             {
-                std::any storedEntry = mIdToEntry.at(id);
-                std::shared_ptr<CurrentEntryType> entryPtr = std::any_cast<std::shared_ptr<CurrentEntryType>>(storedEntry);
+                const std::shared_ptr<CurrentEntryType>& storedEntry = std::any_cast<std::shared_ptr<CurrentEntryType>>(mIdToEntry.at(id));
 
-                registry::Resource& genericResource = mIdToResource[id];
+                std::shared_ptr<Handle_I>& genericResource = mIdToResource[id];
                 CurrentResourceType& concreteResource = reinterpret_cast<CurrentResourceType&>(genericResource);
 
-                concreteRegistry.reconstruct(*entryPtr, concreteResource);
+                concreteRegistry.reconstruct(*storedEntry, concreteResource);
             }
 
         }, registryVariant);
+    }
+}
+
+void RegistryManager::deconstruct()
+{
+    for (const auto& [id, resource] : mIdToResource)
+    {
+        if (resource) resource->destroy(mDevice);
     }
 }
 
@@ -82,7 +91,7 @@ void RegistryManager::uploadBuffer(
 {
     if (mIdToResource.contains(id))
     {
-        const BufferPtr& resource = std::any_cast<BufferPtr>(mIdToResource.at(id));
+        const BufferPtr& resource = std::dynamic_pointer_cast<Buffer>(mIdToResource.at(id));
         resource->upload(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, items, itemCount, itemSize, offset);
     }
     else
@@ -101,7 +110,7 @@ void RegistryManager::uploadTexture(const uint64_t id, const std::vector<unsigne
 {
     if (mIdToResource.contains(id))
     {
-        const TexturePtr& resource = std::any_cast<TexturePtr>(mIdToResource.at(id));
+        const TexturePtr& resource = std::dynamic_pointer_cast<Texture>(mIdToResource.at(id));
         resource->update(mPhysicalDevice, mDevice, mGraphicsQueue, mCommandPool, pixels);
     }
     else
@@ -110,20 +119,21 @@ void RegistryManager::uploadTexture(const uint64_t id, const std::vector<unsigne
     }
 }
 
-void RegistryManager::uploadGraphicsPushConstant(const VkCommandBuffer commandBuffer, const uint64_t id, const uint32_t pushConstantId, const void* data) const
+void RegistryManager::uploadPushConstants(const VkCommandBuffer commandBuffer) const
 {
-    if (mIdToResource.contains(id))
+    const auto graphicsType = std::type_index(typeid(GraphicsPipelinePtr));
+    const std::vector<uint64_t>& graphicsIds = mTypeToIds.at(graphicsType);
+    for (const auto id : graphicsIds)
     {
-        const GraphicsPipelinePtr& resource = std::any_cast<GraphicsPipelinePtr>(mIdToResource.at(id));
-        resource->uploadPushConstant(commandBuffer, pushConstantId, data);
+        const auto& resource = std::dynamic_pointer_cast<GraphicsPipeline>(mIdToResource.at(id));
+        resource->uploadPushConstants(commandBuffer);
     }
-}
 
-void RegistryManager::uploadComputePushConstant(const VkCommandBuffer commandBuffer, const uint64_t id, const uint32_t pushConstantId, const void* data) const
-{
-    if (mIdToResource.contains(id))
+    const auto computeType = std::type_index(typeid(ComputePipelinePtr));
+    const std::vector<uint64_t>& computeIds = mTypeToIds.at(computeType);
+    for (const auto id : computeIds)
     {
-        const ComputePipelinePtr& resource = std::any_cast<ComputePipelinePtr>(mIdToResource.at(id));
-        resource->uploadPushConstant(commandBuffer, pushConstantId, data);
+        const auto& resource = std::dynamic_pointer_cast<ComputePipeline>(mIdToResource.at(id));
+        resource->uploadPushConstants(commandBuffer);
     }
 }

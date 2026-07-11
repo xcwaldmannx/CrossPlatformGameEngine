@@ -1,6 +1,6 @@
 #include "RenderContext.h"
 
-#include "../RenderTarget/RenderPass/RenderPass.h"
+#include "../RenderPass/RenderPass.h"
 #include "../Swapchain/Swapchain.h"
 #include "../Resource/Texture/Texture.h"
 
@@ -20,13 +20,6 @@ RenderContext::RenderContext(
 {
 	mCommandPool = mCommandPoolFactory.create(mGraphicsFamilyIndex);
 
-	mSwapchain = mSwapchainFactory.create(
-		mWindowManager.getWindow(),
-		mGraphicsFamilyIndex,
-		mPresentFamilyIndex);
-
-	// mRenderPass = mRenderPassFactory.create(VK_FORMAT_R8G8B8A8_SRGB);
-
 	resize();
 }
 
@@ -40,34 +33,33 @@ void RenderContext::resize()
 
 	vkDeviceWaitIdle(mDevice);
 
-	mSwapchain->destroy(mDevice);
+	if (mSwapchain)
+	{
+		mSwapchain->destroy(mDevice);
+	}
 
 	mSwapchain = mSwapchainFactory.create(
 		mWindowManager.getWindow(),
 		mGraphicsFamilyIndex,
 		mPresentFamilyIndex);
 
-	// if (mDepthTexture)
-	// {
-	// 	mDepthTexture->destroy(mDevice);
-	// }
+	if (mDepthTexture)
+	{
+	 	mDepthTexture->destroy(mDevice);
+	}
 
-	// mDepthTexture = mTextureFactory.createDepth(
-	// 	mCommandPool,
-	// 	mSwapchain->getExtent().width,
-	// 	mSwapchain->getExtent().height);
+	mDepthTexture = mTextureFactory.createDepth(
+		mCommandPool,
+		mSwapchain->getExtent().width,
+		mSwapchain->getExtent().height);
 
-	// mSwapchain->createFrameBuffers(
-	// 	mDevice,
-	// 	mRenderPass->handle(),
-	// 	mDepthTexture->handle());
+	mSwapchain->setDepthTexture(mDepthTexture);
 
 	mWindowManager.setResized(false);
 }
 
 void RenderContext::cleanup() const
 {
-	mRenderPass->destroy(mDevice);
 	mDepthTexture->destroy(mDevice);
 	mSwapchain->destroy(mDevice);
 	mCommandPool->destroy(mDevice);
@@ -81,9 +73,4 @@ const CommandPoolPtr& RenderContext::getCommandPool() const
 const SwapchainPtr& RenderContext::getSwapchain() const
 {
 	return mSwapchain;
-}
-
-const RenderPassPtr& RenderContext::getRenderPass() const
-{
-	return mRenderPass;
 }

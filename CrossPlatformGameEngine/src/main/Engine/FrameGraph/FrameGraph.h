@@ -1,8 +1,7 @@
 #pragma once
 
+#include "../Core/Types.h"
 #include "FramePass/FramePass.h"
-
-#include "../Registry/FramePass/FramePassRegistry.h"
 
 #include <vector>
 #include <queue>
@@ -14,6 +13,7 @@
 namespace ascen
 {
 
+	/*
 	struct ResourceLastUsage
 	{
 		GpuResource mResource;
@@ -27,22 +27,18 @@ namespace ascen
 		std::vector<unsigned int> mDependencies;
 		std::vector<GpuResource> mResources;
 	};
+	*/
 
 	class FrameGraph
 	{
 	public:
-		FrameGraph(
-			FramePassRegistry& framePassRegistry,
-			const ResourceRegistry& resourceRegistry);
-
-		void compile();
-
-		const std::vector<FramePassPtr>& getExecutions() const;
+		std::vector<FramePassPtr> compile(const std::vector<FramePassPtr>& framePasses);
 
 	private:
-		bool needsBarrier(const GpuResource& previous, const GpuResource& current);
+		// bool needsBarrier(const GpuResource& previous, const GpuResource& current);
 
 		// Returns a list of pass indices in execution order.
+		/*
 		static std::vector<unsigned int> topoSort(const std::vector<FrameGraphNode>& nodes)
 		{
 			const unsigned int n = static_cast<unsigned int>(nodes.size());
@@ -108,15 +104,11 @@ namespace ascen
 
 			return order;
 		}
+		*/
 
 	private:
-		FramePassRegistry& mFramePassRegistry;
-		const ResourceRegistry& mResourceRegistry;
-
-		std::vector<FramePassPtr> mExecutions;
-
-		static std::unordered_map<ResourceAccess, VkAccessFlags2> sResourceAccessMap;
-		static std::unordered_map<ResourceStage, VkPipelineStageFlags2> sResourceStageMap;
+		// static std::unordered_map<ResourceAccess, VkAccessFlags2> sResourceAccessMap;
+		// static std::unordered_map<ResourceStage, VkPipelineStageFlags2> sResourceStageMap;
 	};
 
 }

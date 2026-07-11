@@ -2,7 +2,7 @@
 
 #include "Registry_I.h"
 #include "../Core/Types.h"
-#include "../Pipeline/GraphicsPipeline/GraphicsPipeline_I.h"
+#include "../Pipeline/GraphicsPipeline/GraphicsPipeline.h"
 #include "../Pipeline/GraphicsPipeline/GraphicsPipelineFactory.h"
 
 #include <any>
@@ -17,12 +17,10 @@ namespace ascen
         GraphicsPipelineRegistry(
             const VkDevice device,
             const SwapchainPtr& swapchain,
-            const RenderPassPtr& renderPass,
             const GraphicsPipelineFactory& graphicsPipelineFactory,
-            std::unordered_map<uint64_t, registry::Resource>* idToResource) :
+            std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* idToResource) :
             mDevice(device),
             mSwapchain(swapchain),
-            mRenderPass(renderPass),
             mGraphicsPipelineFactory(graphicsPipelineFactory),
             mIdToResource(idToResource) {}
 
@@ -34,11 +32,12 @@ namespace ascen
 
             for (auto layoutId : entry.mDescriptorSetLayoutIds)
             {
-                const auto& layout = std::any_cast<DescriptorSetLayoutPtr>(mIdToResource->at(layoutId));
+                const auto& layout = std::dynamic_pointer_cast<DescriptorSetLayout>(mIdToResource->at(layoutId));
                 layouts.push_back(layout);
             }
 
-            const auto& vertex = std::any_cast<VertexPtr>(mIdToResource->at(entry.mVertexId));
+            const auto& vertex = std::dynamic_pointer_cast<Vertex>(mIdToResource->at(entry.mVertexId));
+            const auto& renderPass = std::dynamic_pointer_cast<RenderPass>(mIdToResource->at(entry.mRenderPassId));
 
             resource = mGraphicsPipelineFactory.create(
                 entry.mParams,
@@ -47,16 +46,15 @@ namespace ascen
                 vertex,
                 layouts,
                 mSwapchain,
-                mRenderPass);
+                renderPass);
         }
 
     private:
         const VkDevice mDevice;
         const SwapchainPtr& mSwapchain;
-        const RenderPassPtr& mRenderPass;
         const GraphicsPipelineFactory& mGraphicsPipelineFactory;
 
-        std::unordered_map<uint64_t, registry::Resource>* mIdToResource = nullptr;
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* mIdToResource = nullptr;
     };
 
 }

@@ -2,6 +2,8 @@
 
 #include "../Handle/Handle.h"
 
+#include <cstring>
+
 #include <vulkan/vulkan.h>
 
 namespace ascen
@@ -16,7 +18,25 @@ namespace ascen
 			return mLayout;
 		}
 
-		virtual void destroy(VkDevice device) override = 0;
+		void destroy(VkDevice device) override = 0;
+
+		template<typename T>
+		void setPushConstant(const uint32_t pushConstantId, const T& data)
+		{
+			auto& pushConstant = mPushConstants.at(pushConstantId);
+			const size_t dataSize = sizeof(T);
+
+			if (dataSize > pushConstant.mSize)
+			{
+				throw std::runtime_error("Push constant range too small for data type.");
+			}
+
+			if (!pushConstant.mData) {
+				pushConstant.mData = std::make_shared<char[]>(pushConstant.mSize);
+			}
+
+			std::memcpy(pushConstant.mData.get(), &data, dataSize);
+		}
 
 	protected:
 		VkPipelineLayout mLayout{};

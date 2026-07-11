@@ -1,8 +1,8 @@
 #pragma once
 
 #include "../FrameGraph/FrameGraph.h"
+#include "../Registry2/RegistryManager.h"
 
-#include <Mass.h>
 #include <vulkan/vulkan.h>
 
 #include "../CommandRecorder/ComputeCommandRecorder/ComputeCommandRecorder.h"
@@ -43,7 +43,8 @@ namespace ascen
 			WindowManager& windowManager,
 			EcsSystem& ecsSystem,
 			VulkanContext& vulkanContext,
-			RenderContext& renderContext);
+			RenderContext& renderContext,
+			RegistryManager& registryManager);
 
 		// void updateRenderSystem();
 
@@ -59,6 +60,11 @@ namespace ascen
 		uint32_t getFrameIndex() const;
 
 	private:
+		void acquireNextFrame(const SwapchainPtr& swapchain);
+		void submitFrame(const CommandPoolPtr& commandPool) const;
+		void presentFrame(const SwapchainPtr& swapchain) const;
+
+	private:
 		WindowManager& mWindowManager;
 		EcsSystem& mEcsSystem;
 		const VkPhysicalDevice mPhysicalDevice;
@@ -66,6 +72,7 @@ namespace ascen
 		const VkQueue mPresentQueue;
 		const VkDevice mDevice;
 		RenderContext& mRenderContext;
+		RegistryManager& mRegistryManager;
 
 		FrameGraph mFrameGraph;
 

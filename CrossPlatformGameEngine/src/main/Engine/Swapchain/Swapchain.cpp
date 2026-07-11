@@ -6,15 +6,19 @@
 #include <array>
 #include <limits>
 
+#include "../Resource/Texture/Texture.h"
+
 using namespace ascen;
 
 Swapchain::Swapchain(
-	GLFWwindow* window,
-	VkPhysicalDevice physicalDevice,
-    VkDevice device,
-	VkSurfaceKHR surface,
-	uint32_t graphicsFamily,
-	uint32_t presentFamily)
+    GLFWwindow* window,
+    const VkPhysicalDevice physicalDevice,
+    const VkDevice device,
+    const VkSurfaceKHR surface,
+    const uint32_t graphicsFamily,
+    const uint32_t presentFamily) :
+        mPhysicalDevice(physicalDevice),
+        mDevice(device)
 {
 	SwapchainSupportDetails swapChainSupport = querySwapchainSupport(physicalDevice, surface);
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.mFormats);
@@ -24,7 +28,7 @@ Swapchain::Swapchain(
 
     mImageFormat = surfaceFormat.format;
 
-    mImageCount = swapChainSupport.mCapabilities.minImageCount + 1;
+    mImageCount = swapChainSupport.mCapabilities.minImageCount;
 
     if (swapChainSupport.mCapabilities.maxImageCount > 0 &&
         mImageCount > swapChainSupport.mCapabilities.maxImageCount)
@@ -70,20 +74,16 @@ Swapchain::Swapchain(
     vkGetSwapchainImagesKHR(device, mHandle, &mImageCount, nullptr);
     mImages.resize(mImageCount);
     vkGetSwapchainImagesKHR(device, mHandle, &mImageCount, mImages.data());
-
-    // createImageViews(device);
 }
 
 void Swapchain::destroy(VkDevice device)
 {
-    // destroyFrameBuffers(device);
-
-    // destroyImageViews(device);
-
+    destroyFrameBuffers(device);
+    destroyImageViews(device);
     vkDestroySwapchainKHR(device, mHandle, nullptr);
 }
 
-const VkExtent2D& Swapchain::getExtent()
+const VkExtent2D& Swapchain::getExtent() const
 {
     return mExtent;
 }
@@ -103,10 +103,12 @@ VkFormat Swapchain::getImageFormat() const
     return mImageFormat;
 }
 
-// const std::vector<VkFramebuffer>& Swapchain::getFramebuffers()
-// {
-//     return mFrameBuffers;
-// }
+VkFramebuffer_T* Swapchain::getFrameBuffer(uint32_t imageIndex) const
+{
+    const auto& frameBuffer = mFrameBuffers.at(imageIndex);
+    //mCurrentFrameIndex = (mCurrentFrameIndex + 1) % mFrameBuffers.size();
+    return frameBuffer;
+}
 
 SwapchainSupportDetails Swapchain::querySwapchainSupport(
     VkPhysicalDevice physicalDevice,
@@ -194,12 +196,20 @@ VkExtent2D Swapchain::chooseSwapExtent(
     }
 }
 
-/*
-void Swapchain::createFrameBuffers(
-    VkDevice device,
-    VkRenderPass renderPass,
-    VkImageView depthImageView)
+void Swapchain::setDepthTexture(const TexturePtr& texture)
 {
+    mDepthTexture = texture;
+}
+
+void Swapchain::createFrameBuffers(
+    const VkDevice device,
+    const VkRenderPass renderPass)
+{
+    destroyImageViews(device);
+    createImageViews(device);
+
+    destroyFrameBuffers(mDevice);
+
     mFrameBuffers.resize(mImageViews.size());
 
     for (size_t i = 0; i < mImageViews.size(); i++)
@@ -207,7 +217,7 @@ void Swapchain::createFrameBuffers(
         std::array<VkImageView, 2> attachments =
         {
             mImageViews[i],
-            depthImageView
+            mDepthTexture->handle(),
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
@@ -219,23 +229,22 @@ void Swapchain::createFrameBuffers(
         framebufferInfo.height = mExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(
-            device, &framebufferInfo, nullptr, &mFrameBuffers[i]) != VK_SUCCESS)
+        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &mFrameBuffers[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create framebuffer!");
         }
     }
 }
 
-void Swapchain::destroyFrameBuffers(VkDevice device)
+void Swapchain::destroyFrameBuffers(const VkDevice device) const
 {
-    for (auto framebuffer : mFrameBuffers)
+    for (const auto& framebuffer : mFrameBuffers)
     {
         vkDestroyFramebuffer(device, framebuffer, nullptr);
     }
 }
 
-void Swapchain::createImageViews(VkDevice device)
+void Swapchain::createImageViews(const VkDevice device)
 {
     mImageViews.resize(mImages.size());
 
@@ -263,11 +272,10 @@ void Swapchain::createImageViews(VkDevice device)
     }
 }
 
-void Swapchain::destroyImageViews(VkDevice device)
+void Swapchain::destroyImageViews(const VkDevice device) const
 {
     for (auto imageView : mImageViews)
     {
         vkDestroyImageView(device, imageView, nullptr);
     }
 }
-*/

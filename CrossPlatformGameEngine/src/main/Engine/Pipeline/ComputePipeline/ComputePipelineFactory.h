@@ -2,8 +2,6 @@
 
 #include "../../Core/Types.h"
 
-#include "ComputePipeline_I.h"
-
 #include <memory>
 
 #include <string>
@@ -20,7 +18,7 @@ namespace ascen
 		ComputePipelineFactory(VkDevice device);
 
 		ComputePipelinePtr create(
-			const ComputePipelineParams& params,
+			const pipeline::ComputeParams& params,
 			const std::string& computeShaderFilepath,
 			const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayout) const;
 

@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../Handle/Handle.h"
+#include "../Device/Physical/PhysicalDevice.h"
+#include "../Resource/Image/Image.h"
 
 #include <vector>
 
@@ -26,22 +28,23 @@ namespace ascen
 	private:
 		Swapchain(
 			GLFWwindow* window,
-			VkPhysicalDevice physicalDevice,
-			VkDevice device,
-			VkSurfaceKHR surface,
-			uint32_t graphicsFamily,
-			uint32_t presentFamily);
+			const VkPhysicalDevice physicalDevice,
+			const VkDevice device,
+			const VkSurfaceKHR surface,
+			const uint32_t graphicsFamily,
+			const uint32_t presentFamily);
 
 	public:
 		void destroy(VkDevice device) override;
 
 		//void recreate(VkDevice device);
 
-		const VkExtent2D& getExtent();
+		const VkExtent2D& getExtent() const;
 		uint32_t getImageCount() const;
 		const std::vector<VkImage>& getImages() const;
 		VkFormat getImageFormat() const;
-		// const std::vector<VkFramebuffer>& getFramebuffers();
+
+		VkFramebuffer_T* getFrameBuffer(uint32_t imageIndex) const;
 
 		static SwapchainSupportDetails querySwapchainSupport(
 			VkPhysicalDevice physicalDevice,
@@ -57,21 +60,29 @@ namespace ascen
 			GLFWwindow* window,
 			const VkSurfaceCapabilitiesKHR& capabilities);
 
-		// void createFrameBuffers(
-		// 	VkDevice device,
-		// 	VkRenderPass renderPass,
-		// 	VkImageView depthImageView);
+		void setDepthTexture(const TexturePtr& texture);
 
-		// void destroyFrameBuffers(VkDevice device);
+		void createFrameBuffers(
+			VkDevice device,
+			VkRenderPass renderPass);
 
-		// void createImageViews(VkDevice device);
+		void destroyFrameBuffers(VkDevice device) const;
 
-		// void destroyImageViews(VkDevice device);
+		void createImageViews(VkDevice device);
+
+		void destroyImageViews(VkDevice device) const;
 
 	private:
+		const VkPhysicalDevice mPhysicalDevice;
+		const VkDevice mDevice;
+
 		std::vector<VkImage> mImages;
-		// std::vector<VkImageView> mImageViews;
-		// std::vector<VkFramebuffer> mFrameBuffers;
+		std::vector<VkImageView> mImageViews;
+
+		TexturePtr mDepthTexture = nullptr;
+
+		std::vector<VkFramebuffer> mFrameBuffers;
+		// uint32_t mCurrentFrameIndex = 0;
 
 		uint32_t mImageCount;
 		VkFormat mImageFormat{};

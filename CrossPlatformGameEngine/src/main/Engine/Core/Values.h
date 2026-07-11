@@ -128,4 +128,18 @@ namespace ascen
 
     using AccessMaskFlag = uint32_t;
 
+    typedef enum FramePassType
+    {
+        FRAMEPASS_TYPE_GRAPHICS,
+        FRAMEPASS_TYPE_COMPUTE
+    } FramePassType;
+
+    typedef enum FramePassDrawMode
+    {
+        FRAME_PASS_DRAW_MODE_NONE,
+        FRAMEPASS_DRAW_MODE_TRIANGLES,
+        FRAMEPASS_DRAW_MODE_LINES,
+        FRAMEPASS_DRAW_MODE_POINTS,
+    } FramePassDrawMode;
+
 }

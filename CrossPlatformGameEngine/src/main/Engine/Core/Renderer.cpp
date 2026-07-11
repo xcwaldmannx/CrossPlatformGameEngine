@@ -8,23 +8,12 @@
 #include "../CommandRecorder/LineCommandRecorder/LineCommandRecorder.h"
 #include "../CommandRecorder/MeshCommandRecorder/MeshCommandRecorder.h"
 #include "../Swapchain/Swapchain.h"
-#include "../FrameGraph/FramePass/GpuFramePass/GraphicsGpuFramePass/GraphicsGpuFramePass.h"
-#include "../FrameGraph/FramePass/GpuFramePass/ComputeGpuFramePass/ComputeGpuFramePass.h"
 #include "../Resource/Barrier/Barrier.h"
 #include "../Resource/Buffer/Buffer.h"
-#include "../Registry/Vertex/VertexRegistry.h"
-#include "../Registry/Resource/ResourceRegistry.h"
-#include "../Registry/Resource/ResourceRegistryBackend.h"
-#include "../Registry/Descriptor/DescriptorRegistry.h"
-#include "../Registry/Pipeline/PipelineRegistry.h"
-#include "../Registry/FramePass/FramePassRegistry.h"
-#include "../Registry/RenderTarget/RenderTargetRegistry.h"
 
 #include <filesystem>
 
 #include <glm/glm.hpp>
-
-#include "../Registry/RenderTarget/RenderTargetRegistryBackend.h"
 
 using namespace ascen;
 
@@ -32,7 +21,8 @@ Renderer::Renderer(
 	WindowManager& windowManager,
 	EcsSystem& ecsSystem,
 	VulkanContext& vulkanContext,
-	RenderContext& renderContext) :
+	RenderContext& renderContext,
+	RegistryManager& registryManager) :
 	mWindowManager(windowManager),
 	mEcsSystem(ecsSystem),
 	mPhysicalDevice(vulkanContext.getPhysicalDevice()),
@@ -40,25 +30,183 @@ Renderer::Renderer(
 	mPresentQueue(vulkanContext.getPresentQueue()),
 	mDevice(vulkanContext.getDevice()),
 	mRenderContext(renderContext),
-	mFrameGraph(mFramePassRegistry, mResourceRegistry),
-	mLineCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
-	mMeshCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry),
-	mComputeCommandRecorder(mPipelineRegistry, mDescriptorRegistry, mResourceRegistry)
+	mRegistryManager(registryManager)
 {
 	createSyncObjects();
 }
 
 void Renderer::drawFrame()
 {
-	if (::WindowManager::getWidth() == 0 ||
-		::WindowManager::getHeight() == 0)
+	if (WindowManager::getWidth() == 0 ||
+		WindowManager::getHeight() == 0)
 	{
 		return;
 	}
 
-	const auto& commandPool = mRenderContext.getCommandPool();
 	const auto& swapchain = mRenderContext.getSwapchain();
 
+	acquireNextFrame(swapchain);
+
+	auto framePasses = mFrameGraph.compile(mRegistryManager.getResourceType<FramePass>());
+
+	const auto& commandPool = mRenderContext.getCommandPool();
+	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
+
+	uint64_t currentRenderPass = 0;
+	bool isRenderPassActive = false;
+
+	for (const auto& framePass : framePasses)
+	{
+		switch (framePass->mType)
+		{
+			case FRAMEPASS_TYPE_GRAPHICS:
+			{
+				if (!isRenderPassActive || currentRenderPass != framePass->mRenderPassId)
+				{
+					if (isRenderPassActive)
+					{
+						commandPool->endRenderPass(commandBuffer);
+					}
+
+					const auto& renderPassPtr = mRegistryManager.getResource<RenderPass>(framePass->mRenderPassId);
+
+					VkFramebuffer frameBuffer = VK_NULL_HANDLE;
+
+					if (framePass->mFrameBufferId == 0) // use swapchain framebuffer
+					{
+						swapchain->createFrameBuffers(mDevice, renderPassPtr->handle());
+						frameBuffer = swapchain->getFrameBuffer(mImageIndex);
+					}
+					else // use specific framebuffer
+					{
+						const auto& frameBufferPtr = mRegistryManager.getResource<FrameBuffer>(framePass->mFrameBufferId);
+						frameBuffer = frameBufferPtr->handle();
+					}
+
+					VkExtent2D extent;
+
+					if (framePass->mExtent.width == 0 && framePass->mExtent.height == 0) // use swapchain extent
+					{
+						extent = swapchain->getExtent();
+					}
+					else // use specific extent
+					{
+						extent = framePass->mExtent;
+					}
+
+
+					// temp
+					if (framePass->mIndirectBufferId != 0)
+					{
+						const auto& indirectBufferPtr =
+							mRegistryManager.getResource<Buffer>(framePass->mIndirectBufferId);
+
+						VkBufferMemoryBarrier barrier{};
+						barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+
+						barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+						barrier.dstAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
+
+						barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+						barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+
+						barrier.buffer = indirectBufferPtr->handle();
+						barrier.offset = 0;
+						barrier.size = VK_WHOLE_SIZE;
+
+						vkCmdPipelineBarrier(
+							commandBuffer,
+							VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+							VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,
+							0,
+							0,
+							nullptr,
+							1,
+							&barrier,
+							0,
+							nullptr);
+					}
+					// temp
+
+
+					commandPool->beginRenderPass(commandBuffer, renderPassPtr, frameBuffer, extent);
+					isRenderPassActive = true;
+					currentRenderPass = framePass->mRenderPassId;
+				}
+
+				const auto& pipeline = mRegistryManager.getResource<GraphicsPipeline>(framePass->mPipelineId);
+
+				std::vector<VkDescriptorSet> descriptorSets;
+				for (const auto& id : framePass->mDescriptorSetIds)
+				{
+					const auto& set = mRegistryManager.getResource<DescriptorSet>(id);
+					descriptorSets.push_back(set->handle());
+				}
+
+				std::vector<VkBuffer> vertexBuffers;
+				for (const auto& id : framePass->mVertexBufferIds)
+				{
+					const auto& buffer = mRegistryManager.getResource<Buffer>(id);
+					vertexBuffers.push_back(buffer->handle());
+				}
+
+				const auto& indexBufferPtr = mRegistryManager.getResource<Buffer>(framePass->mIndexBufferId);
+				const VkBuffer indexBuffer = indexBufferPtr->handle();
+
+				const auto& indirectBufferPtr = mRegistryManager.getResource<Buffer>(framePass->mIndirectBufferId);
+				const VkBuffer indirectBuffer = indirectBufferPtr->handle();
+
+				if (framePass->mDrawMode == FRAMEPASS_DRAW_MODE_TRIANGLES)
+				{
+					mMeshCommandRecorder.record(commandBuffer, pipeline, descriptorSets, vertexBuffers, indexBuffer, indirectBuffer, 1'000'000);
+				}
+				else if (framePass->mDrawMode == FRAMEPASS_DRAW_MODE_LINES)
+				{
+					mLineCommandRecorder.record(commandBuffer, pipeline, descriptorSets, vertexBuffers, indexBuffer);
+				}
+				break;
+			}
+			case FRAMEPASS_TYPE_COMPUTE:
+			{
+				if (isRenderPassActive)
+				{
+					commandPool->endRenderPass(commandBuffer);
+					isRenderPassActive = false;
+				}
+
+				const auto& pipeline = mRegistryManager.getResource<ComputePipeline>(framePass->mPipelineId);
+
+				std::vector<VkDescriptorSet> descriptorSets;
+				for (const auto& id : framePass->mDescriptorSetIds)
+				{
+					const auto& set = mRegistryManager.getResource<DescriptorSet>(id);
+					descriptorSets.push_back(set->handle());
+				}
+
+				mComputeCommandRecorder.record(commandBuffer, pipeline, descriptorSets, framePass->mComputeGroups);
+				break;
+			}
+			default:
+				break;
+		}
+	}
+
+	if (isRenderPassActive)
+	{
+		commandPool->endRenderPass(commandBuffer);
+		isRenderPassActive = false;
+	}
+
+	commandPool->endCommand(commandBuffer);
+
+	submitFrame(commandPool);
+	presentFrame(swapchain);
+
+	mFrameIndex = (mFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+}
+
+void Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
+{
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
 
 	const VkResult nextImageResult = vkAcquireNextImageKHR(
@@ -81,102 +229,15 @@ void Renderer::drawFrame()
 	}
 
 	vkResetFences(mDevice, 1, &mInFlightFences[mFrameIndex]);
+}
 
-	mFrameGraph.compile();
-	const auto& executions = mFrameGraph.getExecutions();
-
-	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
-
-	// upload all push constants
-	// mPipelineRegistry.uploadAllPushConstants(commandBuffer);
-
-	VkRenderPass currentRenderPass = VK_NULL_HANDLE;
-	bool isRenderPassActive = false;
-
-	for (const auto& exec : executions)
-	{
-		switch (exec->mType)
-		{
-		case FramePassType::GRAPHICS:
-		{
-			const auto& pass = reinterpret_cast<const GraphicsGpuFramePass*>(exec.get());
-
-			const auto& renderPass = RenderTargetRegistryBackend::getRenderPass(mRenderTargetRegistry, pass->mRenderPass);
-
-			if (!isRenderPassActive || currentRenderPass != renderPass->handle())
-			{
-				if (isRenderPassActive)
-				{
-					commandPool->endRenderPass(commandBuffer);
-				}
-
-				const auto& renderTarget = RenderTargetRegistryBackend::getRenderTarget(mRenderTargetRegistry, pass->mRenderTarget);
-
-				commandPool->beginRenderPass(commandBuffer, mImageIndex, renderPass, swapchain);
-				isRenderPassActive = true;
-
-				currentRenderPass = renderPass->handle();
-			}
-
-			if (pass->mMode == GraphicsMode::MESH)
-			{
-				mMeshCommandRecorder.record(commandBuffer, pass, mFrameIndex);
-			}
-			else if (pass->mMode == GraphicsMode::LINES)
-			{
-				mLineCommandRecorder.record(commandBuffer, pass, mFrameIndex);
-			}
-			break;
-		}
-		case FramePassType::COMPUTE:
-		{
-			if (isRenderPassActive)
-			{
-				commandPool->endRenderPass(commandBuffer);
-				isRenderPassActive = false;
-			}
-
-			const auto& pass = reinterpret_cast<const ComputeGpuFramePass*>(exec.get());
-
-			mComputeCommandRecorder.record(commandBuffer, pass, mFrameIndex);
-			break;
-		}
-		case FramePassType::SYNC:
-		{
-			const auto& pass = reinterpret_cast<const SyncFramePass*>(exec.get());
-			Barrier::buffer(
-				commandBuffer,
-				pass->mBuffer,
-				pass->mSrcAccess,
-				pass->mSrcStage,
-				pass->mDstAccess,
-				pass->mDstStage);
-		}
-			break;
-		case FramePassType::NONE:
-		{
-
-		}
-		default:
-		{
-			return;
-		}
-		}
-	}
-
-	if (isRenderPassActive)
-	{
-		commandPool->endRenderPass(commandBuffer);
-		isRenderPassActive = false;
-	}
-
-	commandPool->endCommand(commandBuffer);
-
+void Renderer::submitFrame(const CommandPoolPtr& commandPool) const
+{
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore waitSemaphores[] = { mImageAvailableSemaphores[mFrameIndex] };
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }; // previously was VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+	const VkSemaphore waitSemaphores[] = { mImageAvailableSemaphores[mFrameIndex] };
+	const VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_ALL_COMMANDS_BIT }; // previously was VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
@@ -191,6 +252,10 @@ void Renderer::drawFrame()
 	{
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
+}
+void Renderer::presentFrame(const SwapchainPtr& swapchain) const
+{
+	const VkSemaphore signalSemaphores[] = { mRenderFinishedForImageSemaphores[mImageIndex] };
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -218,7 +283,6 @@ void Renderer::drawFrame()
 		throw std::runtime_error("failed to present swap chain image!");
 	}
 
-	mFrameIndex = (mFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void Renderer::createSyncObjects()

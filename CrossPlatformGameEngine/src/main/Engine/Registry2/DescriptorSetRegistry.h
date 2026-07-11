@@ -21,7 +21,7 @@ namespace ascen
         DescriptorSetRegistry(
             const VkDevice device,
             const DescriptorFactory& descriptorFactory,
-            std::unordered_map<uint64_t, registry::Resource>* idToResource) :
+            std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* idToResource) :
             mDevice(device),
             mDescriptorFactory(descriptorFactory),
             mIdToResource(idToResource) {}
@@ -36,9 +36,9 @@ namespace ascen
             {
                 switch (r.mLocation.mType)
                 {
-                    case IMAGE:
+                    case DESCRIPTOR_TYPE_IMAGE:
                     {
-                        const auto& texture = std::any_cast<TexturePtr>(mIdToResource->at(r.mResourceId));
+                        const auto& texture = std::dynamic_pointer_cast<Texture>(mIdToResource->at(r.mResourceId));
 
                         writes.push_back(mDescriptorFactory.createImageWrite(
                             static_cast<VkDescriptorType>(r.mLocation.mType),
@@ -47,9 +47,9 @@ namespace ascen
                             r.mLocation.mSlot));
                         break;
                     }
-                    case SAMPLER:
+                    case DESCRIPTOR_TYPE_SAMPLER:
                     {
-                        const auto& sampler = std::any_cast<SamplerPtr>(mIdToResource->at(r.mResourceId));
+                        const auto& sampler = std::dynamic_pointer_cast<Sampler>(mIdToResource->at(r.mResourceId));
 
                         writes.push_back(mDescriptorFactory.createImageWrite(
                             static_cast<VkDescriptorType>(r.mLocation.mType),
@@ -58,15 +58,14 @@ namespace ascen
                             r.mLocation.mSlot));
                         break;
                     }
-                    case IMAGE_SAMPLER:
+                    case DESCRIPTOR_TYPE_IMAGE_SAMPLER:
                         break;
-                    case UBO:
-                    case UBO_DYNAMIC:
-                    case SSBO:
-                    case SSBO_DYNAMIC:
-                    default:
+                    case DESCRIPTOR_TYPE_UBO:
+                    case DESCRIPTOR_TYPE_UBO_DYNAMIC:
+                    case DESCRIPTOR_TYPE_SSBO:
+                    case DESCRIPTOR_TYPE_SSBO_DYNAMIC:
                     {
-                        const auto& buffer = std::any_cast<BufferPtr>(mIdToResource->at(r.mResourceId));
+                        const auto& buffer = std::dynamic_pointer_cast<Buffer>(mIdToResource->at(r.mResourceId));
 
                         writes.push_back(mDescriptorFactory.createBufferWrite(
                             static_cast<VkDescriptorType>(r.mLocation.mType),
@@ -75,11 +74,13 @@ namespace ascen
                             r.mSize,
                             r.mLocation.mSlot));
                     }
+                    default:
+                        break;
                 }
             }
 
-            const auto& descriptorPool = std::any_cast<DescriptorPoolPtr>(mIdToResource->at(entry.mPoolId));
-            const auto& descriptorSetLayout = std::any_cast<DescriptorSetLayoutPtr>(mIdToResource->at(entry.mLayoutId));
+            const auto& descriptorPool = std::dynamic_pointer_cast<DescriptorPool>(mIdToResource->at(entry.mPoolId));
+            const auto& descriptorSetLayout = std::dynamic_pointer_cast<DescriptorSetLayout>(mIdToResource->at(entry.mLayoutId));
 
             resource = mDescriptorFactory.createSet(descriptorPool, descriptorSetLayout, writes);
         }
@@ -87,7 +88,7 @@ namespace ascen
     private:
         const VkDevice mDevice;
         const DescriptorFactory& mDescriptorFactory;
-        std::unordered_map<uint64_t, registry::Resource>* mIdToResource = nullptr;
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* mIdToResource = nullptr;
     };
 
 }

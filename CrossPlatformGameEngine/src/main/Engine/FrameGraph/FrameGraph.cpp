@@ -1,15 +1,17 @@
 #include "FrameGraph.h"
 
-#include "../Registry/FramePass/FramePassRegistryBackend.h"
-
 #include <algorithm>
 #include <chrono>
 #include <iostream>
 
-#include "../Registry/Resource/ResourceRegistryBackend.h"
-
 using namespace ascen;
 
+std::vector<FramePassPtr> FrameGraph::compile(const std::vector<FramePassPtr>& framePasses)
+{
+    return framePasses;
+}
+
+/*
 std::unordered_map<ResourceAccess, VkAccessFlags2> FrameGraph::sResourceAccessMap =
 {
     { ResourceAccess::READ,  VK_ACCESS_2_SHADER_READ_BIT  },
@@ -23,17 +25,9 @@ std::unordered_map<ResourceStage, VkPipelineStageFlags2> FrameGraph::sResourceSt
     { ResourceStage::COMPUTE,  VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT  },
 };
 
-FrameGraph::FrameGraph(
-    FramePassRegistry& framePassRegistry,
-    const ResourceRegistry& resourceRegistry) :
-	mFramePassRegistry(framePassRegistry),
-    mResourceRegistry(resourceRegistry) {}
-
-void FrameGraph::compile()
+std::vector<FramePassPtr> FrameGraph::compile(const std::vector<FramePassPtr>& framePasses)
 {
-    mExecutions.clear();
-
-    const auto framePasses = FramePassRegistryBackend::getFramePasses(mFramePassRegistry);
+    std::vector<FramePassPtr> compiledFramePasses;
 
     std::unordered_map<std::string, std::string> resourcePrevFramePass;
     std::unordered_map<std::string, ResourceAccess> resourcePrevAccess;
@@ -83,7 +77,7 @@ void FrameGraph::compile()
 
                             mFramePassRegistry.reconstruct();
 
-                            mExecutions.push_back(FramePassRegistryBackend::getFramePass(mFramePassRegistry, syncName));
+                            compiledFramePasses.push_back(FramePassRegistryBackend::getFramePass(mFramePassRegistry, syncName));
                         }
                     }
                 }
@@ -96,7 +90,7 @@ void FrameGraph::compile()
             previousPassType = framePass->mType;
         }
 
-        mExecutions.push_back(framePass);
+        compiledFramePasses.push_back(framePass);
     }
 
     // debug logging below
@@ -145,7 +139,7 @@ void FrameGraph::compile()
 #endif
 }
 
-const std::vector<FramePassPtr>& FrameGraph::getExecutions() const
+const std::vector<FramePassPtr>& FrameGraph::getFramePasses() const
 {
 	return mExecutions;
 }
@@ -161,3 +155,4 @@ bool FrameGraph::needsBarrier(const GpuResource& previous, const GpuResource& cu
 
     return false;
 }
+*/

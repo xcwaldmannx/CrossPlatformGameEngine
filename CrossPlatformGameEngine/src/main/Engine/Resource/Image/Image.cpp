@@ -162,7 +162,7 @@ void Image::copy(
 	const CommandPoolPtr& commandPool,
 	Buffer& buffer,
 	Image& image,
-	uint32_t layers)
+	uint32_t layers) const
 {
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 

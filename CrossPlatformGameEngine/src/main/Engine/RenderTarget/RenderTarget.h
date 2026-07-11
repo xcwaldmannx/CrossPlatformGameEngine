@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Core/Types.h"
+#include "../Handle/Handle.h"
 
 #include <vector>
 
@@ -11,7 +12,7 @@ namespace ascen
 
     class Swapchain;
 
-    class RenderTarget
+    class RenderTarget : public Handle<void*>
     {
     public:
         RenderTarget(

@@ -16,7 +16,7 @@ namespace ascen
         FrameBufferRegistry(
             const VkDevice device,
             const FrameBufferFactory& frameBufferFactory,
-            std::unordered_map<uint64_t, registry::Resource>* idToResource) :
+            std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* idToResource) :
             mDevice(device),
             mFrameBufferFactory(frameBufferFactory),
             mIdToResource(idToResource) {}
@@ -27,8 +27,8 @@ namespace ascen
 
             const VkExtent2D extent(entry.mWidth, entry.mHeight);
 
-            const RenderPassPtr& renderPass = std::any_cast<RenderPassPtr>(mIdToResource->at(entry.mRenderPassId));
-            const RenderTargetPtr& renderTarget = std::any_cast<RenderTargetPtr>(mIdToResource->at(entry.mRenderTargetId));
+            const RenderPassPtr& renderPass = std::dynamic_pointer_cast<RenderPass>(mIdToResource->at(entry.mRenderPassId));
+            const RenderTargetPtr& renderTarget = std::dynamic_pointer_cast<RenderTarget>(mIdToResource->at(entry.mRenderTargetId));
 
             resource = mFrameBufferFactory.create(renderPass, renderTarget, extent);
         }
@@ -36,7 +36,7 @@ namespace ascen
     private:
         const VkDevice mDevice;
         const FrameBufferFactory& mFrameBufferFactory;
-        std::unordered_map<uint64_t, registry::Resource>* mIdToResource = nullptr;
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* mIdToResource = nullptr;
     };
 
 }

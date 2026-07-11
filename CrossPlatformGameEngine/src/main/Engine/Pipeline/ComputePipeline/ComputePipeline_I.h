@@ -18,7 +18,7 @@ namespace ascen
 
 		virtual void destroy(VkDevice device) override = 0;
 
-		virtual void uploadPushConstant(const VkCommandBuffer commandBuffer, const uint32_t id, const void* data) = 0;
+		virtual void uploadPushConstants(const VkCommandBuffer commandBuffer) = 0;
 
 	protected:
 		const pipeline::ComputeParams& mParams;

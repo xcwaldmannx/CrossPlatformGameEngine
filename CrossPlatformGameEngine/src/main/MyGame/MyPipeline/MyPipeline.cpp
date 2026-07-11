@@ -4,8 +4,6 @@
 
 #include <glm/glm.hpp>
 
-#include "../../Engine/Device/Physical/PhysicalDevice.h"
-
 MyPipeline::MyPipeline(ascen::Engine& engine) : mEngine(engine) {}
 
 void MyPipeline::init()
@@ -39,9 +37,9 @@ void MyPipeline::initResources()
     // Buffers
     // mEngine.resource().registerBuffer({ "BUFFER_CAMERA", ascen::BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
 
-    mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX", 100000, sizeof(float) * 8,
+    mBufferVertex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX", 100000, sizeof(float) * 8,
         ascen::BUFFER_USAGE_VERTEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
-    mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX", 100000, sizeof(uint32_t),
+    mBufferIndex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX", 100000, sizeof(uint32_t),
         ascen::BUFFER_USAGE_INDEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
     mBufferVertexBounds = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX_BOUNDS", 10'000, sizeof(float) * 4,
@@ -51,7 +49,7 @@ void MyPipeline::initResources()
 
     mBufferEntity = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_ENTITY", 1'000'000, sizeof(FrustumCullingSystem::Entity),
         ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
-    mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_DRAWS", 1'000'000, sizeof(ascen::IndexedIndirectDraw),
+    mBufferIndirect = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_DRAWS", mBufferIndirectSize, sizeof(ascen::IndexedIndirectDraw),
         ascen::BUFFER_USAGE_INDIRECT | ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
     // Samplers
@@ -60,18 +58,22 @@ void MyPipeline::initResources()
     // Textures
     mTexture = mEngine.registerResource<ascen::registry::TextureEntry>({ "TEXTURE", ascen::TextureType::IMAGE, 1024, 1024, 1 });
 
-    // Render Targets
-
+    // RenderPass and RenderTarget
     ascen::renderpass::Attachment colorAttachment{};
     colorAttachment.mType = ascen::ATTACHMENT_PRESENT;
     colorAttachment.mFormat = ascen::FORMAT_RGBA8_SRGB;
     colorAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
-    colorAttachment.mStoreOp = ascen::STORE_OP_NA;
+    colorAttachment.mStoreOp = ascen::STORE_OP_STORE;
+    colorAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
+    colorAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
 
     ascen::renderpass::Attachment depthAttachment{};
     depthAttachment.mType = ascen::ATTACHMENT_DEPTH;
     depthAttachment.mFormat = mEngine.getDepthFormat();
     depthAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+    depthAttachment.mStoreOp = ascen::STORE_OP_NA;
+    depthAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
+    depthAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
 
     ascen::renderpass::SubPass subPass{};
     subPass.mBindPoint = ascen::BIND_POINT_GRAPHICS;
@@ -79,7 +81,7 @@ void MyPipeline::initResources()
     subPass.mDepthAttachmentIndex = 1;
 
     ascen::renderpass::SubPassDependency subPassDependency{};
-    subPassDependency.mSrcSubpass = 0;
+    subPassDependency.mSrcSubpass = VK_SUBPASS_EXTERNAL;
     subPassDependency.mDstSubpass = 0;
     subPassDependency.mSrcAccessMask = ascen::ACCESS_NONE;
     subPassDependency.mDstAccessMask = ascen::ACCESS_COLOR_ATTACHMENT_WRITE | ascen::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE;
@@ -102,14 +104,14 @@ void MyPipeline::initResources()
 
     mRenderTarget = mEngine.registerResource<ascen::registry::RenderTargetEntry>(renderTargetEntry);
 
-    ascen::registry::FrameBufferEntry frameBufferEntry{};
-    frameBufferEntry.mName = "FRAMEBUFFER";
-    frameBufferEntry.mRenderPassId = mRenderPass;
-    frameBufferEntry.mRenderTargetId = mRenderTarget;
-    frameBufferEntry.mWidth = mEngine.getScreenWidth();
-    frameBufferEntry.mHeight = mEngine.getScreenHeight();
-
-    mFrameBuffer = mEngine.registerResource<ascen::registry::FrameBufferEntry>(frameBufferEntry);
+    // ascen::registry::FrameBufferEntry frameBufferEntry{};
+    // frameBufferEntry.mName = "FRAMEBUFFER";
+    // frameBufferEntry.mRenderPassId = mRenderPass;
+    // frameBufferEntry.mRenderTargetId = mRenderTarget;
+    // frameBufferEntry.mWidth = mEngine.getScreenWidth();
+    // frameBufferEntry.mHeight = mEngine.getScreenHeight();
+    //
+    // mFrameBuffer = mEngine.registerResource<ascen::registry::FrameBufferEntry>(frameBufferEntry);
 }
 
 void MyPipeline::initStages()
@@ -155,10 +157,10 @@ void MyPipeline::initStages()
         computePipelineEntry.mDescriptorSetLayoutIds = { mDescriptorSetLayoutCompute };
         computePipelineEntry.mParams.mPushConstants =
         {
-                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_COMPUTE } }
+                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_COMPUTE, nullptr } }
         };
 
-        mEngine.registerResource<ascen::registry::ComputePipelineEntry>(computePipelineEntry);
+        mPipelineCompute = mEngine.registerResource<ascen::registry::ComputePipelineEntry>(computePipelineEntry);
     }
 
     // Render visible geometry stage
@@ -199,23 +201,24 @@ void MyPipeline::initStages()
             { mTexture,      l2, 0 },
         };
 
-        mDescriptorSetCompute = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);
+        mDescriptorSetGraphics = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);
 
         ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryTriangles{};
         graphicsPipelineEntryTriangles.mName = "PIPELINE_RENDER_ENTITY";
         graphicsPipelineEntryTriangles.mVertexShaderPath = "src/shaders/Simple/VertexShader.spv";
         graphicsPipelineEntryTriangles.mPixelShaderPath = "src/shaders/Simple/PixelShader.spv";
         graphicsPipelineEntryTriangles.mVertexId = mVertexTriangles;
+        graphicsPipelineEntryTriangles.mRenderPassId = mRenderPass;
         graphicsPipelineEntryTriangles.mDescriptorSetLayoutIds = { mDescriptorSetLayoutGraphics };
         graphicsPipelineEntryTriangles.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         graphicsPipelineEntryTriangles.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
         graphicsPipelineEntryTriangles.mParams.mCullMode = VK_CULL_MODE_BACK_BIT;
         graphicsPipelineEntryTriangles.mParams.mPushConstants =
         {
-            { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX } }
+            { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX, nullptr } }
         };
 
-        mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryTriangles);
+        mPipelineGraphicsTriangles = mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryTriangles);
     }
 
     // Render bounding boxes stage
@@ -225,57 +228,60 @@ void MyPipeline::initStages()
         graphicsPipelineEntryBounds.mVertexShaderPath = "src/shaders/Simple/BoundsVertexShader.spv";
         graphicsPipelineEntryBounds.mPixelShaderPath = "src/shaders/Simple/BoundsPixelShader.spv";
         graphicsPipelineEntryBounds.mVertexId = mVertexPoint;
+        graphicsPipelineEntryBounds.mRenderPassId = mRenderPass;
+        graphicsPipelineEntryBounds.mDescriptorSetLayoutIds = { mDescriptorSetLayoutGraphics };
         graphicsPipelineEntryBounds.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
         graphicsPipelineEntryBounds.mParams.mPolygonMode = VK_POLYGON_MODE_LINE;
         graphicsPipelineEntryBounds.mParams.mCullMode = VK_CULL_MODE_NONE;
         graphicsPipelineEntryBounds.mParams.mPushConstants =
         {
-                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX } }
+                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX, nullptr } }
         };
 
-        mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryBounds);
+        mPipelineGraphicsBoundingBoxes = mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryBounds);
     }
 }
 
 void MyPipeline::initFramePasses()
 {
-    ascen::registry::FramePassEntry framePassEntry;
-    framePassEntry.mName = "FRAMEPASS_0";
+    ascen::registry::FramePassEntry framePassComputeEntry;
+    framePassComputeEntry.mName = "FRAMEPASS_COMPUTE";
+    framePassComputeEntry.mType = ascen::FRAMEPASS_TYPE_COMPUTE;
+    framePassComputeEntry.mDescriptorSetIds = { mDescriptorSetCompute };
+    framePassComputeEntry.mPipelineId = mPipelineCompute;
+    framePassComputeEntry.mComputeParams.mGroups[0] = (10'000 + 63) / 64;
 
-    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassEntry);
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassComputeEntry);
 
-    mEngine.frame().registerCompute(
-        { "FRAMEPASS_FRUSTUM_CULL",
-        { "DESC_FRUSTUM_CULL" },
-        "PIPELINE_FRUSTUM_CULL",
-        {
-            { "BUFFER_ENTITY",        ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
-            { "BUFFER_VERTEX_BOUNDS", ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
-            { "BUFFER_INDEX_BOUNDS",  ascen::ResourceUsage::BUFFER_STORAGE, ascen::ResourceAccess::WRITE, ascen::ResourceStage::COMPUTE },
-        },
-        { (1'000'000 + 63) / 64, 1, 1 }});
+    ascen::registry::FramePassEntry framePassGraphicsTrianglesEntry;
+    framePassGraphicsTrianglesEntry.mName = "FRAMEPASS_GRAPHICS_TRIANGLES";
+    framePassGraphicsTrianglesEntry.mType = ascen::FRAMEPASS_TYPE_GRAPHICS;
+    framePassGraphicsTrianglesEntry.mDescriptorSetIds = { mDescriptorSetGraphics };
+    framePassGraphicsTrianglesEntry.mPipelineId = mPipelineGraphicsTriangles;
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mDrawMode = ascen::FRAMEPASS_DRAW_MODE_TRIANGLES;
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mRenderPassId = mRenderPass;
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mRenderTargetId = mRenderTarget;
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mFrameBufferId = 0;
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mExtent = { 0, 0 };
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mVertexBufferIds = { mBufferVertex };
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mIndexBufferId = mBufferIndex;
+    framePassGraphicsTrianglesEntry.mGraphicsParams.mIndirectBufferId = mBufferIndirect;
 
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassGraphicsTrianglesEntry);
 
-    mEngine.frame().registerGraphics(
-        { "FRAMEPASS_RENDER_ENTITY",
-        { "DESC_RENDER_ENTITY" },
-        "PIPELINE_RENDER_ENTITY",
-        {
-            { "BUFFER_VERTEX", ascen::ResourceUsage::BUFFER_VERTEX,   ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
-            { "BUFFER_INDEX",  ascen::ResourceUsage::BUFFER_INDEX,    ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
-            { "BUFFER_DRAWS",  ascen::ResourceUsage::BUFFER_INDIRECT, ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
-            { "BUFFER_ENTITY", ascen::ResourceUsage::BUFFER_STORAGE,  ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX   },
-            { "TEXTURE",       ascen::ResourceUsage::IMAGE_SAMPLED,   ascen::ResourceAccess::READ, ascen::ResourceStage::FRAGMENT },
-        },
-        ascen::GraphicsMode::MESH });
+    ascen::registry::FramePassEntry framePassGraphicsBoundingBoxesEntry;
+    framePassGraphicsBoundingBoxesEntry.mName = "FRAMEPASS_GRAPHICS_BOUNDING_BOXES";
+    framePassGraphicsBoundingBoxesEntry.mType = ascen::FRAMEPASS_TYPE_GRAPHICS;
+    framePassGraphicsBoundingBoxesEntry.mDescriptorSetIds = { mDescriptorSetGraphics };
+    framePassGraphicsBoundingBoxesEntry.mPipelineId = mPipelineGraphicsBoundingBoxes;
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mDrawMode = ascen::FRAMEPASS_DRAW_MODE_LINES;
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mRenderPassId = mRenderPass;
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mRenderTargetId = mRenderTarget;
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mFrameBufferId = 0;
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mExtent = { 0, 0 };
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mVertexBufferIds = { mBufferVertexBounds };
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mIndexBufferId = mBufferIndexBounds;
+    framePassGraphicsBoundingBoxesEntry.mGraphicsParams.mIndirectBufferId = mBufferIndirect;
 
-    mEngine.frame().registerGraphics(
-        { "FRAMEPASS_RENDER_BOUNDS",
-        {},
-        "PIPELINE_RENDER_BOUNDS",
-        {
-            { "BUFFER_VERTEX_BOUNDS", ascen::ResourceUsage::BUFFER_VERTEX, ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX },
-            { "BUFFER_INDEX_BOUNDS",  ascen::ResourceUsage::BUFFER_INDEX,  ascen::ResourceAccess::READ, ascen::ResourceStage::VERTEX },
-        },
-        ascen::GraphicsMode::LINES });
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassGraphicsBoundingBoxesEntry);
 }

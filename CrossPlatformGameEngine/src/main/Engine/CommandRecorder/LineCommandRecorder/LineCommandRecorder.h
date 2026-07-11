@@ -9,15 +9,12 @@ namespace ascen
     class LineCommandRecorder : public CommandRecorder_I
     {
     public:
-        LineCommandRecorder(
-            PipelineRegistry& pipelineRegistry,
-            DescriptorRegistry& descriptorRegistry,
-            ResourceRegistry& resourceRegistry);
-
         void record(
-            VkCommandBuffer commandBuffer,
-            const GraphicsGpuFramePass* framePass,
-            uint32_t frameIndex);
+            const VkCommandBuffer commandBuffer,
+            const GraphicsPipelinePtr& pipeline,
+            const std::vector<VkDescriptorSet> descriptorSets,
+            const std::vector<VkBuffer> vertexBuffers,
+            const VkBuffer indexBuffer);
     };
 
 }

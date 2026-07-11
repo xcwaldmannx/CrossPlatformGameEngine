@@ -2,8 +2,6 @@
 
 #include "../../Core/RenderContext.h"
 
-#include "../../Registry/Pipeline/PipelineRegistryBackend.h"
-
 namespace ascen
 {
 

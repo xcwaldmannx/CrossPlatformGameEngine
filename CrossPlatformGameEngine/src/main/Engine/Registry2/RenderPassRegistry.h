@@ -3,7 +3,7 @@
 #include "Registry_I.h"
 #include "../Core/Types.h"
 #include "../RenderPass/RenderPassFactory.h"
-#include "../RenderTarget/RenderPass/RenderPass.h"
+#include "../RenderPass/RenderPass.h"
 
 namespace ascen
 {

@@ -16,29 +16,33 @@
 #include "FrameBufferRegistry.h"
 #include "GraphicsPipelineRegistry.h"
 #include "ComputePipelineRegistry.h"
+#include "FramePassRegistry.h"
 
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <string>
 #include <typeindex>
 #include <variant>
+#include <vector>
 
 namespace ascen
 {
 
     using RegistryTypes = std::variant<
         VertexRegistry,
-        DescriptorPoolRegistry,
-        DescriptorSetLayoutRegistry,
-        DescriptorSetRegistry,
         BufferRegistry,
         TextureRegistry,
         SamplerRegistry,
+        DescriptorPoolRegistry,
+        DescriptorSetLayoutRegistry,
+        DescriptorSetRegistry,
         RenderPassRegistry,
         RenderTargetRegistry,
         FrameBufferRegistry,
         GraphicsPipelineRegistry,
-        ComputePipelineRegistry>;
+        ComputePipelineRegistry,
+        FramePassRegistry>;
 
     template <typename T>
     struct RegistryTraits;
@@ -63,15 +67,19 @@ namespace ascen
             const uint64_t id = mHasher(entry.mName);
             mIdToEntry.emplace(id, std::make_shared<E>(entry));
 
-            const std::type_index typeId = std::type_index(typeid(E));
-            mTypeToIds[typeId].push_back(id);
+            using ResourceType = E::ResourceType;
+            mTypeToIds[typeid(ResourceType)].push_back(id);
+
+            std::cout << "Registered resource type: " << typeid(ResourceType).name() << " with name " << entry.mName << std::endl;
 
             return id;
         }
 
         void reconstruct();
 
-        /*
+        void deconstruct();
+
+        /* might need this later
         template<typename T>
         std::span<T> getMappedBuffer(const std::string& name)
         {
@@ -97,8 +105,43 @@ namespace ascen
         void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
         void uploadTexture(const uint64_t id, const std::vector<unsigned char>& pixels) const;
 
-        void uploadGraphicsPushConstant(const VkCommandBuffer commandBuffer, const uint64_t id, const uint32_t pushConstantId, const void* data) const;
-        void uploadComputePushConstant(const VkCommandBuffer commandBuffer, const uint64_t id, const uint32_t pushConstantId, const void* data) const;
+        template<typename T>
+        void setPushConstant(const std::string& name, const uint32_t pushConstantId, const T& data)
+        {
+            const uint64_t id = mHasher(name);
+            setPushConstant<T>(id, pushConstantId, data);
+        }
+
+        template<typename T>
+        void setPushConstant(const uint64_t id, const uint32_t pushConstantId, const T& data)
+        {
+            const std::shared_ptr<Pipeline_I>& pipeline = std::dynamic_pointer_cast<Pipeline_I>(mIdToResource.at(id));
+            pipeline->setPushConstant(pushConstantId, data);
+        }
+
+        void uploadPushConstants(const VkCommandBuffer commandBuffer) const;
+
+        template<typename R>
+        std::shared_ptr<R> getResource(const uint64_t id)
+        {
+            return std::dynamic_pointer_cast<R>(mIdToResource.at(id));
+        }
+
+        template<typename R>
+        std::vector<std::shared_ptr<R>> getResourceType()
+        {
+            const auto& ids = mTypeToIds.at(typeid(std::shared_ptr<R>));
+
+            std::vector<std::shared_ptr<R>> resources;
+            resources.reserve(ids.size());
+
+            for (const auto id : ids)
+            {
+                resources.push_back(std::dynamic_pointer_cast<R>(mIdToResource.at(id)));
+            }
+
+            return resources;
+        }
 
     private:
         const VkPhysicalDevice mPhysicalDevice;
@@ -110,9 +153,9 @@ namespace ascen
 
         std::hash<std::string> mHasher;
 
-        std::unordered_map<uint64_t, std::shared_ptr<registry::Entry>> mIdToEntry;
+        std::unordered_map<uint64_t, std::any> mIdToEntry;
         std::unordered_map<std::type_index, std::vector<uint64_t>> mTypeToIds;
-        std::unordered_map<uint64_t, registry::Resource> mIdToResource;
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>> mIdToResource;
     };
 
 }

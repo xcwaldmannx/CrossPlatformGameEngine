@@ -17,7 +17,7 @@ namespace ascen
         ComputePipelineRegistry(
             const VkDevice device,
             const ComputePipelineFactory& computePipelineFactory,
-            std::unordered_map<uint64_t, registry::Resource>* idToResource) :
+            std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* idToResource) :
             mDevice(device),
             mComputePipelineFactory(computePipelineFactory),
             mIdToResource(idToResource) {}
@@ -30,7 +30,7 @@ namespace ascen
 
             for (auto layoutId : entry.mDescriptorSetLayoutIds)
             {
-                const auto& layout = std::any_cast<DescriptorSetLayoutPtr>(mIdToResource->at(layoutId));
+                const auto& layout = std::dynamic_pointer_cast<DescriptorSetLayout>(mIdToResource->at(layoutId));
                 layouts.push_back(layout);
             }
 
@@ -46,7 +46,7 @@ namespace ascen
         const VkDevice mDevice;
         const ComputePipelineFactory& mComputePipelineFactory;
 
-        std::unordered_map<uint64_t, registry::Resource>* mIdToResource = nullptr;
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* mIdToResource = nullptr;
     };
 
 }

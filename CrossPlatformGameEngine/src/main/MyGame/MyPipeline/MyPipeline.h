@@ -20,6 +20,11 @@ private:
     uint64_t mVertexTriangles = 0;
     uint64_t mVertexPoint = 0;
 
+    uint64_t mBufferVertex = 0;
+    uint64_t mBufferIndex = 0;
+    uint64_t mBufferIndirect = 0;
+    uint32_t mBufferIndirectSize = 1'000'000;
+
     uint64_t mBufferEntity = 0;
     uint64_t mBufferVertexBounds = 0;
     uint64_t mBufferIndexBounds = 0;
@@ -38,4 +43,8 @@ private:
     uint64_t mRenderPass = 0;
     uint64_t mRenderTarget = 0;
     uint64_t mFrameBuffer = 0;
+
+    uint64_t mPipelineCompute = 0;
+    uint64_t mPipelineGraphicsTriangles = 0;
+    uint64_t mPipelineGraphicsBoundingBoxes = 0;
 };

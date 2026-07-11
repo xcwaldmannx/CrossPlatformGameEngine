@@ -104,6 +104,7 @@ namespace ascen
 			uint32_t mOffset = 0;
 			uint32_t mSize = 0;
 			ShaderStageFlags mShaderStages = 0;
+			std::shared_ptr<char[]> mData = nullptr;
 		};
 
 		struct Params
@@ -123,8 +124,6 @@ namespace ascen
 
 	namespace registry
 	{
-		using Resource = std::shared_ptr<void>;
-
 		struct Entry
 		{
 			std::string mName;
@@ -132,12 +131,16 @@ namespace ascen
 
 		struct VertexEntry : Entry
 		{
+			using ResourceType = VertexPtr;
+
 			VertexBinding mBinding;
 			std::vector<VertexAttribute> mAttributes;
 		};
 
 		struct DescriptorPoolEntry : Entry
 		{
+			using ResourceType = DescriptorPoolPtr;
+
 			std::unordered_map<DescriptorType, uint32_t> mDescriptorTypeCounts;
 		};
 
@@ -162,11 +165,15 @@ namespace ascen
 
 		struct DescriptorSetLayoutEntry : Entry
 		{
+			using ResourceType = DescriptorSetLayoutPtr;
+
 			std::vector<DescriptorBinding> mBindings;
 		};
 
 		struct DescriptorSetEntry : Entry
 		{
+			using ResourceType = DescriptorSetPtr;
+
 			uint64_t mPoolId = 0;
 			uint64_t mLayoutId = 0;
 			std::vector<DescriptorResource> mResources;
@@ -174,16 +181,23 @@ namespace ascen
 
 		struct BufferEntry : Entry
 		{
+			using ResourceType = BufferPtr;
+
 			uint32_t mCapacity = 1; // default must be > 0
 			uint32_t mStride = 1;   // default must be > 0
 			BufferUsageFlags mUsageFlags = 0;
 			BufferMemoryFlags mMemoryFlags = 0;
 		};
 
-		struct SamplerEntry : Entry {};
+		struct SamplerEntry : Entry
+		{
+			using ResourceType = SamplerPtr;
+		};
 
 		struct TextureEntry : Entry
 		{
+			using ResourceType = TexturePtr;
+
 			TextureType mType = TextureType::NONE;
 			uint32_t mWidth = 0;
 			uint32_t mHeight = 0;
@@ -192,6 +206,8 @@ namespace ascen
 
 		struct RenderPassEntry : Entry
 		{
+			using ResourceType = RenderPassPtr;
+
 			std::vector<renderpass::Attachment> mAttachments;
 			std::vector<renderpass::SubPass> mSubPasses;
 			std::vector<renderpass::SubPassDependency> mSubPassDependencies;
@@ -199,6 +215,8 @@ namespace ascen
 
 		struct RenderTargetEntry : Entry
 		{
+			using ResourceType = RenderTargetPtr;
+
 			Format mFormat;
 			std::vector<VkImage> mImages;
 			uint32_t mImageCount;
@@ -206,6 +224,8 @@ namespace ascen
 
 		struct FrameBufferEntry : Entry
 		{
+			using ResourceType = FrameBufferPtr;
+
 			uint64_t mRenderPassId = 0;
 			uint64_t mRenderTargetId = 0;
 			uint32_t mWidth = 0;
@@ -219,24 +239,50 @@ namespace ascen
 
 		struct GraphicsPipelineEntry : PipelineEntry
 		{
+			using ResourceType = GraphicsPipelinePtr;
+
 			std::string mVertexShaderPath;
 			std::string mPixelShaderPath;
-			uint64_t mVertexId;
+			uint64_t mVertexId = 0;
+			uint64_t mRenderPassId = 0;
 			pipeline::GraphicsParams mParams;
 		};
 
 		struct ComputePipelineEntry : PipelineEntry
 		{
+			using ResourceType = ComputePipelinePtr;
+
 			std::string mComputeShaderPath;
 			pipeline::ComputeParams mParams;
 		};
 
-		struct FramePassEntry : Entry
+		struct FramePassGraphicsParams
 		{
-			std::vector<uint64_t> mDescriptorSetIds;
+			FramePassDrawMode mDrawMode;
 			uint64_t mRenderPassId = 0;
 			uint64_t mRenderTargetId = 0;
+			uint64_t mFrameBufferId = 0;
+			VkExtent2D mExtent = { 0, 0 };
+
+			std::vector<uint64_t> mVertexBufferIds;
+			uint64_t mIndexBufferId = 0;
+			uint64_t mIndirectBufferId = 0;
+		};
+
+		struct FramePassComputeParams
+		{
+			uint32_t mGroups[3] = { 0, 0, 0 };
+		};
+
+		struct FramePassEntry : Entry
+		{
+			using ResourceType = FramePassPtr;
+
+			FramePassType mType;
+			std::vector<uint64_t> mDescriptorSetIds;
 			uint64_t mPipelineId = 0;
+			FramePassGraphicsParams mGraphicsParams;
+			FramePassComputeParams mComputeParams;
 		};
 	}
 

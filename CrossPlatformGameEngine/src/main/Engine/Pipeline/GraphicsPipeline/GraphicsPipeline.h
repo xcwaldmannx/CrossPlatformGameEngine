@@ -11,6 +11,7 @@
 #include "../../RenderPass/RenderPass.h"
 
 #include <concepts>
+#include <iostream>
 #include <stdexcept>
 
 #include <string>
@@ -131,12 +132,15 @@ namespace ascen
             vkDestroyPipelineLayout(device, mLayout, nullptr);
         }
 
-        void uploadPushConstant(const VkCommandBuffer commandBuffer, const uint32_t id, const void* data) override
+        void uploadPushConstants(const VkCommandBuffer commandBuffer) override
         {
-            auto& [offset, size, flags] = mPushConstants.at(id);
-
-            vkCmdPushConstants(commandBuffer, mLayout, flags, offset, size, data);
-            mPushConstants.at(id);
+            for (const auto& [id, pc] : mPushConstants)
+            {
+                if (pc.mData)
+                {
+                    vkCmdPushConstants(commandBuffer, mLayout, pc.mShaderStages, pc.mOffset, pc.mSize, pc.mData.get());
+                }
+            }
         }
 
     private:
@@ -146,18 +150,18 @@ namespace ascen
             auto& vertexAttributeDescriptions = vertex->getAttributes();
 
             mVertexInputBindingDescs.push_back(vertexBindingDescription);
+            mVertexInputAtrribDescs.insert(mVertexInputAtrribDescs.end(), vertexAttributeDescriptions.begin(), vertexAttributeDescriptions.end());
 
             mVertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
             mVertexInputStateInfo.vertexBindingDescriptionCount =
                 static_cast<uint32_t>(mVertexInputBindingDescs.size());
-            mVertexInputStateInfo.pVertexBindingDescriptions = &vertexBindingDescription;
+            mVertexInputStateInfo.pVertexBindingDescriptions = mVertexInputBindingDescs.data();
 
             mVertexInputStateInfo.vertexAttributeDescriptionCount =
                 static_cast<uint32_t>(vertexAttributeDescriptions.size());
 
-            mVertexInputStateInfo.pVertexAttributeDescriptions =
-                vertexAttributeDescriptions.data();
+            mVertexInputStateInfo.pVertexAttributeDescriptions = mVertexInputAtrribDescs.data();
         }
 
         void handleInputAssembly()
@@ -272,18 +276,16 @@ namespace ascen
 
             mPushConstants = mParams.mPushConstants;
 
-            std::vector<VkPushConstantRange> vkPushConstants;
-
             for (const auto& [id, pc] : mPushConstants)
             {
                 if (pc.mSize > 0)
                 {
-                    vkPushConstants.emplace_back(pc.mShaderStages, pc.mOffset, pc.mSize);
+                    mPushConstantRanges.emplace_back(pc.mShaderStages, pc.mOffset, pc.mSize);
                 }
             }
 
-            mLayoutInfo.pushConstantRangeCount = vkPushConstants.size();
-            mLayoutInfo.pPushConstantRanges = vkPushConstants.data();
+            mLayoutInfo.pushConstantRangeCount = mPushConstantRanges.size();
+            mLayoutInfo.pPushConstantRanges = mPushConstantRanges.data();
 
             mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());
@@ -305,6 +307,7 @@ namespace ascen
         std::vector<VkVertexInputBindingDescription>  mVertexInputBindingDescs;
         std::vector<VkVertexInputAttributeDescription> mVertexInputAtrribDescs;
         std::vector<VkDynamicState> mDynamicStates;
+        std::vector<VkPushConstantRange> mPushConstantRanges;
 
         VkPipelineVertexInputStateCreateInfo mVertexInputStateInfo{};
         VkPipelineInputAssemblyStateCreateInfo mInputAssemblyInfo{};

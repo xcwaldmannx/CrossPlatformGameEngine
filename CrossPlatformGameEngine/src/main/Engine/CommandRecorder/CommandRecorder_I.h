@@ -1,8 +1,7 @@
 #pragma once
 
-#include "../Registry/Pipeline/PipelineRegistryBackend.h"
-#include "../Registry/Descriptor/DescriptorRegistryBackend.h"
-#include "../Registry/Resource/ResourceRegistryBackend.h"
+#include "../Core/Types.h"
+#include <vulkan/vulkan.h>
 
 namespace ascen
 {
@@ -12,21 +11,6 @@ namespace ascen
 
     };
 
-    class CommandRecorder_I
-    {
-    public:
-        CommandRecorder_I(
-            PipelineRegistry& pipelineRegistry,
-            DescriptorRegistry& descriptorRegistry,
-            ResourceRegistry& resourceRegistry) :
-            mPipelineRegistry(pipelineRegistry),
-            mDescriptorRegistry(descriptorRegistry),
-            mResourceRegistry(resourceRegistry) {}
-
-    protected:
-        PipelineRegistry& mPipelineRegistry;
-        DescriptorRegistry& mDescriptorRegistry;
-        ResourceRegistry& mResourceRegistry;
-    };
+    class CommandRecorder_I {};
 
 }
