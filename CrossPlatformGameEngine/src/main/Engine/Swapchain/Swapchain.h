@@ -66,11 +66,11 @@ namespace ascen
 			VkDevice device,
 			VkRenderPass renderPass);
 
-		void destroyFrameBuffers(VkDevice device) const;
+		void destroyFrameBuffers(VkDevice device);
 
 		void createImageViews(VkDevice device);
 
-		void destroyImageViews(VkDevice device) const;
+		void destroyImageViews(VkDevice device);
 
 	private:
 		const VkPhysicalDevice mPhysicalDevice;

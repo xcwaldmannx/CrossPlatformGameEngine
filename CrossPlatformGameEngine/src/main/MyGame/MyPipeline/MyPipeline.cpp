@@ -61,7 +61,7 @@ void MyPipeline::initResources()
     // RenderPass and RenderTarget
     ascen::renderpass::Attachment colorAttachment{};
     colorAttachment.mType = ascen::ATTACHMENT_PRESENT;
-    colorAttachment.mFormat = ascen::FORMAT_RGBA8_SRGB;
+    colorAttachment.mFormat = mEngine.getImageFormat();
     colorAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
     colorAttachment.mStoreOp = ascen::STORE_OP_STORE;
     colorAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
@@ -250,6 +250,8 @@ void MyPipeline::initFramePasses()
     framePassComputeEntry.mDescriptorSetIds = { mDescriptorSetCompute };
     framePassComputeEntry.mPipelineId = mPipelineCompute;
     framePassComputeEntry.mComputeParams.mGroups[0] = (10'000 + 63) / 64;
+    framePassComputeEntry.mComputeParams.mGroups[1] = 1;
+    framePassComputeEntry.mComputeParams.mGroups[2] = 1;
 
     mEngine.registerResource<ascen::registry::FramePassEntry>(framePassComputeEntry);
 

@@ -271,7 +271,7 @@ namespace ascen
 
 		struct FramePassComputeParams
 		{
-			uint32_t mGroups[3] = { 0, 0, 0 };
+			uint32_t mGroups[3] = { 1, 1, 1 };
 		};
 
 		struct FramePassEntry : Entry

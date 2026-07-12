@@ -38,6 +38,18 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+	if (glfwExtensions == nullptr || glfwExtensionCount == 0)
+	{
+		const char* description = nullptr;
+		const int error = glfwGetError(&description);
+
+		throw std::runtime_error(
+			std::string("glfwGetRequiredInstanceExtensions failed: ") +
+			(description ? description : "unknown GLFW error") +
+			" (" + std::to_string(error) + ")");
+	}
+
 	Extensions::add(glfwExtensions, glfwExtensionCount, &mExtensions);
 	Extensions::validate(mExtensions);
 

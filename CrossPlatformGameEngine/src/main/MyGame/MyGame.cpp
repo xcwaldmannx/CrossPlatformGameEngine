@@ -187,6 +187,6 @@ void MyGame::updateCamera(float delta)
 		const glm::mat4 vp = ubo.mProj * ubo.mView;
 		mEngine.setPushConstant<glm::mat4>("PIPELINE_FRUSTUM_CULL",  0, vp);
 		mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_ENTITY", 0, vp);
-		mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_BOUNDS", 0, vp);
+		//mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_BOUNDS", 0, vp);
 	}
 }

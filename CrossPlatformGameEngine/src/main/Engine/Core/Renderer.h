@@ -60,7 +60,7 @@ namespace ascen
 		uint32_t getFrameIndex() const;
 
 	private:
-		void acquireNextFrame(const SwapchainPtr& swapchain);
+		bool acquireNextFrame(const SwapchainPtr& swapchain);
 		void submitFrame(const CommandPoolPtr& commandPool) const;
 		void presentFrame(const SwapchainPtr& swapchain) const;
 

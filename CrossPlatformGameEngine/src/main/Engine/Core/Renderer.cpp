@@ -45,7 +45,7 @@ void Renderer::drawFrame()
 
 	const auto& swapchain = mRenderContext.getSwapchain();
 
-	acquireNextFrame(swapchain);
+	if (!acquireNextFrame(swapchain)) return;
 
 	auto framePasses = mFrameGraph.compile(mRegistryManager.getResourceType<FramePass>());
 
@@ -196,7 +196,7 @@ void Renderer::drawFrame()
 	mFrameIndex = (mFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
+bool Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
 {
 	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
 
@@ -211,7 +211,7 @@ void Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		mRenderContext.resize();
-		return;
+		return false;
 	}
 
 	if (nextImageResult != VK_SUCCESS && nextImageResult != VK_SUBOPTIMAL_KHR)
@@ -220,6 +220,8 @@ void Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
 	}
 
 	vkResetFences(mDevice, 1, &mInFlightFences[mFrameIndex]);
+
+	return true;
 }
 
 void Renderer::submitFrame(const CommandPoolPtr& commandPool) const
