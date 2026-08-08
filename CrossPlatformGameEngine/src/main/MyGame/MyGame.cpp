@@ -94,6 +94,12 @@ void MyGame::run(float delta)
 	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
 
+	updateMousePicking();
+
+	uint32_t x;
+	mEngine.downloadTransfer<uint32_t>("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, &x);
+	std::cout << x << std::endl;
+
 	mEngine.drawFrame();
 }
 
@@ -185,8 +191,39 @@ void MyGame::updateCamera(float delta)
 		ubo.mProj[1][1] *= -1;
 
 		const glm::mat4 vp = ubo.mProj * ubo.mView;
-		mEngine.setPushConstant<glm::mat4>("PIPELINE_FRUSTUM_CULL",  0, vp);
-		mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_ENTITY", 0, vp);
-		//mEngine.setPushConstant<glm::mat4>("PIPELINE_RENDER_BOUNDS", 0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_FRUSTUM_CULL",  0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_RENDER_ENTITY", 0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_RENDER_BOUNDS", 0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_MOUSE_PICKING", 0, vp);
 	}
+}
+
+void MyGame::updateMousePicking()
+{
+	const double mouseX = mWindowManager.getInput().getMouseX();
+	const double mouseY = mWindowManager.getInput().getMouseY();
+
+	const int windowWidth = WindowManager::getWidth();
+	const int windowHeight = WindowManager::getHeight();
+
+	const int pixelX = std::clamp(
+		static_cast<int>(mouseX),
+		0,
+		windowWidth - 1);
+
+	const int pixelY = std::clamp(
+		static_cast<int>(mouseY),
+		0,
+		windowHeight - 1);
+
+	ascen::transfer::BufferImageRegion region
+	{
+		.mBufferOffset = 0,
+		.mImageOffset = { pixelX, pixelY, 0 },
+		.mImageExtent = { 1, 1, 1 },
+	};
+
+	mEngine.updateTransfer("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, region);
+
+	std:: cout << "pixel pos: " << pixelX << ", " << pixelY << std::endl;
 }

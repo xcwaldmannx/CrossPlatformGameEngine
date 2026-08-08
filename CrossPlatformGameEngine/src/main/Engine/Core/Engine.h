@@ -29,12 +29,6 @@ namespace ascen
 			return mRegistryManager.registerResource<E>(entry);
 		}
 
-		template<typename T>
-		void setPushConstant(const std::string& name, uint32_t pushConstantId, const T& data)
-		{
-			mRegistryManager.setPushConstant<T>(name, pushConstantId, data);
-		}
-
 		void uploadBuffer(
 			const std::string& name,
 			const void* items,
@@ -43,6 +37,26 @@ namespace ascen
 			const uint32_t offset) const;
 
 		void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
+
+		void updateTransfer(
+			const std::string& name,
+			uint32_t transferId,
+			const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion> &region);
+
+		template<typename T>
+		void downloadTransfer(
+			const std::string& name,
+			uint32_t transferId,
+			T* data)
+		{
+			mRegistryManager.downloadTransfer(name, transferId, data);
+		}
+
+		template<typename T>
+		void updatePushConstant(const std::string& name, uint32_t pushConstantId, const T& data)
+		{
+			mRegistryManager.updatePushConstant<T>(name, pushConstantId, data);
+		}
 
 		EcsSystem& ecs();
 

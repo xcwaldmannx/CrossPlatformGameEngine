@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../Handle/Handle.h"
-#include "../../Core/Values.h"
+#include "../../Core/Types.h"
 
 #include <functional>
 
@@ -23,9 +23,14 @@ namespace ascen
             const std::vector<uint64_t> vertexBufferIds,
             const uint64_t indexBufferId,
             const uint64_t indirectBufferId,
-            const uint32_t computeGroups[3]);
+            const uint32_t computeGroups[3],
+            const std::unordered_map<uint32_t, transfer::Transfer> dataTransfers);
 
         void destroy(VkDevice device) override;
+
+        void updateTransfer(
+            uint32_t id,
+            const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region);
 
         FramePassType mType;
         std::vector<uint64_t> mDescriptorSetIds;
@@ -42,6 +47,8 @@ namespace ascen
         uint64_t mIndirectBufferId = 0;
 
         uint32_t mComputeGroups[3] = { 0, 0, 0 };
+
+        std::unordered_map<uint32_t, transfer::Transfer> mTransfers;
     };
 
 }

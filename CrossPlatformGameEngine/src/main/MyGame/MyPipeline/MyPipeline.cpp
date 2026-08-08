@@ -52,66 +52,127 @@ void MyPipeline::initResources()
     mBufferIndirect = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_DRAWS", mBufferIndirectSize, sizeof(ascen::IndexedIndirectDraw),
         ascen::BUFFER_USAGE_INDIRECT | ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
+    mBufferMousePicking = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_MOUSE_PICKING", 1, sizeof(uint32_t),
+        ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_HOST });
+
     // Samplers
     mSampler = mEngine.registerResource<ascen::registry::SamplerEntry>({ "SAMPLER" });
 
     // Textures
-    mTexture = mEngine.registerResource<ascen::registry::TextureEntry>({ "TEXTURE", ascen::TextureType::IMAGE, 1024, 1024, 1 });
+    mTexture = mEngine.registerResource<ascen::registry::TextureEntry>({ "TEXTURE", ascen::TextureType::IMAGE, ascen::FORMAT_RGBA8_SRGB, 1024, 1024, 1 });
 
-    // RenderPass and RenderTarget
-    ascen::renderpass::Attachment colorAttachment{};
-    colorAttachment.mType = ascen::ATTACHMENT_PRESENT;
-    colorAttachment.mFormat = mEngine.getImageFormat();
-    colorAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
-    colorAttachment.mStoreOp = ascen::STORE_OP_STORE;
-    colorAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
-    colorAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
+    // Mouse picking images
+    mWritableTextureMousePicking = mEngine.registerResource<ascen::registry::TextureEntry>({ "MOUSE_PICKING_WRITABLE_TEXTURE", ascen::TextureType::WRITABLE, ascen::FORMAT_R32_UINT, 800, 600, 1 });
+    mDepthTextureMousePicking = mEngine.registerResource<ascen::registry::TextureEntry>({ "MOUSE_PICKING_DEPTH_TEXTURE", ascen::TextureType::DEPTH, mEngine.getDepthFormat(), 800, 600, 1 });
 
-    ascen::renderpass::Attachment depthAttachment{};
-    depthAttachment.mType = ascen::ATTACHMENT_DEPTH;
-    depthAttachment.mFormat = mEngine.getDepthFormat();
-    depthAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
-    depthAttachment.mStoreOp = ascen::STORE_OP_NA;
-    depthAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
-    depthAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
+    // Main RenderPass and RenderTarget
+    {
+        ascen::renderpass::Attachment colorAttachment{};
+        colorAttachment.mType = ascen::ATTACHMENT_PRESENT;
+        colorAttachment.mFormat = mEngine.getImageFormat();
+        colorAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+        colorAttachment.mStoreOp = ascen::STORE_OP_STORE;
+        colorAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
+        colorAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
 
-    ascen::renderpass::SubPass subPass{};
-    subPass.mBindPoint = ascen::BIND_POINT_GRAPHICS;
-    subPass.mColorAttachmentIndices = { 0 };
-    subPass.mDepthAttachmentIndex = 1;
+        ascen::renderpass::Attachment depthAttachment{};
+        depthAttachment.mType = ascen::ATTACHMENT_DEPTH;
+        depthAttachment.mFormat = mEngine.getDepthFormat();
+        depthAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+        depthAttachment.mStoreOp = ascen::STORE_OP_NA;
+        depthAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
+        depthAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
 
-    ascen::renderpass::SubPassDependency subPassDependency{};
-    subPassDependency.mSrcSubpass = VK_SUBPASS_EXTERNAL;
-    subPassDependency.mDstSubpass = 0;
-    subPassDependency.mSrcAccessMask = ascen::ACCESS_NONE;
-    subPassDependency.mDstAccessMask = ascen::ACCESS_COLOR_ATTACHMENT_WRITE | ascen::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE;
-    subPassDependency.mSrcStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
-    subPassDependency.mDstStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
+        ascen::renderpass::SubPass subPass{};
+        subPass.mBindPoint = ascen::BIND_POINT_GRAPHICS;
+        subPass.mColorAttachmentIndices = { 0 };
+        subPass.mDepthAttachmentIndex = 1;
 
-    ascen::registry::RenderPassEntry renderPassEntry{};
-    renderPassEntry.mName = "RENDER_PASS";
-    renderPassEntry.mAttachments = { colorAttachment, depthAttachment };
-    renderPassEntry.mSubPasses = { subPass };
-    renderPassEntry.mSubPassDependencies = { subPassDependency };
+        ascen::renderpass::SubPassDependency subPassDependency{};
+        subPassDependency.mSrcSubpass = VK_SUBPASS_EXTERNAL;
+        subPassDependency.mDstSubpass = 0;
+        subPassDependency.mSrcAccessMask = ascen::ACCESS_NONE;
+        subPassDependency.mDstAccessMask = ascen::ACCESS_COLOR_ATTACHMENT_WRITE | ascen::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE;
+        subPassDependency.mSrcStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
+        subPassDependency.mDstStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
 
-    mRenderPass = mEngine.registerResource<ascen::registry::RenderPassEntry>(renderPassEntry);
+        ascen::registry::RenderPassEntry renderPassEntry{};
+        renderPassEntry.mName = "RENDER_PASS";
+        renderPassEntry.mAttachments = { colorAttachment, depthAttachment };
+        renderPassEntry.mSubPasses = { subPass };
+        renderPassEntry.mSubPassDependencies = { subPassDependency };
 
-    ascen::registry::RenderTargetEntry renderTargetEntry{};
-    renderTargetEntry.mName = "RENDER_TARGET";
-    renderTargetEntry.mFormat = mEngine.getImageFormat();
-    renderTargetEntry.mImages = mEngine.getPresentImages();
-    renderTargetEntry.mImageCount = mEngine.getPresentImages().size();
+        mRenderPass = mEngine.registerResource<ascen::registry::RenderPassEntry>(renderPassEntry);
 
-    mRenderTarget = mEngine.registerResource<ascen::registry::RenderTargetEntry>(renderTargetEntry);
+        ascen::registry::RenderTargetEntry renderTargetEntry{};
+        renderTargetEntry.mName = "RENDER_TARGET";
+        renderTargetEntry.mTextureIds = {};
 
-    // ascen::registry::FrameBufferEntry frameBufferEntry{};
-    // frameBufferEntry.mName = "FRAMEBUFFER";
-    // frameBufferEntry.mRenderPassId = mRenderPass;
-    // frameBufferEntry.mRenderTargetId = mRenderTarget;
-    // frameBufferEntry.mWidth = mEngine.getScreenWidth();
-    // frameBufferEntry.mHeight = mEngine.getScreenHeight();
-    //
-    // mFrameBuffer = mEngine.registerResource<ascen::registry::FrameBufferEntry>(frameBufferEntry);
+        mRenderTarget = mEngine.registerResource<ascen::registry::RenderTargetEntry>(renderTargetEntry);
+    }
+
+    // Mouse picking RenderPass and RenderTarget
+    {
+        ascen::renderpass::Attachment colorAttachment{};
+        colorAttachment.mType = ascen::ATTACHMENT_TRANSFER_COLOR;
+        colorAttachment.mFormat = ascen::FORMAT_R32_UINT;
+        colorAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+        colorAttachment.mStoreOp = ascen::STORE_OP_STORE;
+        colorAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
+        colorAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
+
+        ascen::renderpass::Attachment depthAttachment{};
+        depthAttachment.mType = ascen::ATTACHMENT_DEPTH;
+        depthAttachment.mFormat = mEngine.getDepthFormat();
+        depthAttachment.mLoadOp = ascen::LOAD_OP_CLEAR;
+        depthAttachment.mStoreOp = ascen::STORE_OP_NA;
+        depthAttachment.mDepthStencilLoadOp = ascen::LOAD_OP_NA;
+        depthAttachment.mDepthStencilStoreOp = ascen::STORE_OP_NA;
+
+        ascen::renderpass::SubPass subPass{};
+        subPass.mBindPoint = ascen::BIND_POINT_GRAPHICS;
+        subPass.mColorAttachmentIndices = { 0 };
+        subPass.mDepthAttachmentIndex = 1;
+
+        ascen::renderpass::SubPassDependency subPassDependency{};
+        subPassDependency.mSrcSubpass = VK_SUBPASS_EXTERNAL;
+        subPassDependency.mDstSubpass = 0;
+        subPassDependency.mSrcAccessMask = ascen::ACCESS_NONE;
+        subPassDependency.mDstAccessMask = ascen::ACCESS_COLOR_ATTACHMENT_WRITE | ascen::ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE;
+        subPassDependency.mSrcStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
+        subPassDependency.mDstStageMask = ascen::PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT | ascen::PIPELINE_STAGE_EARLY_FRAGMENT_TESTS;
+
+        ascen::renderpass::SubPassDependency transferDependency{};
+        transferDependency.mSrcSubpass = 0;
+        transferDependency.mDstSubpass = VK_SUBPASS_EXTERNAL;
+        transferDependency.mSrcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        transferDependency.mDstStageMask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+        transferDependency.mSrcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+        transferDependency.mDstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+
+        ascen::registry::RenderPassEntry renderPassEntry{};
+        renderPassEntry.mName = "MOUSE_PICKING_RENDER_PASS";
+        renderPassEntry.mAttachments = { colorAttachment, depthAttachment };
+        renderPassEntry.mSubPasses = { subPass };
+        renderPassEntry.mSubPassDependencies = { subPassDependency, transferDependency };
+
+        mRenderPassMousePicking = mEngine.registerResource<ascen::registry::RenderPassEntry>(renderPassEntry);
+
+        ascen::registry::RenderTargetEntry renderTargetMousePickingEntry{};
+        renderTargetMousePickingEntry.mName = "RENDER_TARGET_MOUSE_PICKING";
+        renderTargetMousePickingEntry.mTextureIds = { mWritableTextureMousePicking, mDepthTextureMousePicking };
+
+        mRenderTargetMousePicking = mEngine.registerResource<ascen::registry::RenderTargetEntry>(renderTargetMousePickingEntry);
+    }
+
+    ascen::registry::FrameBufferEntry frameBufferMousePickingEntry {};
+    frameBufferMousePickingEntry.mName = "FRAMEBUFFER_MOUSE_PICKING";
+    frameBufferMousePickingEntry.mRenderPassId = mRenderPassMousePicking;
+    frameBufferMousePickingEntry.mRenderTargetId = mRenderTargetMousePicking;
+    frameBufferMousePickingEntry.mWidth = 800;
+    frameBufferMousePickingEntry.mHeight = 600;
+
+    mFrameBufferMousePicking = mEngine.registerResource<ascen::registry::FrameBufferEntry>(frameBufferMousePickingEntry);
 }
 
 void MyPipeline::initStages()
@@ -161,6 +222,56 @@ void MyPipeline::initStages()
         };
 
         mPipelineCompute = mEngine.registerResource<ascen::registry::ComputePipelineEntry>(computePipelineEntry);
+    }
+
+    { // mouse picking stage
+        ascen::registry::DescriptorPoolEntry descriptorPoolEntry{};
+        descriptorPoolEntry.mName = "DESCRIPTOR_POOL_MOUSE_PICKING";
+        descriptorPoolEntry.mDescriptorTypeCounts =
+        {
+            { ascen::DESCRIPTOR_TYPE_SSBO,    1 },
+            //{ ascen::DESCRIPTOR_TYPE_IMAGE,   1 },
+        };
+
+        mDescriptorPoolMousePicking = mEngine.registerResource<ascen::registry::DescriptorPoolEntry>(descriptorPoolEntry);
+
+        ascen::registry::DescriptorLocation l0 { 0, ascen::DESCRIPTOR_TYPE_SSBO };
+        ascen::registry::DescriptorBinding b0 { l0, ascen::SHADER_STAGE_VERTEX };
+
+        ascen::registry::DescriptorSetLayoutEntry descriptorSetLayoutEntry{};
+        descriptorSetLayoutEntry.mName = "DESCRIPTOR_SET_LAYOUT_MOUSE_PICKING";
+        descriptorSetLayoutEntry.mBindings = { b0 };
+
+        mDescriptorSetLayoutMousePicking = mEngine.registerResource<ascen::registry::DescriptorSetLayoutEntry>(descriptorSetLayoutEntry);
+
+        ascen::registry::DescriptorSetEntry descriptorSetEntry{};
+        descriptorSetEntry.mName = "DESCRIPTOR_SET_MOUSE_PICKING";
+        descriptorSetEntry.mPoolId = mDescriptorPoolMousePicking;
+        descriptorSetEntry.mLayoutId = mDescriptorSetLayoutMousePicking;
+        descriptorSetEntry.mResources =
+        {
+            { mBufferEntity, l0, VK_WHOLE_SIZE },
+        };
+
+        mDescriptorSetMousePicking = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);
+
+        ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryMousePicking{};
+        graphicsPipelineEntryMousePicking.mName = "PIPELINE_MOUSE_PICKING";
+        graphicsPipelineEntryMousePicking.mVertexShaderPath = "src/shaders/Simple/MousePickingVertexShader.spv";
+        graphicsPipelineEntryMousePicking.mPixelShaderPath = "src/shaders/Simple/MousePickingPixelShader.spv";
+        graphicsPipelineEntryMousePicking.mVertexId = mVertexTriangles;
+        graphicsPipelineEntryMousePicking.mRenderPassId = mRenderPassMousePicking;
+        graphicsPipelineEntryMousePicking.mDescriptorSetLayoutIds = { mDescriptorSetLayoutMousePicking };
+        graphicsPipelineEntryMousePicking.mParams.mEnableBlend = false;
+        graphicsPipelineEntryMousePicking.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        graphicsPipelineEntryMousePicking.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
+        graphicsPipelineEntryMousePicking.mParams.mCullMode = VK_CULL_MODE_BACK_BIT;
+        graphicsPipelineEntryMousePicking.mParams.mPushConstants =
+        {
+                { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX, nullptr } }
+        };
+
+        mPipelineMousePicking = mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryMousePicking);
     }
 
     // Render visible geometry stage
@@ -254,6 +365,39 @@ void MyPipeline::initFramePasses()
     framePassComputeEntry.mComputeParams.mGroups[2] = 1;
 
     mEngine.registerResource<ascen::registry::FramePassEntry>(framePassComputeEntry);
+
+    ascen::registry::FramePassEntry framePassMousePickingEntry;
+    framePassMousePickingEntry.mName = "FRAMEPASS_MOUSE_PICKING";
+    framePassMousePickingEntry.mType = ascen::FRAMEPASS_TYPE_GRAPHICS;
+    framePassMousePickingEntry.mDescriptorSetIds = { mDescriptorSetMousePicking };
+    framePassMousePickingEntry.mPipelineId = mPipelineMousePicking;
+    framePassMousePickingEntry.mGraphicsParams.mDrawMode = ascen::FRAMEPASS_DRAW_MODE_TRIANGLES;
+    framePassMousePickingEntry.mGraphicsParams.mRenderPassId = mRenderPassMousePicking;
+    framePassMousePickingEntry.mGraphicsParams.mRenderTargetId = mRenderTargetMousePicking;
+    framePassMousePickingEntry.mGraphicsParams.mFrameBufferId = mFrameBufferMousePicking;
+    framePassMousePickingEntry.mGraphicsParams.mExtent = { 800, 600 };
+    framePassMousePickingEntry.mGraphicsParams.mVertexBufferIds = { mBufferVertex };
+    framePassMousePickingEntry.mGraphicsParams.mIndexBufferId = mBufferIndex;
+    framePassMousePickingEntry.mGraphicsParams.mIndirectBufferId = mBufferIndirect;
+
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassMousePickingEntry);
+
+    ascen::registry::FramePassEntry framePassMousePickingTransferEntry;
+    framePassMousePickingTransferEntry.mName = "FRAMEPASS_MOUSE_PICKING_TRANSFER";
+    framePassMousePickingTransferEntry.mType = ascen::FRAMEPASS_TYPE_TRANSFER;
+    framePassMousePickingTransferEntry.mTransfers =
+    {
+            {
+                0,
+                {
+                    ascen::transfer::TRANSFER_TYPE_IMAGE_TO_BUFFER,
+                    mWritableTextureMousePicking,
+                    mBufferMousePicking,
+                }
+            }
+    };
+
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassMousePickingTransferEntry);
 
     ascen::registry::FramePassEntry framePassGraphicsTrianglesEntry;
     framePassGraphicsTrianglesEntry.mName = "FRAMEPASS_GRAPHICS_TRIANGLES";

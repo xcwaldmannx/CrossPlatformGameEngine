@@ -29,6 +29,14 @@ void Engine::uploadTexture(const std::string& name, const std::vector<unsigned c
 	mRegistryManager.uploadTexture(name, pixels);
 }
 
+void Engine::updateTransfer(
+			const std::string& name,
+			uint32_t transferId,
+			const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region)
+{
+	mRegistryManager.updateTransfer(name, transferId, region);
+}
+
 EcsSystem& Engine::ecs()
 {
 	return mEcs;

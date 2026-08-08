@@ -5,8 +5,6 @@
 #include "VulkanContext.h"
 #include "RenderContext.h"
 #include "../CommandPool/CommandPool.h"
-#include "../CommandRecorder/LineCommandRecorder/LineCommandRecorder.h"
-#include "../CommandRecorder/MeshCommandRecorder/MeshCommandRecorder.h"
 #include "../Swapchain/Swapchain.h"
 #include "../Resource/Barrier/Barrier.h"
 #include "../Resource/Buffer/Buffer.h"
@@ -30,7 +28,8 @@ Renderer::Renderer(
 	mPresentQueue(vulkanContext.getPresentQueue()),
 	mDevice(vulkanContext.getDevice()),
 	mRenderContext(renderContext),
-	mRegistryManager(registryManager)
+	mRegistryManager(registryManager),
+	mTransferCommandRecorder(registryManager)
 {
 	createSyncObjects();
 }
@@ -48,7 +47,6 @@ void Renderer::drawFrame()
 	if (!acquireNextFrame(swapchain)) return;
 
 	auto framePasses = mFrameGraph.compile(mRegistryManager.getResourceType<FramePass>());
-
 	const auto& commandPool = mRenderContext.getCommandPool();
 	const auto commandBuffer = commandPool->beginCommand(mFrameIndex);
 
@@ -80,6 +78,7 @@ void Renderer::drawFrame()
 					else // use specific framebuffer
 					{
 						const auto& frameBufferPtr = mRegistryManager.getResource<FrameBuffer>(framePass->mFrameBufferId);
+						frameBufferPtr->resize(swapchain->getExtent().width, swapchain->getExtent().height);
 						frameBuffer = frameBufferPtr->handle();
 					}
 
@@ -149,7 +148,7 @@ void Renderer::drawFrame()
 
 				if (framePass->mDrawMode == FRAMEPASS_DRAW_MODE_TRIANGLES)
 				{
-					mMeshCommandRecorder.record(commandBuffer, pipeline, descriptorSets, vertexBuffers, indexBuffer, indirectBuffer, 1'000'000);
+					mMeshCommandRecorder.record(commandBuffer, pipeline, descriptorSets, vertexBuffers, indexBuffer, indirectBuffer, 2);
 				}
 				else if (framePass->mDrawMode == FRAMEPASS_DRAW_MODE_LINES)
 				{
@@ -177,6 +176,33 @@ void Renderer::drawFrame()
 				mComputeCommandRecorder.record(commandBuffer, pipeline, descriptorSets, framePass->mComputeGroups);
 				break;
 			}
+			case FRAMEPASS_TYPE_TRANSFER:
+			{
+				if (isRenderPassActive)
+				{
+					commandPool->endRenderPass(commandBuffer);
+					isRenderPassActive = false;
+					currentRenderPass = 0;
+				}
+
+				for (auto& transfer: framePass->mTransfers | std::views::values)
+				{
+					if (transfer.mState == transfer::TRANSFER_STATE_IDLE || transfer.mState == transfer::TRANSFER_STATE_READY)
+					{
+						mTransferCommandRecorder.record(
+							commandBuffer,
+							transfer.mType,
+							transfer.mSrc,
+							transfer.mDest,
+							transfer.mRegion);
+
+						transfer.mState = transfer::TRANSFER_STATE_SUBMITTED;
+						std::cout << "SUBMITTED" << std::endl;
+					}
+
+				}
+				break;
+			}
 			default:
 				break;
 		}
@@ -191,15 +217,40 @@ void Renderer::drawFrame()
 	commandPool->endCommand(commandBuffer);
 
 	submitFrame(commandPool);
-	presentFrame(swapchain);
+
+	if (!presentFrame(swapchain))
+	{
+		return;
+	}
 
 	mFrameIndex = (mFrameIndex + 1) % MAX_FRAMES_IN_FLIGHT;
+
+	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
+
+	for (const auto& framePass : framePasses)
+	{
+		switch (framePass->mType)
+		{
+			case FRAMEPASS_TYPE_TRANSFER:
+			{
+				for (auto& transfer: framePass->mTransfers | std::views::values)
+				{
+					if (transfer.mState == transfer::TRANSFER_STATE_SUBMITTED)
+					{
+						transfer.mState = transfer::TRANSFER_STATE_READY;
+						std::cout << "READY" << std::endl;
+					}
+				}
+				break;
+			}
+			default:
+				break;
+		}
+	}
 }
 
 bool Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
 {
-	vkWaitForFences(mDevice, 1, &mInFlightFences[mFrameIndex], VK_TRUE, UINT64_MAX);
-
 	const VkResult nextImageResult = vkAcquireNextImageKHR(
 		mDevice,
 		swapchain->handle(),
@@ -246,7 +297,7 @@ void Renderer::submitFrame(const CommandPoolPtr& commandPool) const
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 }
-void Renderer::presentFrame(const SwapchainPtr& swapchain) const
+bool Renderer::presentFrame(const SwapchainPtr& swapchain) const
 {
 	const VkSemaphore signalSemaphores[] = { mRenderFinishedForImageSemaphores[mImageIndex] };
 
@@ -269,13 +320,15 @@ void Renderer::presentFrame(const SwapchainPtr& swapchain) const
 		mWindowManager.isResized())
 	{
 		mRenderContext.resize();
-		return;
+		return false;
 	}
-	else if (queuePresentResult != VK_SUCCESS)
+
+	if (queuePresentResult != VK_SUCCESS)
 	{
 		throw std::runtime_error("failed to present swap chain image!");
 	}
 
+	return true;
 }
 
 void Renderer::createSyncObjects()

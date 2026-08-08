@@ -17,23 +17,14 @@ namespace ascen
     public:
         RenderTarget(
             const VkDevice device,
-            const Format format,
-            const std::vector<VkImage>& images);
+            const std::vector<TexturePtr>& textures);
 
         void destroy(const VkDevice device);
 
-        void resize(const VkDevice device);
-
-        std::vector<VkImageView>& getImageViews();
+        std::vector<VkImageView> getImageViews();
 
     private:
-        void createImageViews(const VkDevice device);
-        void destroyImageViews(const VkDevice device);
-
-    private:
-        const Format mFormat;
-        std::vector<VkImage> mImages;
-        std::vector<VkImageView> mImageViews;
+        std::vector<TexturePtr> mTextures;
     };
 
 }

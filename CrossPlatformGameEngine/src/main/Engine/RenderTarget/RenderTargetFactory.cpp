@@ -6,9 +6,7 @@ using namespace ascen;
 
 RenderTargetFactory::RenderTargetFactory(VkDevice device) : mDevice(device) {}
 
-RenderTargetPtr RenderTargetFactory::create(
-    const Format format,
-    const std::vector<VkImage>& images) const
+RenderTargetPtr RenderTargetFactory::create(const std::vector<TexturePtr>& textures) const
 {
-    return std::make_shared<RenderTarget>(mDevice, format, images);
+    return std::make_shared<RenderTarget>(mDevice, textures);
 }

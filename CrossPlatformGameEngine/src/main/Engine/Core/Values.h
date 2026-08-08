@@ -51,6 +51,7 @@ namespace ascen
     {
         NONE,
         IMAGE,
+        WRITABLE,
         DEPTH,
     };
 
@@ -58,11 +59,13 @@ namespace ascen
     {
         ATTACHMENT_PRESENT,
         ATTACHMENT_COLOR,
+        ATTACHMENT_TRANSFER_COLOR,
         ATTACHMENT_DEPTH
     };
 
     enum Format
     {
+        FORMAT_R32_UINT   = VK_FORMAT_R32_UINT,
         FORMAT_RGBA8_SRGB = VK_FORMAT_R8G8B8A8_SRGB,
     };
 
@@ -131,7 +134,8 @@ namespace ascen
     typedef enum FramePassType
     {
         FRAMEPASS_TYPE_GRAPHICS,
-        FRAMEPASS_TYPE_COMPUTE
+        FRAMEPASS_TYPE_COMPUTE,
+        FRAMEPASS_TYPE_TRANSFER,
     } FramePassType;
 
     typedef enum FramePassDrawMode

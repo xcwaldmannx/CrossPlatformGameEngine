@@ -94,7 +94,7 @@ void WindowManager::windowThread()
     });
 
     // enable this for renderdoc
-    //glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 
     if (!glfwInit())
     {

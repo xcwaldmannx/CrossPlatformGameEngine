@@ -99,7 +99,10 @@ void CommandPool::beginRenderPass(
     renderPassInfo.renderArea.extent = extent;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { { 0.075f, 0.01f, 0.01f, 1.0f } };
+    clearValues[0].color.uint32[0] = 0;
+    clearValues[0].color.uint32[1] = 0;
+    clearValues[0].color.uint32[2] = 0;
+    clearValues[0].color.uint32[3] = 0;
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());

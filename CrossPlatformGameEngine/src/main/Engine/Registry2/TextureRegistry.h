@@ -32,6 +32,14 @@ namespace ascen
                         entry.mHeight,
                         entry.mLayers);
                     break;
+                case TextureType::WRITABLE:
+                    resource = mTextureFactory.createWritable(
+                        mCommandPool,
+                        entry.mFormat,
+                        entry.mWidth,
+                        entry.mHeight,
+                        entry.mLayers);
+                    break;
                 case TextureType::DEPTH:
                     resource = mTextureFactory.createDepth(
                         mCommandPool,

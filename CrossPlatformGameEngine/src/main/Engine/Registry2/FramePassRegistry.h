@@ -24,7 +24,8 @@ namespace ascen
                 entry.mGraphicsParams.mVertexBufferIds,
                 entry.mGraphicsParams.mIndexBufferId,
                 entry.mGraphicsParams.mIndirectBufferId,
-                entry.mComputeParams.mGroups);
+                entry.mComputeParams.mGroups,
+                entry.mTransfers);
         }
     };
 

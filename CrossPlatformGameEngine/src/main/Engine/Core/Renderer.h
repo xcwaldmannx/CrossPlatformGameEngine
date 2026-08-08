@@ -8,6 +8,7 @@
 #include "../CommandRecorder/ComputeCommandRecorder/ComputeCommandRecorder.h"
 #include "../CommandRecorder/LineCommandRecorder/LineCommandRecorder.h"
 #include "../CommandRecorder/MeshCommandRecorder/MeshCommandRecorder.h"
+#include "../CommandRecorder/TransferCommandRecorder/TransferCommandRecorder.h"
 
 class EcsSystem;
 
@@ -62,7 +63,7 @@ namespace ascen
 	private:
 		bool acquireNextFrame(const SwapchainPtr& swapchain);
 		void submitFrame(const CommandPoolPtr& commandPool) const;
-		void presentFrame(const SwapchainPtr& swapchain) const;
+		bool presentFrame(const SwapchainPtr& swapchain) const;
 
 	private:
 		WindowManager& mWindowManager;
@@ -79,6 +80,7 @@ namespace ascen
 		LineCommandRecorder mLineCommandRecorder;
 		MeshCommandRecorder mMeshCommandRecorder;
 		ComputeCommandRecorder mComputeCommandRecorder;
+		TransferCommandRecorder mTransferCommandRecorder;
 
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
 		std::vector<VkSemaphore> mRenderFinishedForImageSemaphores;

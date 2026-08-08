@@ -13,20 +13,34 @@ namespace ascen
     public:
         RenderTargetRegistry(
         const VkDevice device,
-        const RenderTargetFactory& renderTargetFactory) :
+        const RenderTargetFactory& renderTargetFactory,
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* idToResource) :
         mDevice(device),
-        mRenderTargetFactory(renderTargetFactory) {}
+        mRenderTargetFactory(renderTargetFactory),
+        mIdToResource(idToResource) {}
 
         void reconstruct(const registry::RenderTargetEntry& entry, RenderTargetPtr& resource) override
         {
             if (resource) resource->destroy(mDevice);
 
-            resource = mRenderTargetFactory.create(entry.mFormat, entry.mImages);
+            std::vector<TexturePtr> textures;
+            if (!entry.mTextureIds.empty())
+            {
+                for (const uint64_t id : entry.mTextureIds)
+                {
+                    const TexturePtr& texture = std::dynamic_pointer_cast<Texture>(mIdToResource->at(id));
+                    textures.push_back(texture);
+                }
+            }
+
+            resource = mRenderTargetFactory.create(textures);
         }
 
     private:
         const VkDevice mDevice;
         const RenderTargetFactory& mRenderTargetFactory;
+
+        std::unordered_map<uint64_t, std::shared_ptr<Handle_I>>* mIdToResource = nullptr;
     };
 
 }

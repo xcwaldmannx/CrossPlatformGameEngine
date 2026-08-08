@@ -45,6 +45,12 @@ namespace ascen
 			uint32_t itemCount,
 			uint32_t itemSize) const;
 
+		void read(
+			const VkDevice device,
+			void* destination,
+			const VkDeviceSize sizeBytes,
+			const VkDeviceSize offset) const;
+
 		size_t getItemCount() const;
 
 		size_t getItemSize() const;

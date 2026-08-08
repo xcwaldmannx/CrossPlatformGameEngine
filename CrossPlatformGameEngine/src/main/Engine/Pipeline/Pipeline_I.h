@@ -21,7 +21,7 @@ namespace ascen
 		void destroy(VkDevice device) override = 0;
 
 		template<typename T>
-		void setPushConstant(const uint32_t pushConstantId, const T& data)
+		void updatePushConstant(const uint32_t pushConstantId, const T& data)
 		{
 			auto& pushConstant = mPushConstants.at(pushConstantId);
 			const size_t dataSize = sizeof(T);

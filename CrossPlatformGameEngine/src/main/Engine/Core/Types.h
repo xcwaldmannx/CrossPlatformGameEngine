@@ -4,6 +4,7 @@
 
 #include <memory>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace ascen
@@ -114,12 +115,77 @@ namespace ascen
 
 		struct GraphicsParams : Params
 		{
+			bool mEnableBlend = true;
 			uint32_t mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 			uint32_t mPolygonMode = VK_POLYGON_MODE_FILL;
 			uint32_t mCullMode = VK_CULL_MODE_BACK_BIT;
 		};
 
 		struct ComputeParams : Params {};
+	}
+
+	namespace transfer
+	{
+		typedef enum TransferType
+		{
+			TRANSFER_TYPE_BUFFER_TO_BUFFER,
+			TRANSFER_TYPE_BUFFER_TO_IMAGE,
+			TRANSFER_TYPE_IMAGE_TO_IMAGE,
+			TRANSFER_TYPE_IMAGE_TO_BUFFER,
+		} DataTransferType;
+
+		typedef enum TransferState
+		{
+			TRANSFER_STATE_IDLE,
+			TRANSFER_STATE_SUBMITTED,
+			TRANSFER_STATE_READY,
+		} TransferState;
+
+		struct BufferRegion
+		{
+			VkDeviceSize mSrcOffset = 0;
+			VkDeviceSize mDestOffset = 0;
+			VkDeviceSize mSize = 0;
+		};
+
+		struct ImageRegion
+		{
+			VkOffset3D mSrcOffset { 0, 0, 0 };
+			VkOffset3D mDestOffset{ 0, 0, 0 };
+			VkExtent3D mExtent { 1, 1, 1 };
+
+			VkImageAspectFlags mAspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+			uint32_t mMipLevel = 0;
+			uint32_t mBaseArrayLayer = 0;
+			uint32_t mLayerCount = 1;
+		};
+
+		struct BufferImageRegion
+		{
+			VkDeviceSize mBufferOffset = 0;
+
+			uint32_t mBufferRowLength = 0;
+			uint32_t mBufferImageHeight = 0;
+
+			VkOffset3D mImageOffset { 0, 0, 0 };
+			VkExtent3D mImageExtent { 1, 1, 1 };
+
+			VkImageAspectFlags mAspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+			uint32_t mMipLevel = 0;
+			uint32_t mBaseArrayLayer = 0;
+			uint32_t mLayerCount = 1;
+		};
+
+		struct Transfer
+		{
+			TransferType mType = TRANSFER_TYPE_BUFFER_TO_BUFFER;
+			uint64_t mSrc = 0;
+			uint64_t mDest = 0;
+			std::variant<BufferRegion, ImageRegion, BufferImageRegion> mRegion;
+			TransferState mState = TRANSFER_STATE_IDLE;
+		};
 	}
 
 	namespace registry
@@ -199,6 +265,7 @@ namespace ascen
 			using ResourceType = TexturePtr;
 
 			TextureType mType = TextureType::NONE;
+			Format mFormat = FORMAT_RGBA8_SRGB;
 			uint32_t mWidth = 0;
 			uint32_t mHeight = 0;
 			uint32_t mLayers = 0;
@@ -217,9 +284,7 @@ namespace ascen
 		{
 			using ResourceType = RenderTargetPtr;
 
-			Format mFormat;
-			std::vector<VkImage> mImages;
-			uint32_t mImageCount;
+			std::vector<uint64_t> mTextureIds;
 		};
 
 		struct FrameBufferEntry : Entry
@@ -283,6 +348,8 @@ namespace ascen
 			uint64_t mPipelineId = 0;
 			FramePassGraphicsParams mGraphicsParams;
 			FramePassComputeParams mComputeParams;
+
+			std::unordered_map<uint32_t, transfer::Transfer> mTransfers;
 		};
 	}
 

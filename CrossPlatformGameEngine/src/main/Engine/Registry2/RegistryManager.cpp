@@ -24,7 +24,7 @@ RegistryManager::RegistryManager(
     mRegistries.emplace_back(DescriptorSetLayoutRegistry{ device, vulkanContext.getDescriptorFactory() });
     mRegistries.emplace_back(DescriptorSetRegistry{ device, vulkanContext.getDescriptorFactory(), &mIdToResource });
     mRegistries.emplace_back(RenderPassRegistry{ device, vulkanContext.getRenderPassFactory() });
-    mRegistries.emplace_back(RenderTargetRegistry{ device, vulkanContext.getRenderTargetFactory() });
+    mRegistries.emplace_back(RenderTargetRegistry{ device, vulkanContext.getRenderTargetFactory(), &mIdToResource });
     mRegistries.emplace_back(FrameBufferRegistry{ device, vulkanContext.getFrameBufferFactory(), &mIdToResource });
     mRegistries.emplace_back(GraphicsPipelineRegistry{ device, renderContext.getSwapchain(), vulkanContext.getGraphicsPipelineFactory(), &mIdToResource });
     mRegistries.emplace_back(ComputePipelineRegistry{ device, vulkanContext.getComputePipelineFactory(), &mIdToResource });
@@ -116,6 +116,27 @@ void RegistryManager::uploadTexture(const uint64_t id, const std::vector<unsigne
     else
     {
         throw std::runtime_error("Texture does not exist!");
+    }
+}
+
+void RegistryManager::updateTransfer(
+    const std::string& name,
+    const uint32_t transferId,
+    const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region)
+{
+    const uint64_t id = mHasher(name);
+    updateTransfer(id, transferId, region);
+}
+
+void RegistryManager::updateTransfer(
+    const uint64_t id,
+    const uint32_t transferId,
+    const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region) const
+{
+    if (mIdToResource.contains(id))
+    {
+        const FramePassPtr& resource = std::dynamic_pointer_cast<FramePass>(mIdToResource.at(id));
+        resource->updateTransfer(transferId, region);
     }
 }
 

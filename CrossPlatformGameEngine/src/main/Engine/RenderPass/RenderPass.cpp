@@ -57,6 +57,9 @@ void RenderPass::createAttachments(const std::vector<renderpass::Attachment>& at
             case ATTACHMENT_COLOR:
                 desc.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
                 break;
+            case ATTACHMENT_TRANSFER_COLOR:
+                desc.finalLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+                break;
             case ATTACHMENT_DEPTH:
                 desc.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
                 break;

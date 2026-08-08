@@ -105,24 +105,63 @@ namespace ascen
         void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
         void uploadTexture(const uint64_t id, const std::vector<unsigned char>& pixels) const;
 
+        void updateTransfer(
+            const std::string& name,
+            const uint32_t transferId,
+            const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region);
+        void updateTransfer(
+            const uint64_t id,
+            const uint32_t transferId,
+            const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region) const;
+
         template<typename T>
-        void setPushConstant(const std::string& name, const uint32_t pushConstantId, const T& data)
+        void downloadTransfer(
+            const std::string& name,
+            const uint32_t transferId,
+            T* data)
         {
             const uint64_t id = mHasher(name);
-            setPushConstant<T>(id, pushConstantId, data);
+            downloadTransfer(id, transferId, data);
         }
 
         template<typename T>
-        void setPushConstant(const uint64_t id, const uint32_t pushConstantId, const T& data)
+        void downloadTransfer(
+            const uint64_t id,
+            const uint32_t transferId,
+            T* data) const
+        {
+            if (mIdToResource.contains(id))
+            {
+                const FramePassPtr& resource = std::dynamic_pointer_cast<FramePass>(mIdToResource.at(id));
+                auto& transfer = resource->mTransfers.at(transferId);
+                if (transfer.mState == transfer::TRANSFER_STATE_READY)
+                {
+                    const BufferPtr& buffer = getResource<Buffer>(transfer.mDest);
+                    buffer->read(mDevice, data, sizeof(T), 0);
+                    transfer.mState = transfer::TRANSFER_STATE_IDLE;
+                    std::cout << "IDLE" << std::endl;
+                }
+            }
+        }
+
+        template<typename T>
+        void updatePushConstant(const std::string& name, const uint32_t pushConstantId, const T& data)
+        {
+            const uint64_t id = mHasher(name);
+            updatePushConstant<T>(id, pushConstantId, data);
+        }
+
+        template<typename T>
+        void updatePushConstant(const uint64_t id, const uint32_t pushConstantId, const T& data)
         {
             const std::shared_ptr<Pipeline_I>& pipeline = std::dynamic_pointer_cast<Pipeline_I>(mIdToResource.at(id));
-            pipeline->setPushConstant(pushConstantId, data);
+            pipeline->updatePushConstant(pushConstantId, data);
         }
 
         void uploadPushConstants(const VkCommandBuffer commandBuffer) const;
 
         template<typename R>
-        std::shared_ptr<R> getResource(const uint64_t id)
+        std::shared_ptr<R> getResource(const uint64_t id) const
         {
             return std::dynamic_pointer_cast<R>(mIdToResource.at(id));
         }

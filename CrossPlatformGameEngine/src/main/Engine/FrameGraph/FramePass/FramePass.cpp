@@ -16,7 +16,8 @@ FramePass::FramePass(
             const std::vector<uint64_t> vertexBufferIds,
             const uint64_t indexBufferId,
             const uint64_t indirectBufferId,
-            const uint32_t computeGroups[3]):
+            const uint32_t computeGroups[3],
+            const std::unordered_map<uint32_t, transfer::Transfer> transfers):
     mType(type),
     mDescriptorSetIds(descriptorSetIds),
     mPipelineId(pipelineId),
@@ -28,6 +29,22 @@ FramePass::FramePass(
     mVertexBufferIds(vertexBufferIds),
     mIndexBufferId(indexBufferId),
     mIndirectBufferId(indirectBufferId),
-    mComputeGroups { computeGroups[0], computeGroups[1], computeGroups[2] } {}
+    mComputeGroups { computeGroups[0], computeGroups[1], computeGroups[2] },
+    mTransfers(transfers) {}
 
 void FramePass::destroy(const VkDevice device) {}
+
+void FramePass::updateTransfer(
+    const uint32_t id,
+    const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion>& region)
+{
+    if (const auto it = mTransfers.find(id); it != mTransfers.end())
+    {
+        auto& transfer = it->second;
+        transfer.mRegion = region;
+    }
+    else
+    {
+        throw std::runtime_error("Transfer does not exist.");
+    }
+}

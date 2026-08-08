@@ -15,9 +15,7 @@ namespace ascen
     public:
         RenderTargetFactory(VkDevice device);
 
-        RenderTargetPtr create(
-            const Format format,
-            const std::vector<VkImage>& images) const;
+        RenderTargetPtr create(const std::vector<TexturePtr>& textures) const;
 
     private:
         VkDevice mDevice;
