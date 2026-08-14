@@ -38,6 +38,12 @@ namespace ascen
 
 		void destroy(VkDevice device) override;
 
+		static Memory getMemoryInfo(
+			VkPhysicalDevice physicalDevice,
+			VkDevice device,
+			VkImage image,
+			VkMemoryPropertyFlags memoryFlags);
+
 	private:
 		void transitionLayout(
 			VkDevice device,
@@ -52,13 +58,7 @@ namespace ascen
 			const CommandPoolPtr& commandPool,
 			Buffer& buffer,
 			Image& image,
-			uint32_t layers);
-
-		Memory getMemoryInfo(
-			VkPhysicalDevice physicalDevice,
-			VkDevice device,
-			VkImage image,
-			VkMemoryPropertyFlags memoryFlags);
+			uint32_t layers) const;
 
 	private:
 		uint32_t mWidth;

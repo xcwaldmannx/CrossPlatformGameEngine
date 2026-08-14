@@ -12,7 +12,7 @@ namespace ascen
 	public:
 		SamplerFactory(VkPhysicalDevice physicalDevice, VkDevice device);
 
-		SamplerPtr createSampler() const;
+		SamplerPtr create() const;
 
 	private:
 		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;

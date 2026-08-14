@@ -1,61 +1,26 @@
 #include "LineCommandRecorder.h"
 
-#include "../../FrameGraph/FramePass/GpuFramePass/GraphicsGpuFramePass/GraphicsGpuFramePass.h"
+#include "../../Pipeline/GraphicsPipeline/GraphicsPipeline.h"
 
 #include <vector>
 
-#include "../../Registry/FramePass/FramePassRegistryBackend.h"
-#include "../../Registry/Resource/ResourceRegistryBackend.h"
-
 using namespace ascen;
 
-LineCommandRecorder::LineCommandRecorder(
-    PipelineRegistry& pipelineRegistry,
-    DescriptorRegistry& descriptorRegistry,
-    ResourceRegistry& resourceRegistry) :
-    CommandRecorder_I(pipelineRegistry, descriptorRegistry, resourceRegistry) {}
-
 void LineCommandRecorder::record(
-    VkCommandBuffer commandBuffer,
-    const GraphicsGpuFramePass* pass,
-    uint32_t frameIndex)
+    const VkCommandBuffer commandBuffer,
+    const GraphicsPipelinePtr& pipeline,
+    const std::vector<VkDescriptorSet> descriptorSets,
+    const std::vector<VkBuffer> vertexBuffers,
+    const VkBuffer indexBuffer)
 {
-    const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, pass->mPipeline);
+
     const auto& pipelineLayout = pipeline->getLayout();
-
-    std::vector<VkDescriptorSet> descriptorSets;
-    for (const auto& descriptorSet : pass->mDescriptorSets)
-    {
-        const auto& descriptorSetPtr = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
-        descriptorSets.push_back(descriptorSetPtr->handle());
-    }
-
-    std::vector<VkBuffer> vertexBuffers;
-    VkBuffer indexBuffer = VK_NULL_HANDLE;
-
-    for (const auto & resource : pass->mResources)
-    {
-        switch (resource.mUsage)
-        {
-            case ResourceUsage::BUFFER_VERTEX:
-            {
-                const auto& vertexBufferPtr = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
-                vertexBuffers.push_back(vertexBufferPtr->handle());
-                break;
-            }
-            case ResourceUsage::BUFFER_INDEX:
-            {
-                indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName)->handle();
-                break;
-            }
-            default:
-                break;
-        }
-    }
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle());
 
-    std::vector<VkDeviceSize> vertexOffsets(vertexBuffers.size(), 0);
+    pipeline->uploadPushConstants(commandBuffer);
+
+    const std::vector<VkDeviceSize> vertexOffsets(vertexBuffers.size(), 0);
     vkCmdBindVertexBuffers(
         commandBuffer,
         0,

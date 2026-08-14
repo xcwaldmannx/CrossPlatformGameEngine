@@ -54,3 +54,8 @@ void Texture::destroy(VkDevice device)
 	vkDestroyImageView(device, mHandle, nullptr);
 	mImage.destroy(device);
 }
+
+Image& Texture::getImage()
+{
+	return mImage;
+}

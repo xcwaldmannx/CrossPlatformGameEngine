@@ -5,9 +5,9 @@
 struct Entity
 {
     vec3 position;
-    uint _pad0;
+    uint id;
     vec3 rotation;
-    uint _pad1;
+    uint isSelected;
     vec3 scale;
     uint _pad2;
 
@@ -89,6 +89,7 @@ layout(location = 2) in vec2 inTexCoord;
 
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) out flat uint outTextureId;
+layout(location = 2) out flat uint outSelected;
 
 void main()
 {
@@ -107,4 +108,5 @@ void main()
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);
     outTextureId = 0;
+    outSelected = entity.isSelected;
 }

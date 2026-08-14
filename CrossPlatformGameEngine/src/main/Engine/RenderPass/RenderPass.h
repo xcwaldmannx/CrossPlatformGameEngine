@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../Core/Types.h"
 #include "../Handle/Handle.h"
 
 #include <vector>
@@ -9,32 +10,29 @@
 namespace ascen
 {
 
-	struct Attachment
-	{
-		VkAttachmentDescription mDesc{};
-		VkAttachmentReference mRef{};
-	};
+    class RenderPass : public Handle<VkRenderPass>
+    {
+    public:
+        RenderPass(
+            const VkDevice device,
+            const std::vector<renderpass::Attachment>& attachments,
+            const std::vector<renderpass::SubPass>& subPasses,
+            const std::vector<renderpass::SubPassDependency>& subPassDependencies);
 
-	class RenderPass : public Handle<VkRenderPass>
-	{
-	private:
-		RenderPass(
-			VkPhysicalDevice physicalDevice,
-			VkDevice device,
-			VkFormat colorFormat,
-			VkFormat depthFormat);
+        void destroy(const VkDevice device) override;
 
-	public:
-		void destroy(VkDevice device) override;
+    private:
+        void createAttachments(const std::vector<renderpass::Attachment>& attachments);
+        void createSubPassDescriptions(const std::vector<renderpass::SubPass>& subPasses);
+        void createSubPassDependencies(const std::vector<renderpass::SubPassDependency>& subPassDependencies);
 
-	protected:
-		std::vector<Attachment> mAttachments;
-		std::vector<VkAttachmentDescription> mAttachmentDescriptions;
-		VkSubpassDescription mSubPassDesc{};
-		VkSubpassDependency mSubPassDependency{};
-		VkRenderPassCreateInfo mRenderPassInfo{};
-
-		friend class RenderPassFactory;
-	};
+    private:
+        std::vector<VkAttachmentDescription> mAttachments;
+        std::vector<std::vector<VkAttachmentReference>> mInputAttachmentReferences;
+        std::vector<std::vector<VkAttachmentReference>> mColorAttachmentReferences;
+        std::vector<VkAttachmentReference> mDepthAttachmentReferences;
+        std::vector<VkSubpassDescription> mSubPassDescriptions;
+        std::vector<VkSubpassDependency> mSubPassDependencies;
+    };
 
 }

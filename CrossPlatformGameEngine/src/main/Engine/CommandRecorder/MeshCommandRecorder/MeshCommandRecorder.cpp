@@ -1,67 +1,27 @@
 #include "MeshCommandRecorder.h"
 
-#include "../../FrameGraph/FramePass/GpuFramePass/GraphicsGpuFramePass/GraphicsGpuFramePass.h"
+#include "../../Pipeline/GraphicsPipeline/GraphicsPipeline.h"
 
 #include <vector>
 
 using namespace ascen;
 
-MeshCommandRecorder::MeshCommandRecorder(
-    PipelineRegistry& pipelineRegistry,
-    DescriptorRegistry& descriptorRegistry,
-    ResourceRegistry& resourceRegistry) :
-    CommandRecorder_I(pipelineRegistry, descriptorRegistry, resourceRegistry) {}
-
 void MeshCommandRecorder::record(
-    VkCommandBuffer commandBuffer,
-    const GraphicsGpuFramePass* pass,
-    uint32_t frameIndex)
+    const VkCommandBuffer commandBuffer,
+    const GraphicsPipelinePtr& pipeline,
+    const std::vector<VkDescriptorSet> descriptorSets,
+    const std::vector<VkBuffer> vertexBuffers,
+    const VkBuffer indexBuffer,
+    const VkBuffer indirectBuffer,
+    const uint32_t indirectCount)
 {
-    const auto& pipeline = PipelineRegistryBackend::getGraphicsPipeline(mPipelineRegistry, pass->mPipeline);
     const auto& pipelineLayout = pipeline->getLayout();
-
-    std::vector<VkDescriptorSet> descriptorSets;
-    for (const auto& descriptorSet : pass->mDescriptorSets)
-    {
-        const auto& descriptorSetPtr = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
-        descriptorSets.push_back(descriptorSetPtr->handle());
-    }
-
-    std::vector<VkBuffer> vertexBuffers;
-    VkBuffer indexBuffer = VK_NULL_HANDLE;
-    VkBuffer indirectBuffer = VK_NULL_HANDLE;
-    uint32_t indirectCount = 0;
-
-    for (const auto & resource : pass->mResources)
-    {
-        switch (resource.mUsage)
-        {
-            case ResourceUsage::BUFFER_VERTEX:
-            {
-                const auto& vertexBufferPtr = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
-                vertexBuffers.push_back(vertexBufferPtr->handle());
-                break;
-            }
-            case ResourceUsage::BUFFER_INDEX:
-            {
-                indexBuffer = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName)->handle();
-                break;
-            }
-            case ResourceUsage::BUFFER_INDIRECT:
-            {
-                const auto& buf = ResourceRegistryBackend::getBuffer(mResourceRegistry, resource.mName);
-                indirectBuffer = buf->handle();
-                indirectCount = static_cast<uint32_t>(buf->getItemCount());
-                break;
-            }
-            default:
-                break;
-        }
-    }
 
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline->handle());
 
-    std::vector<VkDeviceSize> vertexOffsets(vertexBuffers.size(), 0);
+    pipeline->uploadPushConstants(commandBuffer);
+
+    const std::vector<VkDeviceSize> vertexOffsets(vertexBuffers.size(), 0);
     vkCmdBindVertexBuffers(
         commandBuffer,
         0,
@@ -95,6 +55,6 @@ void MeshCommandRecorder::record(
         commandBuffer,
         indirectBuffer,
         0,
-        indirectCount,
+        2,
         sizeof(VkDrawIndexedIndirectCommand));
 }

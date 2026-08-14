@@ -18,11 +18,11 @@ public:
     struct alignas(16) Entity
     {
         glm::vec3 mPosition;
-        uint32_t _pad0;
+        uint32_t  mEntityId;
         glm::vec3 mRotation;
-        uint32_t _pad1;
+        uint32_t  mIsSelected;
         glm::vec3 mScale;
-        uint32_t _pad2;
+        uint32_t  _pad2;
 
         glm::vec3 mBoundsPos;
         uint32_t _pad3;

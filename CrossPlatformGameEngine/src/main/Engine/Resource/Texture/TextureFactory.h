@@ -23,6 +23,13 @@ namespace ascen
 			uint32_t height,
 			uint32_t layers) const;
 
+		TexturePtr createWritable(
+			const CommandPoolPtr& commandPool,
+			const Format format,
+			uint32_t width,
+			uint32_t height,
+			uint32_t layers) const;
+
 		TexturePtr createDepth(
 			const CommandPoolPtr& commandPool,
 			uint32_t width,

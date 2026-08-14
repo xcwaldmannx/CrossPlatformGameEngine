@@ -1,5 +1,6 @@
 #include "WindowManager.h"
 
+#include <iostream>
 #include <stdexcept>
 
 void WindowManager::create()
@@ -83,6 +84,18 @@ InputManager& WindowManager::getInput()
 
 void WindowManager::windowThread()
 {
+    glfwSetErrorCallback(
+    [](int error, const char* description)
+    {
+        std::cerr
+            << "GLFW error " << error << ": "
+            << (description ? description : "unknown")
+            << '\n';
+    });
+
+    // enable this for renderdoc
+    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
     if (!glfwInit())
     {
         throw std::runtime_error("Failed to initialize GLFW");

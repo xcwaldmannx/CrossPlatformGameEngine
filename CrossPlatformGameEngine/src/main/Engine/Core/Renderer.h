@@ -1,16 +1,14 @@
 #pragma once
 
 #include "../FrameGraph/FrameGraph.h"
-// #include "../Ecs/Systems/RenderSystem.h"
+#include "../Registry2/RegistryManager.h"
 
-#include <unordered_map>
-
-#include <Mass.h>
 #include <vulkan/vulkan.h>
 
 #include "../CommandRecorder/ComputeCommandRecorder/ComputeCommandRecorder.h"
 #include "../CommandRecorder/LineCommandRecorder/LineCommandRecorder.h"
 #include "../CommandRecorder/MeshCommandRecorder/MeshCommandRecorder.h"
+#include "../CommandRecorder/TransferCommandRecorder/TransferCommandRecorder.h"
 
 class EcsSystem;
 
@@ -23,6 +21,7 @@ namespace ascen
 	class ResourceRegistry;
 	class DescriptorRegistry;
 	class FramePassRegistry;
+	class RenderTargetRegistry;
 
 	class Renderer
 	{
@@ -46,11 +45,7 @@ namespace ascen
 			EcsSystem& ecsSystem,
 			VulkanContext& vulkanContext,
 			RenderContext& renderContext,
-			VertexRegistry& vertexRegistry,
-			ResourceRegistry& resourceRegistry,
-			DescriptorRegistry& descriptorRegistry,
-			PipelineRegistry& pipelineRegistry,
-			FramePassRegistry& framePassRegistry);
+			RegistryManager& registryManager);
 
 		// void updateRenderSystem();
 
@@ -66,6 +61,11 @@ namespace ascen
 		uint32_t getFrameIndex() const;
 
 	private:
+		bool acquireNextFrame(const SwapchainPtr& swapchain);
+		void submitFrame(const CommandPoolPtr& commandPool) const;
+		bool presentFrame(const SwapchainPtr& swapchain) const;
+
+	private:
 		WindowManager& mWindowManager;
 		EcsSystem& mEcsSystem;
 		const VkPhysicalDevice mPhysicalDevice;
@@ -73,17 +73,14 @@ namespace ascen
 		const VkQueue mPresentQueue;
 		const VkDevice mDevice;
 		RenderContext& mRenderContext;
-		VertexRegistry& mVertexRegistry;
-		ResourceRegistry& mResourceRegistry;
-		DescriptorRegistry& mDescriptorRegistry;
-		PipelineRegistry& mPipelineRegistry;
-		FramePassRegistry& mFramePassRegistry;
+		RegistryManager& mRegistryManager;
 
 		FrameGraph mFrameGraph;
 
 		LineCommandRecorder mLineCommandRecorder;
 		MeshCommandRecorder mMeshCommandRecorder;
 		ComputeCommandRecorder mComputeCommandRecorder;
+		TransferCommandRecorder mTransferCommandRecorder;
 
 		std::vector<VkSemaphore> mImageAvailableSemaphores;
 		std::vector<VkSemaphore> mRenderFinishedForImageSemaphores;

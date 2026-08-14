@@ -1,5 +1,7 @@
 #include "Buffer.h"
 
+#include <cstring>
+
 #include "../../Device/Physical/PhysicalDevice.h"
 #include "../Barrier/Barrier.h"
 
@@ -160,6 +162,42 @@ void Buffer::download(
 	vkUnmapMemory(device, stagingBuffer.mMemory);
 
 	stagingBuffer.destroy(device);
+}
+
+void Buffer::read(
+	const VkDevice device,
+	void* destination,
+	const VkDeviceSize sizeBytes,
+	const VkDeviceSize offset) const
+{
+	if (!(mMemoryFlags & BUFFER_MEMORY_HOST))
+	{
+		throw std::runtime_error("Cannot read directly from non-host-visible buffer.");
+	}
+
+	if (offset + sizeBytes > mItemCount * mItemSize)
+	{
+		throw std::out_of_range("Buffer read exceeds allocated buffer size.");
+	}
+
+	void* mappedMemory = nullptr;
+
+	const VkResult result = vkMapMemory(
+		device,
+		mMemory,
+		offset,
+		sizeBytes,
+		0,
+		&mappedMemory);
+
+	if (result != VK_SUCCESS)
+	{
+		throw std::runtime_error("Failed to map host-visible buffer.");
+	}
+
+	std::memcpy(destination, mappedMemory, sizeBytes);
+
+	vkUnmapMemory(device, mMemory);
 }
 
 size_t Buffer::getItemCount() const

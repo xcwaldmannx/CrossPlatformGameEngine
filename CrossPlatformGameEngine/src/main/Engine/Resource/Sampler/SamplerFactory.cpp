@@ -7,7 +7,7 @@ using namespace ascen;
 SamplerFactory::SamplerFactory(VkPhysicalDevice physicalDevice, VkDevice device) :
 	mPhysicalDevice(physicalDevice), mDevice(device) {}
 
-SamplerPtr SamplerFactory::createSampler() const
+SamplerPtr SamplerFactory::create() const
 {
 	return std::make_shared<Sampler>(mPhysicalDevice, mDevice);
 }

@@ -1,31 +1,22 @@
 #include "ComputeCommandRecorder.h"
 
+#include <ostream>
+
 #include "../../Pipeline/ComputePipeline/ComputePipeline_I.h"
 
 using namespace ascen;
 
-ComputeCommandRecorder::ComputeCommandRecorder(
-    PipelineRegistry& pipelineRegistry,
-    DescriptorRegistry& descriptorRegistry,
-    ResourceRegistry& resourceRegistry) :
-    CommandRecorder_I(pipelineRegistry, descriptorRegistry, resourceRegistry) {}
-
 void ComputeCommandRecorder::record(
     VkCommandBuffer commandBuffer,
-    const ComputeGpuFramePass* pass,
-    uint32_t frameIndex)
+    const ComputePipelinePtr& pipeline,
+    const std::vector<VkDescriptorSet>& descriptorSets,
+    const uint32_t computeGroups[3])
 {
-    const auto& pipeline = PipelineRegistryBackend::getComputePipeline(mPipelineRegistry, pass->mPipeline);
     const auto& pipelineLayout = pipeline->getLayout();
 
-    std::vector<VkDescriptorSet> descriptorSets;
-    for (const auto& descriptorSet : pass->mDescriptorSets)
-    {
-        const auto& descriptorSetPtr = DescriptorRegistryBackend::getDescriptorSet(mDescriptorRegistry, descriptorSet);
-        descriptorSets.push_back(descriptorSetPtr->handle());
-    }
-
     vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline->handle());
+
+    pipeline->uploadPushConstants(commandBuffer);
 
     // TODO: create dynamic offsets for dynamic buffers. This is currently hard-coded
     std::vector<uint32_t> dynamicOffets =
@@ -43,6 +34,5 @@ void ComputeCommandRecorder::record(
         static_cast<uint32_t>(dynamicOffets.size()),
         nullptr); // &dynamicOffets[0]);
 
-    vkCmdDispatch(commandBuffer,
-        pass->mGroups[0], pass->mGroups[1], pass->mGroups[2]);
+    vkCmdDispatch(commandBuffer, computeGroups[0], computeGroups[1], computeGroups[2]);
 }

@@ -1,6 +1,11 @@
 #pragma once
 
+#include "Values.h"
+
 #include <memory>
+#include <unordered_map>
+#include <variant>
+#include <vector>
 
 namespace ascen
 {
@@ -19,9 +24,6 @@ namespace ascen
 
 	class Swapchain;
 	using SwapchainPtr = std::shared_ptr<Swapchain>;
-
-	class RenderPass;
-	using RenderPassPtr = std::shared_ptr<RenderPass>;
 
 	class GraphicsPipeline_I;
 	using GraphicsPipelinePtr = std::shared_ptr<GraphicsPipeline_I>;
@@ -44,7 +46,311 @@ namespace ascen
 	class Vertex;
 	using VertexPtr = std::shared_ptr<Vertex>;
 
+	class FrameBuffer;
+	using FrameBufferPtr = std::shared_ptr<FrameBuffer>;
+
+	class RenderPass;
+	using RenderPassPtr = std::shared_ptr<RenderPass>;
+
+	class RenderTarget;
+	using RenderTargetPtr = std::shared_ptr<RenderTarget>;
+
 	class FramePass;
 	using FramePassPtr = std::shared_ptr<FramePass>;
+
+	using VertexBinding = VkVertexInputBindingDescription;
+	using VertexAttribute = VkVertexInputAttributeDescription;
+
+	using IndexedIndirectDraw = VkDrawIndexedIndirectCommand;
+	using IndirectDraw = VkDrawIndirectCommand;
+
+	template<typename T, typename U>
+	concept Derived = std::is_base_of_v<U, T>;
+
+	namespace renderpass
+	{
+		struct Attachment
+		{
+			AttachmentType mType;
+			Format mFormat;
+			LoadOp mLoadOp;
+			StoreOp mStoreOp;
+			LoadOp mDepthStencilLoadOp;
+			StoreOp mDepthStencilStoreOp;
+		};
+
+		struct SubPassDependency
+		{
+			uint32_t mSrcSubpass;
+			uint32_t mDstSubpass;
+			PipelineStageFlag mSrcStageMask;
+			PipelineStageFlag mDstStageMask;
+			AccessMaskFlag mSrcAccessMask;
+			AccessMaskFlag mDstAccessMask;
+		};
+
+		struct SubPass
+		{
+			BindPoint mBindPoint;
+			std::vector<uint32_t> mColorAttachmentIndices;
+			std::vector<uint32_t> mInputAttachmentIndices;
+			int32_t mDepthAttachmentIndex;
+		};
+	}
+
+	namespace pipeline
+	{
+		struct PushConstant
+		{
+			uint32_t mOffset = 0;
+			uint32_t mSize = 0;
+			ShaderStageFlags mShaderStages = 0;
+			std::shared_ptr<char[]> mData = nullptr;
+		};
+
+		struct Params
+		{
+			std::unordered_map<uint32_t, PushConstant> mPushConstants;
+		};
+
+		struct GraphicsParams : Params
+		{
+			bool mEnableBlend = true;
+			uint32_t mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+			uint32_t mPolygonMode = VK_POLYGON_MODE_FILL;
+			uint32_t mCullMode = VK_CULL_MODE_BACK_BIT;
+		};
+
+		struct ComputeParams : Params {};
+	}
+
+	namespace transfer
+	{
+		typedef enum TransferType
+		{
+			TRANSFER_TYPE_BUFFER_TO_BUFFER,
+			TRANSFER_TYPE_BUFFER_TO_IMAGE,
+			TRANSFER_TYPE_IMAGE_TO_IMAGE,
+			TRANSFER_TYPE_IMAGE_TO_BUFFER,
+		} DataTransferType;
+
+		typedef enum TransferState
+		{
+			TRANSFER_STATE_IDLE,
+			TRANSFER_STATE_SUBMITTED,
+			TRANSFER_STATE_READY,
+		} TransferState;
+
+		struct BufferRegion
+		{
+			VkDeviceSize mSrcOffset = 0;
+			VkDeviceSize mDestOffset = 0;
+			VkDeviceSize mSize = 0;
+		};
+
+		struct ImageRegion
+		{
+			VkOffset3D mSrcOffset { 0, 0, 0 };
+			VkOffset3D mDestOffset{ 0, 0, 0 };
+			VkExtent3D mExtent { 1, 1, 1 };
+
+			VkImageAspectFlags mAspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+			uint32_t mMipLevel = 0;
+			uint32_t mBaseArrayLayer = 0;
+			uint32_t mLayerCount = 1;
+		};
+
+		struct BufferImageRegion
+		{
+			VkDeviceSize mBufferOffset = 0;
+
+			uint32_t mBufferRowLength = 0;
+			uint32_t mBufferImageHeight = 0;
+
+			VkOffset3D mImageOffset { 0, 0, 0 };
+			VkExtent3D mImageExtent { 1, 1, 1 };
+
+			VkImageAspectFlags mAspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+
+			uint32_t mMipLevel = 0;
+			uint32_t mBaseArrayLayer = 0;
+			uint32_t mLayerCount = 1;
+		};
+
+		struct Transfer
+		{
+			TransferType mType = TRANSFER_TYPE_BUFFER_TO_BUFFER;
+			uint64_t mSrc = 0;
+			uint64_t mDest = 0;
+			std::variant<BufferRegion, ImageRegion, BufferImageRegion> mRegion;
+			TransferState mState = TRANSFER_STATE_IDLE;
+		};
+	}
+
+	namespace registry
+	{
+		struct Entry
+		{
+			std::string mName;
+		};
+
+		struct VertexEntry : Entry
+		{
+			using ResourceType = VertexPtr;
+
+			VertexBinding mBinding;
+			std::vector<VertexAttribute> mAttributes;
+		};
+
+		struct DescriptorPoolEntry : Entry
+		{
+			using ResourceType = DescriptorPoolPtr;
+
+			std::unordered_map<DescriptorType, uint32_t> mDescriptorTypeCounts;
+		};
+
+		struct DescriptorLocation
+		{
+			uint32_t mSlot = 0;
+			DescriptorType mType = DESCRIPTOR_TYPE_SSBO;
+		};
+
+		struct DescriptorBinding
+		{
+			DescriptorLocation mLocation;
+			ShaderStageFlags mStage = SHADER_STAGE_VERTEX;
+		};
+
+		struct DescriptorResource
+		{
+			uint64_t mResourceId = 0;
+			DescriptorLocation mLocation;
+			uint64_t mSize = 0;
+		};
+
+		struct DescriptorSetLayoutEntry : Entry
+		{
+			using ResourceType = DescriptorSetLayoutPtr;
+
+			std::vector<DescriptorBinding> mBindings;
+		};
+
+		struct DescriptorSetEntry : Entry
+		{
+			using ResourceType = DescriptorSetPtr;
+
+			uint64_t mPoolId = 0;
+			uint64_t mLayoutId = 0;
+			std::vector<DescriptorResource> mResources;
+		};
+
+		struct BufferEntry : Entry
+		{
+			using ResourceType = BufferPtr;
+
+			uint32_t mCapacity = 1; // default must be > 0
+			uint32_t mStride = 1;   // default must be > 0
+			BufferUsageFlags mUsageFlags = 0;
+			BufferMemoryFlags mMemoryFlags = 0;
+		};
+
+		struct SamplerEntry : Entry
+		{
+			using ResourceType = SamplerPtr;
+		};
+
+		struct TextureEntry : Entry
+		{
+			using ResourceType = TexturePtr;
+
+			TextureType mType = TextureType::NONE;
+			Format mFormat = FORMAT_RGBA8_SRGB;
+			uint32_t mWidth = 0;
+			uint32_t mHeight = 0;
+			uint32_t mLayers = 0;
+		};
+
+		struct RenderPassEntry : Entry
+		{
+			using ResourceType = RenderPassPtr;
+
+			std::vector<renderpass::Attachment> mAttachments;
+			std::vector<renderpass::SubPass> mSubPasses;
+			std::vector<renderpass::SubPassDependency> mSubPassDependencies;
+		};
+
+		struct RenderTargetEntry : Entry
+		{
+			using ResourceType = RenderTargetPtr;
+
+			std::vector<uint64_t> mTextureIds;
+		};
+
+		struct FrameBufferEntry : Entry
+		{
+			using ResourceType = FrameBufferPtr;
+
+			uint64_t mRenderPassId = 0;
+			uint64_t mRenderTargetId = 0;
+			uint32_t mWidth = 0;
+			uint32_t mHeight = 0;
+		};
+
+		struct PipelineEntry : Entry
+		{
+			std::vector<uint64_t> mDescriptorSetLayoutIds;
+		};
+
+		struct GraphicsPipelineEntry : PipelineEntry
+		{
+			using ResourceType = GraphicsPipelinePtr;
+
+			std::string mVertexShaderPath;
+			std::string mPixelShaderPath;
+			uint64_t mVertexId = 0;
+			uint64_t mRenderPassId = 0;
+			pipeline::GraphicsParams mParams;
+		};
+
+		struct ComputePipelineEntry : PipelineEntry
+		{
+			using ResourceType = ComputePipelinePtr;
+
+			std::string mComputeShaderPath;
+			pipeline::ComputeParams mParams;
+		};
+
+		struct FramePassGraphicsParams
+		{
+			FramePassDrawMode mDrawMode;
+			uint64_t mRenderPassId = 0;
+			uint64_t mRenderTargetId = 0;
+			uint64_t mFrameBufferId = 0;
+			VkExtent2D mExtent = { 0, 0 };
+
+			std::vector<uint64_t> mVertexBufferIds;
+			uint64_t mIndexBufferId = 0;
+			uint64_t mIndirectBufferId = 0;
+		};
+
+		struct FramePassComputeParams
+		{
+			uint32_t mGroups[3] = { 1, 1, 1 };
+		};
+
+		struct FramePassEntry : Entry
+		{
+			using ResourceType = FramePassPtr;
+
+			FramePassType mType;
+			std::vector<uint64_t> mDescriptorSetIds;
+			uint64_t mPipelineId = 0;
+			FramePassGraphicsParams mGraphicsParams;
+			FramePassComputeParams mComputeParams;
+
+			std::unordered_map<uint32_t, transfer::Transfer> mTransfers;
+		};
+	}
 
 }

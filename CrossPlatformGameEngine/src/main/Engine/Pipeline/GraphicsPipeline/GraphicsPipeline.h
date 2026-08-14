@@ -11,6 +11,7 @@
 #include "../../RenderPass/RenderPass.h"
 
 #include <concepts>
+#include <iostream>
 #include <stdexcept>
 
 #include <string>
@@ -25,8 +26,8 @@ namespace ascen
     {
     protected:
         GraphicsPipeline(
-            VkDevice device,
-            const GraphicsPipelineParams& params,
+            const VkDevice device,
+            const pipeline::GraphicsParams& params,
             const std::string& vertexShaderFilepath,
             const std::string& pixelShaderFilepath,
             const VertexPtr& vertex,
@@ -131,6 +132,17 @@ namespace ascen
             vkDestroyPipelineLayout(device, mLayout, nullptr);
         }
 
+        void uploadPushConstants(const VkCommandBuffer commandBuffer) override
+        {
+            for (const auto& [id, pc] : mPushConstants)
+            {
+                if (pc.mData)
+                {
+                    vkCmdPushConstants(commandBuffer, mLayout, pc.mShaderStages, pc.mOffset, pc.mSize, pc.mData.get());
+                }
+            }
+        }
+
     private:
         void handleVertexInput(const VertexPtr& vertex)
         {
@@ -138,18 +150,18 @@ namespace ascen
             auto& vertexAttributeDescriptions = vertex->getAttributes();
 
             mVertexInputBindingDescs.push_back(vertexBindingDescription);
+            mVertexInputAtrribDescs.insert(mVertexInputAtrribDescs.end(), vertexAttributeDescriptions.begin(), vertexAttributeDescriptions.end());
 
             mVertexInputStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
             mVertexInputStateInfo.vertexBindingDescriptionCount =
                 static_cast<uint32_t>(mVertexInputBindingDescs.size());
-            mVertexInputStateInfo.pVertexBindingDescriptions = &vertexBindingDescription;
+            mVertexInputStateInfo.pVertexBindingDescriptions = mVertexInputBindingDescs.data();
 
             mVertexInputStateInfo.vertexAttributeDescriptionCount =
                 static_cast<uint32_t>(vertexAttributeDescriptions.size());
 
-            mVertexInputStateInfo.pVertexAttributeDescriptions =
-                vertexAttributeDescriptions.data();
+            mVertexInputStateInfo.pVertexAttributeDescriptions = mVertexInputAtrribDescs.data();
         }
 
         void handleInputAssembly()
@@ -221,7 +233,7 @@ namespace ascen
                 VK_COLOR_COMPONENT_G_BIT |
                 VK_COLOR_COMPONENT_B_BIT |
                 VK_COLOR_COMPONENT_A_BIT;
-            mColorBlendAttachmentState.blendEnable = VK_TRUE;
+            mColorBlendAttachmentState.blendEnable = mParams.mEnableBlend;
             mColorBlendAttachmentState.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
             mColorBlendAttachmentState.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
             mColorBlendAttachmentState.colorBlendOp = VK_BLEND_OP_ADD;
@@ -262,19 +274,18 @@ namespace ascen
             mLayoutInfo.pushConstantRangeCount = 0;
             mLayoutInfo.pPushConstantRanges = nullptr;
 
-            const auto& pc = mParams.mPushConstantRange;
+            mPushConstants = mParams.mPushConstants;
 
-            if (!pc.mName.empty() && pc.mSize > 0)
+            for (const auto& [id, pc] : mPushConstants)
             {
-                mPushConstantRange = VkPushConstantRange(
-                    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                    mParams.mPushConstantRange.mOffset,
-                    mParams.mPushConstantRange.mSize);
-
-                mLayoutInfo.pushConstantRangeCount = 1;
-                mLayoutInfo.pPushConstantRanges = &mPushConstantRange;
+                if (pc.mSize > 0)
+                {
+                    mPushConstantRanges.emplace_back(pc.mShaderStages, pc.mOffset, pc.mSize);
+                }
             }
 
+            mLayoutInfo.pushConstantRangeCount = mPushConstantRanges.size();
+            mLayoutInfo.pPushConstantRanges = mPushConstantRanges.data();
 
             mCreateInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
             mCreateInfo.stageCount = static_cast<uint32_t>(mShaderStages.size());
@@ -296,6 +307,7 @@ namespace ascen
         std::vector<VkVertexInputBindingDescription>  mVertexInputBindingDescs;
         std::vector<VkVertexInputAttributeDescription> mVertexInputAtrribDescs;
         std::vector<VkDynamicState> mDynamicStates;
+        std::vector<VkPushConstantRange> mPushConstantRanges;
 
         VkPipelineVertexInputStateCreateInfo mVertexInputStateInfo{};
         VkPipelineInputAssemblyStateCreateInfo mInputAssemblyInfo{};

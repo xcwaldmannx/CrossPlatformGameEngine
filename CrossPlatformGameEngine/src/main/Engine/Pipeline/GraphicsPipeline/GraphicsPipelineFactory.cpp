@@ -7,7 +7,7 @@ using namespace ascen;
 GraphicsPipelineFactory::GraphicsPipelineFactory(VkDevice device) : mDevice(device) {}
 
 GraphicsPipelinePtr GraphicsPipelineFactory::create(
-	const GraphicsPipelineParams& params,
+	const pipeline::GraphicsParams& params,
 	const std::string& vertexShaderFilepath,
 	const std::string& pixelShaderFilepath,
 	const VertexPtr& vertex,

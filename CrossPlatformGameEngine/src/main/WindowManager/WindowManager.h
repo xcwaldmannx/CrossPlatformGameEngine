@@ -28,12 +28,12 @@ public:
 	GLFWwindow* getWindow() const;
 	InputManager& getInput();
 
-	inline static int getWidth()
+	static int getWidth()
 	{
 		return mFramebufferWidth.load(std::memory_order_acquire);
 	}
 
-	inline static int getHeight()
+	static int getHeight()
 	{
 		return mFramebufferHeight.load(std::memory_order_acquire);
 	}

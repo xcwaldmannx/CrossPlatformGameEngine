@@ -8,6 +8,8 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
+#include <box3d/box3d.h>
+
 class WindowManager;
 
 struct Camera
@@ -28,7 +30,9 @@ public:
 private:
 	void loadTextures();
 	void createModel(const std::string& model, const glm::vec3 position, const glm::vec3 scale);
+	void createPhysicsWorld();
 	void updateCamera(float delta);
+	void updateMousePicking();
 
 private:
 	WindowManager& mWindowManager;
@@ -64,7 +68,10 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 100;
+	double mEntityCount = 128;
+
+	b3WorldDef mWorldDef;
+	b3WorldId mWorldId;
 
 	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
 	glm::vec3 camPosition{ 0.0f, 2.0f, 0.0f };

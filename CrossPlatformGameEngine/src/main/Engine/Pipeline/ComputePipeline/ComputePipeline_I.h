@@ -7,24 +7,21 @@
 namespace ascen
 {
 
-	struct ComputePipelineParams : PipelineParams
-	{
-
-	};
-
 	class ComputePipeline_I : public Pipeline_I
 	{
 	public:
 		ComputePipeline_I(
-			const ComputePipelineParams& params,
+			const pipeline::ComputeParams& params,
 			const std::string& computeShaderFilepath) :
 			mParams(params),
 			mComputeShaderFilepath(computeShaderFilepath) {}
 
 		virtual void destroy(VkDevice device) override = 0;
 
+		virtual void uploadPushConstants(const VkCommandBuffer commandBuffer) = 0;
+
 	protected:
-		const ComputePipelineParams& mParams;
+		const pipeline::ComputeParams& mParams;
 		const std::string mComputeShaderFilepath;
 	};
 

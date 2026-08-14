@@ -1,20 +1,14 @@
 #include "RenderPassFactory.h"
-
 #include "RenderPass.h"
-#include "../Device/Physical/PhysicalDevice.h"
 
 using namespace ascen;
 
-RenderPassFactory::RenderPassFactory(
-	VkPhysicalDevice physicalDevice,
-	VkDevice device) :
-	mPhysicalDevice(physicalDevice),
-	mDevice(device) {}
+RenderPassFactory::RenderPassFactory(VkDevice device) : mDevice(device) {}
 
 RenderPassPtr RenderPassFactory::create(
-	VkFormat colorFormat) const
+    const std::vector<renderpass::Attachment>& attachments,
+    const std::vector<renderpass::SubPass>& subPasses,
+    const std::vector<renderpass::SubPassDependency>& subPassDependencies) const
 {
-	VkFormat depthFormat = PhysicalDevice::findDepthFormat(mPhysicalDevice);
-	RenderPassPtr ptr(new RenderPass(mPhysicalDevice, mDevice, colorFormat, depthFormat));
-	return ptr;
+    return std::make_shared<RenderPass>(mDevice, attachments, subPasses, subPassDependencies);
 }

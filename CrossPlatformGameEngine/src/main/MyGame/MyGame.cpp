@@ -7,6 +7,7 @@
 
 #include "Ecs/Components/ModelComponent.h"
 #include "Ecs/Components/TransformComponent.h"
+#include "Ecs/Components/PhysicsBodyComponent.h"
 
 #include "Ecs/Systems/FrustumCullingSystem.h"
 #include "Ecs/Systems/PhysicsSystem.h"
@@ -26,35 +27,36 @@ MyGame::MyGame(WindowManager& windowManager) :
 	const auto& vertices = mModelHandler.getVertices();
 	const auto& indices = mModelHandler.getIndices();
 
-	mEngine.resource().uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float));
-	mEngine.resource().uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t));
+	mEngine.uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float), 0);
+	mEngine.uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t), 0);
 
 	// initialize ECS
 	mEngine.ecs().registerComponent<TransformComponent>();
 	mEngine.ecs().registerComponent<ModelComponent>();
+	mEngine.ecs().registerComponent<PhysicsBodyComponent>();
 
 	{
-		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
-		const auto writeSig = mEngine.ecs().getSignature<>();
+		const auto readSig = mEngine.ecs().getSignature<PhysicsBodyComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
 
 		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig);
 	}
 
 	{
-		const auto readSig = mEngine.ecs().getSignature<>();
-		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
+		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<>();
 
 		mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
 	}
 
 	loadTextures();
 
-	mEngine.resource().uploadTexture("TEXTURE", mPixels);
+	mEngine.uploadTexture("TEXTURE", mPixels);
 
-	double r = 50;
-	double deg = 360;
-	unsigned int entityCount = 0;
+	constexpr double r = 50;
+	constexpr double deg = 360;
 
+	// entities
 	for (double i = 0; i < deg; i += (deg / mEntityCount))
 	{
 		const double angle = i * (M_PI / 180);
@@ -69,16 +71,14 @@ MyGame::MyGame(WindowManager& windowManager) :
 		{
 			createModel("assets/models/submarine.model", { x, 15, z }, { 1, 1, 1 });
 		}
-
-		entityCount++;
 	}
+
+	createPhysicsWorld();
 }
 
 void MyGame::run(float delta)
 {
 	updateCamera(delta);
-	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
-	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 
 	for (unsigned int i = 0; i < static_cast<unsigned int>(mEntityCount); i++)
 	{
@@ -96,7 +96,28 @@ void MyGame::run(float delta)
 		}
 	}
 
+	updateMousePicking();
+
+	uint32_t selectedEntity = 0;
+	mEngine.downloadTransfer<uint32_t>("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, &selectedEntity);
+	selectedEntity--;
+
+	if (selectedEntity < ENTITY_MAX)
+	{
+		auto& current = mEngine.ecs().getComponent<ModelComponent>(selectedEntity);
+		current.mIsSelected = 1;
+	}
+
+	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
+	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
+
 	mEngine.drawFrame();
+
+	if (selectedEntity < ENTITY_MAX)
+	{
+		auto& current = mEngine.ecs().getComponent<ModelComponent>(selectedEntity);
+		current.mIsSelected = 0;
+	}
 }
 
 void MyGame::cleanup()
@@ -106,9 +127,7 @@ void MyGame::cleanup()
 
 void MyGame::loadTextures()
 {
-	ImageLoader il;
-
-	std::vector<const char*> mTextureFilepaths =
+	const std::vector<const char*> mTextureFilepaths =
 	{
 		"assets/textures/metal.jpg",
 	};
@@ -122,7 +141,7 @@ void MyGame::loadTextures()
 	for (const auto& filepath : mTextureFilepaths)
 	{
 		RawImage raw;
-		il.loadImage(filepath, &raw);
+		ImageLoader::loadImage(filepath, &raw);
 		mPixels.insert(mPixels.end(), raw.mPixels.begin(), raw.mPixels.end());
 	}
 }
@@ -142,8 +161,32 @@ void MyGame::createModel(const std::string& model, const glm::vec3 position, con
 	m.mTextureId = 0;
 	m.mIsHidden = false;
 
+	PhysicsBodyComponent p{};
+	p.mBodyType = DYNAMIC;
+	p.mDensity = 3.0f;
+
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
+	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
+}
+
+void MyGame::createPhysicsWorld()
+{
+	mWorldDef = b3DefaultWorldDef();
+	mWorldId  = b3CreateWorld(&mWorldDef);
+
+	b3BodyDef bodyDef = b3DefaultBodyDef();
+	bodyDef.type = b3_dynamicBody;
+	bodyDef.position = { -3.0f, 8.0f };
+	bodyDef.name = "crate1";
+	b3BodyId bodyId = b3CreateBody(mWorldId, &bodyDef);
+
+	b3BoxHull box = b3MakeBoxHull(0.75f, 0.75f, 0.75f);
+
+	b3ShapeDef shapeDef = b3DefaultShapeDef();
+	shapeDef.density = 2.0f;
+
+	b3CreateHullShape(bodyId, &shapeDef, &box.base);
 }
 
 void MyGame::updateCamera(float delta)
@@ -189,8 +232,40 @@ void MyGame::updateCamera(float delta)
 		ubo.mProj[1][1] *= -1;
 
 		const glm::mat4 vp = ubo.mProj * ubo.mView;
-		mEngine.pipeline().pushConstants("PIPELINE_FRUSTUM_CULL",  "PUSH_0", &vp);
-		mEngine.pipeline().pushConstants("PIPELINE_RENDER_ENTITY", "PUSH_0", &vp);
-		mEngine.pipeline().pushConstants("PIPELINE_RENDER_BOUNDS", "PUSH_0", &vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_FRUSTUM_CULL",  0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_RENDER_ENTITY", 0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_RENDER_BOUNDS", 0, vp);
+		mEngine.updatePushConstant<glm::mat4>("PIPELINE_MOUSE_PICKING", 0, vp);
+	}
+}
+
+void MyGame::updateMousePicking()
+{
+	const double mouseX = mWindowManager.getInput().getMouseX();
+	const double mouseY = mWindowManager.getInput().getMouseY();
+
+	const int windowWidth = WindowManager::getWidth();
+	const int windowHeight = WindowManager::getHeight();
+
+	const int pixelX = std::clamp(
+		static_cast<int>(mouseX),
+		0,
+		windowWidth - 1);
+
+	const int pixelY = std::clamp(
+		static_cast<int>(mouseY),
+		0,
+		windowHeight - 1);
+
+	ascen::transfer::BufferImageRegion region
+	{
+		.mBufferOffset = 0,
+		.mImageOffset = { pixelX, pixelY, 0 },
+		.mImageExtent = { 1, 1, 1 },
+	};
+
+	if (pixelX >= 0 && pixelY >= 0 && pixelX < windowWidth && pixelY < windowHeight)
+	{
+		mEngine.updateTransfer("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, region);
 	}
 }

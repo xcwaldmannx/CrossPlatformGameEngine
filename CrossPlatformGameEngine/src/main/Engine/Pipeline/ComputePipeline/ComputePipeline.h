@@ -24,7 +24,7 @@ namespace ascen
     private:
         ComputePipeline(
             VkDevice device,
-            const ComputePipelineParams& params,
+            const pipeline::ComputeParams& params,
             const std::string& computeShaderFilepath,
             const std::vector<DescriptorSetLayoutPtr>& descriptorSetLayouts) :
             ComputePipeline_I(params, computeShaderFilepath)
@@ -84,6 +84,14 @@ namespace ascen
             vkDestroyPipelineLayout(device, mLayout, nullptr);
         }
 
+        void uploadPushConstants(const VkCommandBuffer commandBuffer) override
+        {
+            for (const auto& [id, pc] : mPushConstants)
+            {
+                vkCmdPushConstants(commandBuffer, mLayout, pc.mShaderStages, pc.mOffset, pc.mSize, pc.mData.get());
+            }
+        }
+
     private:
         void handlePipeline(const std::vector<VkDescriptorSetLayout>& descriptorSetLayouts)
         {
@@ -94,18 +102,18 @@ namespace ascen
             mLayoutInfo.pushConstantRangeCount = 0;
             mLayoutInfo.pPushConstantRanges = nullptr;
 
-            const auto& pc = mParams.mPushConstantRange;
+            mPushConstants = mParams.mPushConstants;
 
-            if (!pc.mName.empty() && pc.mSize > 0)
+            for (const auto& [id, pc] : mPushConstants)
             {
-                mPushConstantRange = VkPushConstantRange(
-                    VK_SHADER_STAGE_COMPUTE_BIT,
-                    mParams.mPushConstantRange.mOffset,
-                    mParams.mPushConstantRange.mSize);
-
-                mLayoutInfo.pushConstantRangeCount = 1;
-                mLayoutInfo.pPushConstantRanges = &mPushConstantRange;
+                if (pc.mSize > 0)
+                {
+                    mPushConstantRanges.emplace_back(pc.mShaderStages, pc.mOffset, pc.mSize);
+                }
             }
+
+            mLayoutInfo.pushConstantRangeCount = mPushConstantRanges.size();
+            mLayoutInfo.pPushConstantRanges = mPushConstantRanges.data();
 
             // pipeline creation
             mCreateInfo.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
@@ -113,6 +121,8 @@ namespace ascen
         }
 
     protected:
+        std::vector<VkPushConstantRange> mPushConstantRanges;
+
         VkPipelineShaderStageCreateInfo mShaderStage{};
         VkPipelineLayoutCreateInfo mLayoutInfo{};
         VkComputePipelineCreateInfo mCreateInfo{};

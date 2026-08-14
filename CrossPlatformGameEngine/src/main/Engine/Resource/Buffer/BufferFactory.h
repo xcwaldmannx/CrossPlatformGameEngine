@@ -2,8 +2,6 @@
 
 #include "../../Core/Types.h"
 
-#include "../../Registry/Resource/ResourceRegistry.h"
-
 #include <vulkan/vulkan.h>
 
 namespace ascen

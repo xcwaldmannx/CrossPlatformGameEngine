@@ -18,12 +18,14 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	mCommandPoolFactory(VK_NULL_HANDLE),
 	mDescriptorFactory(VK_NULL_HANDLE),
 	mSwapchainFactory(VK_NULL_HANDLE, VK_NULL_HANDLE, VK_NULL_HANDLE),
-	mRenderPassFactory(VK_NULL_HANDLE, VK_NULL_HANDLE),
 	mGraphicsPipelineFactory(VK_NULL_HANDLE),
 	mComputePipelineFactory(VK_NULL_HANDLE),
 	mBufferFactory(VK_NULL_HANDLE, VK_NULL_HANDLE),
 	mTextureFactory(VK_NULL_HANDLE, VK_NULL_HANDLE),
-	mSamplerFactory(VK_NULL_HANDLE, VK_NULL_HANDLE)
+	mSamplerFactory(VK_NULL_HANDLE, VK_NULL_HANDLE),
+	mFrameBufferFactory(VK_NULL_HANDLE),
+	mRenderPassFactory(VK_NULL_HANDLE),
+	mRenderTargetFactory(VK_NULL_HANDLE)
 {
 	if (ValidationLayers::isEnabled())
 	{
@@ -36,6 +38,18 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
 	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+
+	if (glfwExtensions == nullptr || glfwExtensionCount == 0)
+	{
+		const char* description = nullptr;
+		const int error = glfwGetError(&description);
+
+		throw std::runtime_error(
+			std::string("glfwGetRequiredInstanceExtensions failed: ") +
+			(description ? description : "unknown GLFW error") +
+			" (" + std::to_string(error) + ")");
+	}
+
 	Extensions::add(glfwExtensions, glfwExtensionCount, &mExtensions);
 	Extensions::validate(mExtensions);
 
@@ -65,13 +79,15 @@ VulkanContext::VulkanContext(WindowManager& windowManager) :
 	mCommandPoolFactory      = CommandPoolFactory(mDevice);
 	mDescriptorFactory       = DescriptorFactory(mDevice);
 	mSwapchainFactory        = SwapchainFactory(mPhysicalDevice, mDevice, mSurface);
-	mRenderPassFactory       = RenderPassFactory(mPhysicalDevice, mDevice);
 	mGraphicsPipelineFactory = GraphicsPipelineFactory(mDevice);
 	mComputePipelineFactory  = ComputePipelineFactory(mDevice);
 	mPushConstantFactory     = PushConstantFactory();
 	mBufferFactory           = BufferFactory(mPhysicalDevice, mDevice);
 	mTextureFactory          = TextureFactory(mPhysicalDevice, mDevice);
 	mSamplerFactory          = SamplerFactory(mPhysicalDevice, mDevice);
+	mFrameBufferFactory      = FrameBufferFactory(mDevice);
+	mRenderPassFactory       = RenderPassFactory(mDevice);
+	mRenderTargetFactory     = RenderTargetFactory(mDevice);
 }
 
 VkPhysicalDevice VulkanContext::getPhysicalDevice() const
@@ -129,11 +145,6 @@ const SwapchainFactory& VulkanContext::getSwapchainFactory() const
 	return mSwapchainFactory;
 }
 
-const RenderPassFactory& VulkanContext::getRenderPassFactory() const
-{
-	return mRenderPassFactory;
-}
-
 const GraphicsPipelineFactory& VulkanContext::getGraphicsPipelineFactory() const
 {
 	return mGraphicsPipelineFactory;
@@ -164,6 +175,21 @@ const SamplerFactory& VulkanContext::getSamplerFactory() const
 	return mSamplerFactory;
 }
 
+const FrameBufferFactory& VulkanContext::getFrameBufferFactory() const
+{
+	return mFrameBufferFactory;
+}
+
+const RenderPassFactory& VulkanContext::getRenderPassFactory() const
+{
+	return mRenderPassFactory;
+}
+
+const RenderTargetFactory& VulkanContext::getRenderTargetFactory() const
+{
+	return mRenderTargetFactory;
+}
+
 void VulkanContext::waitIdle() const
 {
 	vkDeviceWaitIdle(mDevice);
@@ -171,8 +197,8 @@ void VulkanContext::waitIdle() const
 
 void VulkanContext::cleanup() const
 {
-	ascen::Device::destroy(mDevice);
-	ascen::Surface::destroy(mInstance, mSurface);
-	ascen::DebugMessenger::destroy(mInstance, mDebugMessenger);
-	ascen::Instance::destroy(mInstance);
+	Device::destroy(mDevice);
+	Surface::destroy(mInstance, mSurface);
+	DebugMessenger::destroy(mInstance, mDebugMessenger);
+	Instance::destroy(mInstance);
 }

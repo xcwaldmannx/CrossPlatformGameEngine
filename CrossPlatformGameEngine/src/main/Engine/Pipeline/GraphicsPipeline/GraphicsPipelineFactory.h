@@ -21,7 +21,7 @@ namespace ascen
 		GraphicsPipelineFactory(VkDevice device);
 
 		GraphicsPipelinePtr create(
-			const GraphicsPipelineParams& params,
+			const pipeline::GraphicsParams& params,
 			const std::string& vertexShaderFilepath,
 			const std::string& pixelShaderFilepath,
 			const VertexPtr& vertex,

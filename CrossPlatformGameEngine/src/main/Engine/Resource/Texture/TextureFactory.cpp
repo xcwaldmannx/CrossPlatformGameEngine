@@ -1,6 +1,7 @@
 #include "TextureFactory.h"
 
 #include "Image/ImageTexture.h"
+#include "Writable/WritableTexture.h"
 #include "Depth/DepthTexture.h"
 
 using namespace ascen;
@@ -20,6 +21,23 @@ TexturePtr TextureFactory::createImage(
 		mPhysicalDevice,
 		mDevice,
 		commandPool,
+		width,
+		height,
+		layers);
+}
+
+TexturePtr TextureFactory::createWritable(
+	const CommandPoolPtr& commandPool,
+	const Format format,
+	uint32_t width,
+	uint32_t height,
+	uint32_t layers) const
+{
+	return std::make_shared<WritableTexture>(
+		mPhysicalDevice,
+		mDevice,
+		commandPool,
+		format,
 		width,
 		height,
 		layers);

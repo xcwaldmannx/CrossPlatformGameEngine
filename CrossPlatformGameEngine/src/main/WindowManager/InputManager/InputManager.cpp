@@ -14,7 +14,7 @@ void InputManager::update(GLFWwindow* window)
         mPrevButtons[i].store(mCurrButtons[i].load(std::memory_order_relaxed), std::memory_order_relaxed);
     }
 
-    for (int i = 0; i < MAX_KEYS; ++i)
+    for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; ++i)
     {
         mCurrKeys[i].store(glfwGetKey(window, i) == GLFW_PRESS ? 1 : 0, std::memory_order_relaxed);
     }
@@ -34,30 +34,66 @@ void InputManager::update(GLFWwindow* window)
     mMouseY.store(mouseY, std::memory_order_relaxed);
 }
 
-bool InputManager::isKeyPressed(int key) const {
+bool InputManager::isKeyPressed(int key) const
+{
+    if (key < 0 || key >= MAX_KEYS)
+    {
+        return false;
+    }
+
     return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-bool InputManager::isKeyJustPressed(int key) const {
+bool InputManager::isKeyJustPressed(int key) const
+{
+    if (key < 0 || key >= MAX_KEYS)
+    {
+        return false;
+    }
+
     return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS &&
         mPrevKeys[key].load(std::memory_order_relaxed) == GLFW_RELEASE;
 }
 
-bool InputManager::isKeyJustReleased(int key) const {
+bool InputManager::isKeyJustReleased(int key) const
+{
+    if (key < 0 || key >= MAX_KEYS)
+    {
+        return false;
+    }
+
     return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_RELEASE &&
         mPrevKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-bool InputManager::isButtonPressed(int button) const {
+bool InputManager::isButtonPressed(int button) const
+{
+    if (button < 0 || button >= MAX_MOUSE_BUTTONS)
+    {
+        return false;
+    }
+
     return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-bool InputManager::isButtonJustPressed(int button) const {
+bool InputManager::isButtonJustPressed(int button) const
+{
+    if (button < 0 || button >= MAX_MOUSE_BUTTONS)
+    {
+        return false;
+    }
+
     return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS &&
         mPrevButtons[button].load(std::memory_order_relaxed) == GLFW_RELEASE;
 }
 
-bool InputManager::isButtonJustReleased(int button) const {
+bool InputManager::isButtonJustReleased(int button) const
+{
+    if (button < 0 || button >= MAX_MOUSE_BUTTONS)
+    {
+        return false;
+    }
+
     return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_RELEASE &&
         mPrevButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS;
 }

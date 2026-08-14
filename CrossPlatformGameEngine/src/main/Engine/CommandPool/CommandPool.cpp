@@ -72,36 +72,37 @@ void CommandPool::endCommand(VkCommandBuffer buffer)
 }
 
 void CommandPool::beginRenderPass(
-    VkCommandBuffer commandBuffer,
-    uint32_t currentImage,
+    const VkCommandBuffer commandBuffer,
     const RenderPassPtr& renderPass,
-    const SwapchainPtr& swapchain)
+    const VkFramebuffer frameBuffer,
+    const VkExtent2D extent)
 {
-    const VkExtent2D& renderArea = swapchain->getExtent();
-
     VkViewport viewport{};
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = static_cast<float>(renderArea.width);
-    viewport.height = static_cast<float>(renderArea.height);
+    viewport.width = static_cast<float>(extent.width);
+    viewport.height = static_cast<float>(extent.height);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
 
     VkRect2D scissor{};
     scissor.offset = { 0, 0 };
-    scissor.extent = renderArea;
+    scissor.extent = extent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     VkRenderPassBeginInfo renderPassInfo{};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     renderPassInfo.renderPass = renderPass->handle();
-    renderPassInfo.framebuffer = swapchain->getFramebuffers()[currentImage];
+    renderPassInfo.framebuffer = frameBuffer;
     renderPassInfo.renderArea.offset = { 0, 0 };
-    renderPassInfo.renderArea.extent = renderArea;
+    renderPassInfo.renderArea.extent = extent;
 
     std::array<VkClearValue, 2> clearValues{};
-    clearValues[0].color = { { 0.075f, 0.01f, 0.01f, 1.0f } };
+    clearValues[0].color.uint32[0] = 0;
+    clearValues[0].color.uint32[1] = 0;
+    clearValues[0].color.uint32[2] = 0;
+    clearValues[0].color.uint32[3] = 0;
     clearValues[1].depthStencil = { 1.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
