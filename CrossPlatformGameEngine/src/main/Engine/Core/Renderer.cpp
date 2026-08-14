@@ -197,7 +197,6 @@ void Renderer::drawFrame()
 							transfer.mRegion);
 
 						transfer.mState = transfer::TRANSFER_STATE_SUBMITTED;
-						std::cout << "SUBMITTED" << std::endl;
 					}
 
 				}
@@ -238,7 +237,6 @@ void Renderer::drawFrame()
 					if (transfer.mState == transfer::TRANSFER_STATE_SUBMITTED)
 					{
 						transfer.mState = transfer::TRANSFER_STATE_READY;
-						std::cout << "READY" << std::endl;
 					}
 				}
 				break;

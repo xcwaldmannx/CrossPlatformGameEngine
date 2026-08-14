@@ -35,21 +35,25 @@ void FrustumCullingSystem::update(const float delta)
             mModelToDrawCommands[m.mModelId] = drawCommand;
 
             Entity e{};
-            e.mPosition  = transform.mPosition;
-            e.mRotation  = transform.mRotation;
-            e.mScale     = transform.mScale;
-            e.mBoundsPos = m.mBoundsPos;
-            e.mBoundsNeg = m.mBoundsNeg;
+            e.mPosition   = transform.mPosition;
+            e.mEntityId   = entityId;
+            e.mRotation   = transform.mRotation;
+            e.mIsSelected = model.mIsSelected;
+            e.mScale      = transform.mScale;
+            e.mBoundsPos  = m.mBoundsPos;
+            e.mBoundsNeg  = m.mBoundsNeg;
             mModelToEntities[m.mModelId][entityId] = e;
         }
         else
         {
             Entity& e = mModelToEntities[m.mModelId][entityId];
-            e.mPosition  = transform.mPosition;
-            e.mRotation  = transform.mRotation;
-            e.mScale     = transform.mScale;
-            e.mBoundsPos = m.mBoundsPos;
-            e.mBoundsNeg = m.mBoundsNeg;
+            e.mPosition   = transform.mPosition;
+            e.mEntityId   = entityId;
+            e.mRotation   = transform.mRotation;
+            e.mIsSelected = model.mIsSelected;
+            e.mScale      = transform.mScale;
+            e.mBoundsPos  = m.mBoundsPos;
+            e.mBoundsNeg  = m.mBoundsNeg;
         }
 
     }

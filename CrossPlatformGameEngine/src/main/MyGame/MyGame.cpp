@@ -7,6 +7,7 @@
 
 #include "Ecs/Components/ModelComponent.h"
 #include "Ecs/Components/TransformComponent.h"
+#include "Ecs/Components/PhysicsBodyComponent.h"
 
 #include "Ecs/Systems/FrustumCullingSystem.h"
 #include "Ecs/Systems/PhysicsSystem.h"
@@ -32,10 +33,11 @@ MyGame::MyGame(WindowManager& windowManager) :
 	// initialize ECS
 	mEngine.ecs().registerComponent<TransformComponent>();
 	mEngine.ecs().registerComponent<ModelComponent>();
+	mEngine.ecs().registerComponent<PhysicsBodyComponent>();
 
 	{
-		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
-		const auto writeSig = mEngine.ecs().getSignature<>();
+		const auto readSig = mEngine.ecs().getSignature<PhysicsBodyComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
 
 		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig);
 	}
@@ -54,6 +56,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 	constexpr double r = 50;
 	constexpr double deg = 360;
 
+	// entities
 	for (double i = 0; i < deg; i += (deg / mEntityCount))
 	{
 		const double angle = i * (M_PI / 180);
@@ -69,6 +72,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 			createModel("assets/models/submarine.model", { x, 15, z }, { 1, 1, 1 });
 		}
 	}
+
+	createPhysicsWorld();
 }
 
 void MyGame::run(float delta)
@@ -91,16 +96,28 @@ void MyGame::run(float delta)
 		}
 	}
 
+	updateMousePicking();
+
+	uint32_t selectedEntity = 0;
+	mEngine.downloadTransfer<uint32_t>("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, &selectedEntity);
+	selectedEntity--;
+
+	if (selectedEntity < ENTITY_MAX)
+	{
+		auto& current = mEngine.ecs().getComponent<ModelComponent>(selectedEntity);
+		current.mIsSelected = 1;
+	}
+
 	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
 
-	updateMousePicking();
-
-	uint32_t x;
-	mEngine.downloadTransfer<uint32_t>("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, &x);
-	std::cout << x << std::endl;
-
 	mEngine.drawFrame();
+
+	if (selectedEntity < ENTITY_MAX)
+	{
+		auto& current = mEngine.ecs().getComponent<ModelComponent>(selectedEntity);
+		current.mIsSelected = 0;
+	}
 }
 
 void MyGame::cleanup()
@@ -144,8 +161,32 @@ void MyGame::createModel(const std::string& model, const glm::vec3 position, con
 	m.mTextureId = 0;
 	m.mIsHidden = false;
 
+	PhysicsBodyComponent p{};
+	p.mBodyType = DYNAMIC;
+	p.mDensity = 3.0f;
+
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
+	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
+}
+
+void MyGame::createPhysicsWorld()
+{
+	mWorldDef = b3DefaultWorldDef();
+	mWorldId  = b3CreateWorld(&mWorldDef);
+
+	b3BodyDef bodyDef = b3DefaultBodyDef();
+	bodyDef.type = b3_dynamicBody;
+	bodyDef.position = { -3.0f, 8.0f };
+	bodyDef.name = "crate1";
+	b3BodyId bodyId = b3CreateBody(mWorldId, &bodyDef);
+
+	b3BoxHull box = b3MakeBoxHull(0.75f, 0.75f, 0.75f);
+
+	b3ShapeDef shapeDef = b3DefaultShapeDef();
+	shapeDef.density = 2.0f;
+
+	b3CreateHullShape(bodyId, &shapeDef, &box.base);
 }
 
 void MyGame::updateCamera(float delta)
@@ -223,7 +264,8 @@ void MyGame::updateMousePicking()
 		.mImageExtent = { 1, 1, 1 },
 	};
 
-	mEngine.updateTransfer("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, region);
-
-	std:: cout << "pixel pos: " << pixelX << ", " << pixelY << std::endl;
+	if (pixelX >= 0 && pixelY >= 0 && pixelX < windowWidth && pixelY < windowHeight)
+	{
+		mEngine.updateTransfer("FRAMEPASS_MOUSE_PICKING_TRANSFER", 0, region);
+	}
 }

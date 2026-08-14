@@ -5,5 +5,5 @@ layout(location = 0) out uint outEntityId;
 
 void main()
 {
-    outEntityId = 123u;
+    outEntityId = inEntityId;
 }

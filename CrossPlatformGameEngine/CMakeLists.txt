@@ -78,6 +78,14 @@ target_link_libraries(CrossPlatformGameEngine PRIVATE
 )
 
 # -------------------------
+# box3d
+# -------------------------
+
+find_package(box3d 0.1 REQUIRED)
+
+target_link_libraries(CrossPlatformGameEngine PRIVATE box3d::box3d)
+
+# -------------------------
 # copy shaders/assets
 # -------------------------
 

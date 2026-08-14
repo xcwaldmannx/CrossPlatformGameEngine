@@ -30,6 +30,8 @@ namespace ascen
 
 		void destroy(VkDevice device) override;
 
+		Image& getImage();
+
 	protected:
 		Image mImage;
 	};

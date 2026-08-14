@@ -10,9 +10,9 @@ namespace ascen
 	class Image_I : public Handle<VkImage>
 	{
 	public:
-		virtual void destroy(VkDevice device) override = 0;
+		void destroy(VkDevice device) override = 0;
 
-		VkDeviceMemory getMemory()
+		VkDeviceMemory getMemory() const
 		{
 			return mMemory;
 		}

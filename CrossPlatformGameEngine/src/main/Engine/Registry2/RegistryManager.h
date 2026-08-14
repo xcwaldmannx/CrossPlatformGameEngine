@@ -139,7 +139,6 @@ namespace ascen
                     const BufferPtr& buffer = getResource<Buffer>(transfer.mDest);
                     buffer->read(mDevice, data, sizeof(T), 0);
                     transfer.mState = transfer::TRANSFER_STATE_IDLE;
-                    std::cout << "IDLE" << std::endl;
                 }
             }
         }
