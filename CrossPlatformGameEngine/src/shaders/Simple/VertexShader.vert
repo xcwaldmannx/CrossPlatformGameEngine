@@ -6,10 +6,9 @@ struct Entity
 {
     vec3 position;
     uint id;
-    vec3 rotation;
-    uint isSelected;
+    vec4 rotation;
     vec3 scale;
-    uint _pad2;
+    uint isSelected;
 
     vec3 boundsPos;
     uint _pad3;
@@ -32,48 +31,50 @@ layout(push_constant) uniform PushConstants
     mat4 cameraVP;
 } pushConstants;
 
-mat4 eulerRotationToMat4(vec3 euler)
+mat4 quaternionToMat4(vec4 q)
 {
-    float cx = cos(euler.x);
-    float sx = sin(euler.x);
-    float cy = cos(euler.y);
-    float sy = sin(euler.y);
-    float cz = cos(euler.z);
-    float sz = sin(euler.z);
+    q = normalize(q);
 
-    mat3 Rz = mat3(
-        cz, -sz, 0.0,
-        sz,  cz, 0.0,
-        0.0, 0.0, 1.0
-    );
+    float x = q.x;
+    float y = q.y;
+    float z = q.z;
+    float w = q.w;
 
-    mat3 Ry = mat3(
-         cy, 0.0, sy,
-         0.0, 1.0, 0.0,
-        -sy, 0.0, cy
-    );
+    float xx = x * x;
+    float yy = y * y;
+    float zz = z * z;
 
-    mat3 Rx = mat3(
-        1.0, 0.0, 0.0,
-        0.0,  cx, -sx,
-        0.0,  sx,  cx
-    );
+    float xy = x * y;
+    float xz = x * z;
+    float yz = y * z;
 
-    mat3 R = Rz * Ry * Rx;
+    float wx = w * x;
+    float wy = w * y;
+    float wz = w * z;
 
-    mat4 M = mat4(1.0);
-    M[0].xyz = R[0];
-    M[1].xyz = R[1];
-    M[2].xyz = R[2];
-    return M;
+    mat4 R = mat4(1.0);
+
+    R[0][0] = 1.0 - 2.0 * (yy + zz);
+    R[0][1] = 2.0 * (xy + wz);
+    R[0][2] = 2.0 * (xz - wy);
+
+    R[1][0] = 2.0 * (xy - wz);
+    R[1][1] = 1.0 - 2.0 * (xx + zz);
+    R[1][2] = 2.0 * (yz + wx);
+
+    R[2][0] = 2.0 * (xz + wy);
+    R[2][1] = 2.0 * (yz - wx);
+    R[2][2] = 1.0 - 2.0 * (xx + yy);
+
+    return R;
 }
 
-mat4 buildTransform(vec3 pos, vec3 rot, vec3 scale)
+mat4 buildTransform(vec3 pos, vec4 rot, vec3 scale)
 {
     mat4 T = mat4(1.0);
     T[3].xyz = pos;
 
-    mat4 R = eulerRotationToMat4(rot);
+    mat4 R = quaternionToMat4(rot);
 
     mat4 S = mat4(1.0);
     S[0][0] = scale.x;

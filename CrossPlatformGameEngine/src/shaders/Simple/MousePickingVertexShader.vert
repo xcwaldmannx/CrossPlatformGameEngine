@@ -3,18 +3,15 @@
 struct Entity
 {
     vec3 position;
-    uint entityId;
-
-    vec3 rotation;
-    uint _pad1;
-
+    uint id;
+    vec4 rotation;
     vec3 scale;
-    uint _pad2;
+    uint isSelected;
 
     vec3 boundsPos;
     uint _pad3;
-
     vec3 boundsNeg;
+
     uint isVisible;
 
     uint meshCount;
@@ -36,51 +33,57 @@ layout(location = 0) in vec3 inPosition;
 
 layout(location = 0) flat out uint outEntityId;
 
-mat4 eulerRotationToMat4(vec3 euler)
+mat4 quaternionToMat4(vec4 q)
 {
-    float cx = cos(euler.x);
-    float sx = sin(euler.x);
-    float cy = cos(euler.y);
-    float sy = sin(euler.y);
-    float cz = cos(euler.z);
-    float sz = sin(euler.z);
+    q = normalize(q);
 
-    mat3 rz = mat3(
-         cz, -sz, 0.0,
-         sz,  cz, 0.0,
-        0.0, 0.0, 1.0);
+    float x = q.x;
+    float y = q.y;
+    float z = q.z;
+    float w = q.w;
 
-    mat3 ry = mat3(
-         cy, 0.0,  sy,
-        0.0, 1.0, 0.0,
-        -sy, 0.0, cy);
+    float xx = x * x;
+    float yy = y * y;
+    float zz = z * z;
 
-    mat3 rx = mat3(
-        1.0, 0.0, 0.0,
-        0.0,  cx, -sx,
-        0.0,  sx,  cx);
+    float xy = x * y;
+    float xz = x * z;
+    float yz = y * z;
 
-    mat4 result = mat4(1.0);
-    result[0].xyz = (rz * ry * rx)[0];
-    result[1].xyz = (rz * ry * rx)[1];
-    result[2].xyz = (rz * ry * rx)[2];
+    float wx = w * x;
+    float wy = w * y;
+    float wz = w * z;
 
-    return result;
+    mat4 R = mat4(1.0);
+
+    R[0][0] = 1.0 - 2.0 * (yy + zz);
+    R[0][1] = 2.0 * (xy + wz);
+    R[0][2] = 2.0 * (xz - wy);
+
+    R[1][0] = 2.0 * (xy - wz);
+    R[1][1] = 1.0 - 2.0 * (xx + zz);
+    R[1][2] = 2.0 * (yz + wx);
+
+    R[2][0] = 2.0 * (xz + wy);
+    R[2][1] = 2.0 * (yz - wx);
+    R[2][2] = 1.0 - 2.0 * (xx + yy);
+
+    return R;
 }
 
-mat4 buildTransform(vec3 position, vec3 rotation, vec3 scale)
+mat4 buildTransform(vec3 pos, vec4 rot, vec3 scale)
 {
-    mat4 translation = mat4(1.0);
-    translation[3].xyz = position;
+    mat4 T = mat4(1.0);
+    T[3].xyz = pos;
 
-    mat4 scaling = mat4(1.0);
-    scaling[0][0] = scale.x;
-    scaling[1][1] = scale.y;
-    scaling[2][2] = scale.z;
+    mat4 R = quaternionToMat4(rot);
 
-    return translation *
-           eulerRotationToMat4(rotation) *
-           scaling;
+    mat4 S = mat4(1.0);
+    S[0][0] = scale.x;
+    S[1][1] = scale.y;
+    S[2][2] = scale.z;
+
+    return T * R * S;
 }
 
 void main()
@@ -105,5 +108,5 @@ void main()
         vec4(inPosition, 1.0);
 
     // Zero is reserved for background.
-    outEntityId = entity.entityId + 1;
+    outEntityId = entity.id + 1;
 }

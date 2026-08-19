@@ -114,6 +114,10 @@ void WindowManager::windowThread()
     mFramebufferWidth.store(WINDOW_WIDTH, std::memory_order_release);
     mFramebufferHeight.store(WINDOW_HEIGHT, std::memory_order_release);
 
+    // glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+
+    glfwSetCursorPosCallback(mWindow, InputManager::mouseCallback);
+
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
     glfwSetWindowIconifyCallback(mWindow, iconifyCallback);
     glfwSetWindowCloseCallback(mWindow, windowCloseCallback);
@@ -127,6 +131,21 @@ void WindowManager::windowThread()
     while (!mIsCloseRequested.load(std::memory_order_acquire) && mIsRunning.load(std::memory_order_acquire))
     {
         glfwPollEvents();
-        mInputManager.update(mWindow);
+        InputManager::update(mWindow);
+
+        if (InputManager::isKeyJustPressed(GLFW_KEY_TAB))
+        {
+            mFocusMouse = !mFocusMouse;
+            glfwFocusWindow(mWindow);
+
+            if (mFocusMouse)
+            {
+                glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            }
+            else
+            {
+                glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+            }
+        }
     }
 }

@@ -8,9 +8,11 @@
 #include "Ecs/Components/ModelComponent.h"
 #include "Ecs/Components/TransformComponent.h"
 #include "Ecs/Components/PhysicsBodyComponent.h"
+#include "Ecs/Components/MoverComponent.h"
 
 #include "Ecs/Systems/FrustumCullingSystem.h"
 #include "Ecs/Systems/PhysicsSystem.h"
+#include "Ecs/Systems/MoverSystem.h"
 
 MyGame::MyGame(WindowManager& windowManager) :
 	mWindowManager(windowManager),
@@ -30,17 +32,16 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mEngine.uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float), 0);
 	mEngine.uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t), 0);
 
+	// init physics world
+	b3WorldDef worldDef = b3DefaultWorldDef();
+	worldDef.gravity = { 0.0f, -9.81f, 0.0f };
+	mWorldId  = b3CreateWorld(&worldDef);
+
 	// initialize ECS
 	mEngine.ecs().registerComponent<TransformComponent>();
 	mEngine.ecs().registerComponent<ModelComponent>();
 	mEngine.ecs().registerComponent<PhysicsBodyComponent>();
-
-	{
-		const auto readSig = mEngine.ecs().getSignature<PhysicsBodyComponent>();
-		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
-
-		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig);
-	}
+	mEngine.ecs().registerComponent<MoverComponent>();
 
 	{
 		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
@@ -49,11 +50,25 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mEngine.ecs().registerSystem<FrustumCullingSystem>(readSig, writeSig, mEngine, models);
 	}
 
+	{
+		const auto readSig = mEngine.ecs().getSignature<ModelComponent, PhysicsBodyComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
+
+		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig, mModelHandler, mWorldId);
+	}
+
+	{
+		const auto readSig = mEngine.ecs().getSignature<MoverComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
+
+		mEngine.ecs().registerSystem<MoverSystem>(readSig, writeSig, mWorldId);
+	}
+
 	loadTextures();
 
 	mEngine.uploadTexture("TEXTURE", mPixels);
 
-	constexpr double r = 50;
+	constexpr double r = 25;
 	constexpr double deg = 360;
 
 	// entities
@@ -73,28 +88,26 @@ MyGame::MyGame(WindowManager& windowManager) :
 		}
 	}
 
-	createPhysicsWorld();
+	// character
+	{
+		mCharacter = mEngine.ecs().addEntity();
+
+		TransformComponent t{};
+		t.mPosition = { 0, 2.5f, 0 };
+		t.mRotation = { 0, 0, 0, 0 };
+		t.mScale = { 1, 1, 1 };
+
+		MoverComponent m{};
+		m.mWalkSpeed = 10.0f;
+
+		mEngine.ecs().addComponent<TransformComponent>(mCharacter, std::move(t));
+		mEngine.ecs().addComponent<MoverComponent>(mCharacter, std::move(m));
+	}
 }
 
 void MyGame::run(float delta)
 {
 	updateCamera(delta);
-
-	for (unsigned int i = 0; i < static_cast<unsigned int>(mEntityCount); i++)
-	{
-		if (i % 5 == 0)
-		{
-			auto& transform = mEngine.ecs().getComponent<TransformComponent>(i);
-
-			transform.mRotation.x += 2.0f * delta;
-			transform.mRotation.y += 2.0f * delta;
-			transform.mRotation.z += 2.0f * delta;
-
-			transform.mScale.x = 2.0f;
-			transform.mScale.y = 2.0f;
-			transform.mScale.z = 2.0f;
-		}
-	}
 
 	updateMousePicking();
 
@@ -109,6 +122,7 @@ void MyGame::run(float delta)
 	}
 
 	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
+	mEngine.ecs().updateSystem<MoverSystem>(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
 
 	mEngine.drawFrame();
@@ -152,7 +166,7 @@ void MyGame::createModel(const std::string& model, const glm::vec3 position, con
 
 	TransformComponent t{};
 	t.mPosition = position;
-	t.mRotation = { 0, 0, 0 };
+	t.mRotation = { 0, 0, 0, 0 };
 	t.mScale = scale;
 
 	ModelComponent m{};
@@ -170,55 +184,22 @@ void MyGame::createModel(const std::string& model, const glm::vec3 position, con
 	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
 }
 
-void MyGame::createPhysicsWorld()
-{
-	mWorldDef = b3DefaultWorldDef();
-	mWorldId  = b3CreateWorld(&mWorldDef);
-
-	b3BodyDef bodyDef = b3DefaultBodyDef();
-	bodyDef.type = b3_dynamicBody;
-	bodyDef.position = { -3.0f, 8.0f };
-	bodyDef.name = "crate1";
-	b3BodyId bodyId = b3CreateBody(mWorldId, &bodyDef);
-
-	b3BoxHull box = b3MakeBoxHull(0.75f, 0.75f, 0.75f);
-
-	b3ShapeDef shapeDef = b3DefaultShapeDef();
-	shapeDef.density = 2.0f;
-
-	b3CreateHullShape(bodyId, &shapeDef, &box.base);
-}
-
 void MyGame::updateCamera(float delta)
 {
-	// --- yaw (Q/E), pitch clamped ---
-	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_Q)) camRotation.y -= camSpeed * 0.25f * delta; // look left
-	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_E)) camRotation.y += camSpeed * 0.25f * delta; // look right
-	camRotation.x = glm::clamp(camRotation.x, -1.553f, 1.553f);
+	const auto& characterTransform = mEngine.ecs().getComponent<TransformComponent>(mCharacter);
+	camPosition = characterTransform.mPosition;
+	camRotation = characterTransform.mRotation;
 	
-	// --- derive camera basis (-Z forward, Y up) ---
-	glm::vec3 camForward;
-	camForward.x = std::cos(camRotation.x) * std::sin(camRotation.y);
-	camForward.y = std::sin(camRotation.x);
-	camForward.z = -std::cos(camRotation.x) * std::cos(camRotation.y);
-	camForward = glm::normalize(camForward);
-	
-	glm::vec3 camRight = glm::normalize(glm::cross(camForward, glm::vec3(0, 1, 0)));
-	glm::vec3 camUp = glm::normalize(glm::cross(camRight, camForward));
-	
-	// --- movement ---
-	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_A)) camPosition -= camRight * camSpeed * delta;
-	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_D)) camPosition += camRight * camSpeed * delta;
-	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_W)) camPosition += camForward * camSpeed * delta;
-	if (mWindowManager.getInput().isKeyPressed(GLFW_KEY_S)) camPosition -= camForward * camSpeed * delta;
-	
-	// --- build camera transform ---
+	const glm::vec3 camForward = camRotation * glm::vec3(0.0f, 0.0f, -1.0f);
+	const glm::vec3 camRight = camRotation * glm::vec3(1.0f, 0.0f, 0.0f);
+	const glm::vec3 camUp = camRotation * glm::vec3(0.0f, 1.0f, 0.0f);
+
 	glm::mat4 rot(1.0f);
 	rot[0] = glm::vec4(camRight, 0.0f);
 	rot[1] = glm::vec4(camUp, 0.0f);
-	rot[2] = glm::vec4(-camForward, 0.0f); // note the negative
-	
-	glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), camPosition) * rot;
+	rot[2] = glm::vec4(-camForward, 0.0f);
+
+	const glm::mat4 cameraTransform = glm::translate(glm::mat4(1.0f), camPosition) * glm::toMat4(camRotation);
 	
 	const auto width = static_cast<float>(mEngine.getScreenWidth());
 	const auto height = static_cast<float>(mEngine.getScreenHeight());
@@ -227,8 +208,7 @@ void MyGame::updateCamera(float delta)
 	{
 		Camera ubo{};
 		ubo.mView = glm::inverse(cameraTransform);
-		ubo.mProj = glm::perspective(glm::radians(90.0f),
-			width / height, 0.01f, 100'000.0f);
+		ubo.mProj = glm::perspective(glm::radians(90.0f), width / height, 0.01f, 100'000.0f);
 		ubo.mProj[1][1] *= -1;
 
 		const glm::mat4 vp = ubo.mProj * ubo.mView;

@@ -6,14 +6,18 @@
 
 #include <box3d/box3d.h>
 
+#include "../../ModelHandler/ModelHandler.h"
+
 class PhysicsSystem : public System_I
 {
 public:
-    PhysicsSystem();
+    PhysicsSystem(ModelHandler& modelHandler, b3WorldId& worldId);
+    ~PhysicsSystem();
 
     void update(float delta) override;
 
 private:
-    b3WorldId mWorldId;
+    ModelHandler& mModelHandler;
+    b3WorldId& mWorldId;
     std::unordered_map<EntityId, b3BodyId> mBodies;
 };

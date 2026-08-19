@@ -10,32 +10,35 @@ class InputManager
 public:
 	InputManager();
 
-	void update(GLFWwindow* window);
+	static void update(GLFWwindow* window);
+    static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
 
-    bool isKeyPressed(int key) const;
-    bool isKeyJustPressed(int key) const;
-    bool isKeyJustReleased(int key) const;
-    bool isButtonPressed(int button) const;
-    bool isButtonJustPressed(int button) const;
-    bool isButtonJustReleased(int button) const;
+    static bool isKeyPressed(int key);
+    static bool isKeyJustPressed(int key);
+    static bool isKeyJustReleased(int key);
+    static bool isButtonPressed(int button);
+    static bool isButtonJustPressed(int button);
+    static bool isButtonJustReleased(int button);
 
-    double getMouseX() const;
-    double getMouseY() const;
-    double getMouseDeltaX() const;
-    double getMouseDeltaY() const;
+    static double getMouseX();
+    static double getMouseY();
+    static double getMouseDeltaX();
+    static double getMouseDeltaY();
 
 private:
-    static const int MAX_KEYS = GLFW_KEY_LAST + 1;
-    static const int MAX_MOUSE_BUTTONS = GLFW_MOUSE_BUTTON_LAST + 1;
+    static constexpr int MAX_KEYS = GLFW_KEY_LAST + 1;
+    static constexpr int MAX_MOUSE_BUTTONS = GLFW_MOUSE_BUTTON_LAST + 1;
 
-    std::array<std::atomic<int>, MAX_KEYS> mCurrKeys{};
-    std::array<std::atomic<int>, MAX_KEYS> mPrevKeys{};
+    static std::array<std::atomic<int>, MAX_KEYS> mCurrKeys;
+    static std::array<std::atomic<int>, MAX_KEYS> mPrevKeys;
 
-    std::array<std::atomic<int>, MAX_MOUSE_BUTTONS> mCurrButtons{};
-    std::array<std::atomic<int>, MAX_MOUSE_BUTTONS> mPrevButtons{};
+    static std::array<std::atomic<int>, MAX_MOUSE_BUTTONS> mCurrButtons;
+    static std::array<std::atomic<int>, MAX_MOUSE_BUTTONS> mPrevButtons;
 
-    std::atomic<double> mMouseX = 0.0;
-    std::atomic<double> mMouseY = 0.0;
-    std::atomic<double> mMouseDeltaX = 0.0;
-    std::atomic<double> mMouseDeltaY = 0.0;
+    static std::atomic<bool> mFirstMouse;
+    static std::atomic<bool> mLockMouseToCenter;
+    static std::atomic<double> mMouseX;
+    static std::atomic<double> mMouseY;
+    static std::atomic<double> mMouseDeltaX;
+    static std::atomic<double> mMouseDeltaY;
 };

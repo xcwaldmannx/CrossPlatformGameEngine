@@ -11,6 +11,7 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
 
 class FrustumCullingSystem : public System_I
 {
@@ -19,10 +20,9 @@ public:
     {
         glm::vec3 mPosition;
         uint32_t  mEntityId;
-        glm::vec3 mRotation;
-        uint32_t  mIsSelected;
+        glm::quat mRotation;
         glm::vec3 mScale;
-        uint32_t  _pad2;
+        uint32_t  mIsSelected;
 
         glm::vec3 mBoundsPos;
         uint32_t _pad3;

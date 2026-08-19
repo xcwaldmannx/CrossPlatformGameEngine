@@ -7,6 +7,10 @@
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/quaternion.hpp>
+
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 #include <box3d/box3d.h>
 
@@ -68,13 +72,13 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 128;
+	double mEntityCount = 16;
 
-	b3WorldDef mWorldDef;
 	b3WorldId mWorldId;
+	EntityId mCharacter;
 
-	glm::vec3 camUpWorld{ 0.0f, 1.0f, 0.0f };
-	glm::vec3 camPosition{ 0.0f, 2.0f, 0.0f };
-	glm::vec3 camRotation{ 0.0f }; // radians: x=pitch, y=yaw
+	glm::vec3 camUpWorld { 0.0f, 1.0f, 0.0f };
+	glm::vec3 camPosition { 0.0f, 5.0f, 0.0f };
+	glm::quat camRotation;
 	float camSpeed = 15.0f;
 };

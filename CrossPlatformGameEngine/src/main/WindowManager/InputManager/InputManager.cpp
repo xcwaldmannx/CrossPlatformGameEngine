@@ -1,5 +1,21 @@
 #include "InputManager.h"
 
+#include <iostream>
+#include <ostream>
+
+std::array<std::atomic<int>, InputManager::MAX_KEYS> InputManager::mCurrKeys{};
+std::array<std::atomic<int>, InputManager::MAX_KEYS> InputManager::mPrevKeys{};
+
+std::array<std::atomic<int>, InputManager::MAX_MOUSE_BUTTONS> InputManager::mCurrButtons{};
+std::array<std::atomic<int>, InputManager::MAX_MOUSE_BUTTONS> InputManager::mPrevButtons{};
+
+std::atomic<bool> InputManager::mFirstMouse { true };
+std::atomic<bool> InputManager::mLockMouseToCenter { true };
+std::atomic<double> InputManager::mMouseX{  0.0 };
+std::atomic<double> InputManager::mMouseY { 0.0 };
+std::atomic<double> InputManager::mMouseDeltaX { 0.0 };
+std::atomic<double> InputManager::mMouseDeltaY { 0.0 };
+
 InputManager::InputManager() {}
 
 void InputManager::update(GLFWwindow* window)
@@ -23,18 +39,31 @@ void InputManager::update(GLFWwindow* window)
     {
         mCurrButtons[i].store(glfwGetMouseButton(window, i) == GLFW_PRESS ? 1 : 0, std::memory_order_relaxed);
     }
-
-    double mouseX, mouseY;
-    glfwGetCursorPos(window, &mouseX, &mouseY);
-
-    mMouseDeltaX.store(mouseX - mMouseX.load(std::memory_order_relaxed), std::memory_order_relaxed);
-    mMouseDeltaY.store(mouseY - mMouseY.load(std::memory_order_relaxed), std::memory_order_relaxed);
-
-    mMouseX.store(mouseX, std::memory_order_relaxed);
-    mMouseY.store(mouseY, std::memory_order_relaxed);
 }
 
-bool InputManager::isKeyPressed(int key) const
+void InputManager::mouseCallback(GLFWwindow *window, double xpos, double ypos)
+{
+    if (mFirstMouse.load(std::memory_order_relaxed))
+    {
+        mMouseX.store(xpos, std::memory_order_relaxed);
+        mMouseY.store(ypos, std::memory_order_relaxed);
+
+        mMouseDeltaX.store(0, std::memory_order_relaxed);
+        mMouseDeltaY.store(0, std::memory_order_relaxed);
+
+        mFirstMouse.store(false, std::memory_order_relaxed);
+    }
+    else
+    {
+        const double oldMouseX = mMouseX.exchange(xpos, std::memory_order_relaxed);
+        const double oldMouseY = mMouseY.exchange(ypos, std::memory_order_relaxed);
+
+        mMouseDeltaX.fetch_add(xpos - oldMouseX, std::memory_order_relaxed);
+        mMouseDeltaY.fetch_add(ypos - oldMouseY, std::memory_order_relaxed);
+    }
+}
+
+bool InputManager::isKeyPressed(int key)
 {
     if (key < 0 || key >= MAX_KEYS)
     {
@@ -44,7 +73,7 @@ bool InputManager::isKeyPressed(int key) const
     return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-bool InputManager::isKeyJustPressed(int key) const
+bool InputManager::isKeyJustPressed(int key)
 {
     if (key < 0 || key >= MAX_KEYS)
     {
@@ -55,7 +84,7 @@ bool InputManager::isKeyJustPressed(int key) const
         mPrevKeys[key].load(std::memory_order_relaxed) == GLFW_RELEASE;
 }
 
-bool InputManager::isKeyJustReleased(int key) const
+bool InputManager::isKeyJustReleased(int key)
 {
     if (key < 0 || key >= MAX_KEYS)
     {
@@ -66,7 +95,7 @@ bool InputManager::isKeyJustReleased(int key) const
         mPrevKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-bool InputManager::isButtonPressed(int button) const
+bool InputManager::isButtonPressed(int button)
 {
     if (button < 0 || button >= MAX_MOUSE_BUTTONS)
     {
@@ -76,7 +105,7 @@ bool InputManager::isButtonPressed(int button) const
     return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-bool InputManager::isButtonJustPressed(int button) const
+bool InputManager::isButtonJustPressed(int button)
 {
     if (button < 0 || button >= MAX_MOUSE_BUTTONS)
     {
@@ -87,7 +116,7 @@ bool InputManager::isButtonJustPressed(int button) const
         mPrevButtons[button].load(std::memory_order_relaxed) == GLFW_RELEASE;
 }
 
-bool InputManager::isButtonJustReleased(int button) const
+bool InputManager::isButtonJustReleased(int button)
 {
     if (button < 0 || button >= MAX_MOUSE_BUTTONS)
     {
@@ -98,22 +127,22 @@ bool InputManager::isButtonJustReleased(int button) const
         mPrevButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS;
 }
 
-double InputManager::getMouseX() const
+double InputManager::getMouseX()
 {
     return mMouseX.load(std::memory_order_relaxed);
 }
 
-double InputManager::getMouseY() const
+double InputManager::getMouseY()
 {
     return mMouseY.load(std::memory_order_relaxed);
 }
 
-double InputManager::getMouseDeltaX() const
+double InputManager::getMouseDeltaX()
 { 
-    return mMouseDeltaX.load(std::memory_order_relaxed);
+    return mMouseDeltaX.exchange(0, std::memory_order_relaxed);
 }
 
-double InputManager::getMouseDeltaY() const
+double InputManager::getMouseDeltaY()
 { 
-    return mMouseDeltaY.load(std::memory_order_relaxed);
+    return mMouseDeltaY.exchange(0, std::memory_order_relaxed);
 }
