@@ -22,7 +22,7 @@ void MoverSystem::update(float delta)
         auto& transform = mSystem->getComponent<TransformComponent>(e);
 
         const auto& pos = transform.mPosition;
-        const auto& rot = transform.mRotation;
+        auto& rot = transform.mRotation;
 
         double mouseDeltaX = InputManager::getMouseDeltaX();
         double mouseDeltaY = InputManager::getMouseDeltaY();
@@ -37,6 +37,8 @@ void MoverSystem::update(float delta)
         const glm::quat pitchRotation = glm::angleAxis(mPitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
         transform.mRotation = glm::normalize(yawRotation * pitchRotation);
+
+        rot = transform.mRotation;
 
         const glm::vec3 forward = rot * glm::vec3(0.0f, 0.0f, -1.0f);
         const glm::vec3 right = rot * glm::vec3(1.0f, 0.0f, 0.0f);
@@ -64,7 +66,12 @@ void MoverSystem::update(float delta)
             direction -= forward;
         }
 
-        if (InputManager::isKeyJustPressed(GLFW_KEY_SPACE))
+        if (InputManager::isKeyPressed(GLFW_KEY_SPACE))
+        {
+            direction += up;
+        }
+
+        if (InputManager::isKeyPressed(GLFW_KEY_C))
         {
             direction -= up;
         }
