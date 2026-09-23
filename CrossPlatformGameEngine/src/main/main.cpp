@@ -19,6 +19,8 @@ int main()
 
 	while (mWindow.isRunning() && !mWindow.isCloseRequested())
 	{
+		mWindow.poll();
+
 		frameCounter.frame();
 		const float delta = frameCounter.deltaTime();
 

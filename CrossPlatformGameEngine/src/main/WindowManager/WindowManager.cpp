@@ -28,6 +28,11 @@ void WindowManager::destroy()
     glfwTerminate();
 }
 
+void WindowManager::poll()
+{
+    mPoll.store(true, std::memory_order_release);
+}
+
 void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height)
 {
     mIsResized.store(true, std::memory_order_release);
@@ -52,24 +57,29 @@ void WindowManager::setResized(bool resized)
     mIsResized.store(resized, std::memory_order_release);
 }
 
-bool WindowManager::isRunning() const
+bool WindowManager::isRunning()
 {
     return mIsRunning.load(std::memory_order_acquire);
 }
 
-bool WindowManager::isResized() const
+bool WindowManager::isResized()
 {
     return mIsResized.load(std::memory_order_acquire);
 }
 
-bool WindowManager::isMinimized() const
+bool WindowManager::isMinimized()
 {
     return mIsMinimized.load(std::memory_order_acquire);
 }
 
-bool WindowManager::isCloseRequested() const
+bool WindowManager::isCloseRequested()
 {
     return mIsCloseRequested.load(std::memory_order_acquire);
+}
+
+bool WindowManager::isMouseFocused()
+{
+    return mFocusMouse.load(std::memory_order_acquire);
 }
 
 GLFWwindow* WindowManager::getWindow() const
@@ -94,7 +104,7 @@ void WindowManager::windowThread()
     });
 
     // enable this for renderdoc
-    glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+    // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
 
     if (!glfwInit())
     {
@@ -104,7 +114,13 @@ void WindowManager::windowThread()
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    mWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan Window", nullptr, nullptr);
+    mWindow = glfwCreateWindow(
+        static_cast<int>(WINDOW_WIDTH),
+        static_cast<int>(WINDOW_HEIGHT),
+        "Vulkan Window",
+        nullptr,
+        nullptr);
+
     if (!mWindow)
     {
         glfwTerminate();
@@ -114,13 +130,10 @@ void WindowManager::windowThread()
     mFramebufferWidth.store(WINDOW_WIDTH, std::memory_order_release);
     mFramebufferHeight.store(WINDOW_HEIGHT, std::memory_order_release);
 
-    // glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-    glfwSetCursorPosCallback(mWindow, InputManager::mouseCallback);
-
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
     glfwSetWindowIconifyCallback(mWindow, iconifyCallback);
     glfwSetWindowCloseCallback(mWindow, windowCloseCallback);
+    glfwSetCursorPosCallback(mWindow, InputManager::mouseCallback);
 
     mIsRunning.store(true, std::memory_order_release);
     mWindowReady.store(true, std::memory_order_release);
@@ -130,22 +143,29 @@ void WindowManager::windowThread()
 
     while (!mIsCloseRequested.load(std::memory_order_acquire) && mIsRunning.load(std::memory_order_acquire))
     {
-        glfwPollEvents();
-        InputManager::update(mWindow);
-
-        if (InputManager::isKeyJustPressed(GLFW_KEY_TAB))
+        const auto& poll = mPoll.load(std::memory_order_acquire);
+        if (poll)
         {
-            mFocusMouse = !mFocusMouse;
-            glfwFocusWindow(mWindow);
+            glfwPollEvents();
+            InputManager::update(mWindow);
 
-            if (mFocusMouse)
+            if (InputManager::isKeyJustPressed(GLFW_KEY_TAB))
             {
-                glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                const bool focus = !mFocusMouse.load(std::memory_order_acquire);
+
+                mFocusMouse.exchange(focus, std::memory_order_release);
+                glfwFocusWindow(mWindow);
+
+                if (!focus)
+                {
+                    glfwSetCursorPos(mWindow, getCenterX(), getCenterY());
+                }
+
+                const int cursorMode = focus ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL;
+                glfwSetInputMode(mWindow, GLFW_CURSOR, cursorMode);
             }
-            else
-            {
-                glfwSetInputMode(mWindow, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-            }
+
+            mPoll.store(false, std::memory_order_release);
         }
     }
 }

@@ -68,7 +68,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.uploadTexture("TEXTURE", mPixels);
 
-	constexpr double r = 25;
+	constexpr double r = 50;
 	constexpr double deg = 360;
 
 	// entities
@@ -78,13 +78,15 @@ MyGame::MyGame(WindowManager& windowManager) :
 		double x = r * std::cos(angle);
 		double z = r * std::sin(angle);
 
+		float rad = -i * (M_PI / 180.0);
+
 		if (i < 180)
 		{
-			createModel("assets/models/test.model", { x, 15, z }, { 1, 1, 1 });
+			createModel("assets/models/test.model", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
 		}
 		else
 		{
-			createModel("assets/models/submarine.model", { x, 15, z }, { 1, 1, 1 });
+			createModel("assets/models/submarine.model", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 3, 1 });
 		}
 	}
 
@@ -117,8 +119,15 @@ void MyGame::run(float delta)
 
 	if (selectedEntity < ENTITY_MAX)
 	{
-		auto& current = mEngine.ecs().getComponent<ModelComponent>(selectedEntity);
-		current.mIsSelected = 1;
+		auto& selectedModel = mEngine.ecs().getComponent<ModelComponent>(selectedEntity);
+		selectedModel.mIsSelected = 1;
+
+
+		if (InputManager::isButtonJustPressed(GLFW_MOUSE_BUTTON_LEFT))
+		{
+			auto& selectedPhysicsBody = mEngine.ecs().getComponent<PhysicsBodyComponent>(selectedEntity);
+			selectedPhysicsBody.mAppliedForce = { 0, 1000, 0 };
+		}
 	}
 
 	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
@@ -160,13 +169,13 @@ void MyGame::loadTextures()
 	}
 }
 
-void MyGame::createModel(const std::string& model, const glm::vec3 position, const glm::vec3 scale)
+void MyGame::createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale)
 {
 	const auto e = mEngine.ecs().addEntity();
 
 	TransformComponent t{};
-	t.mPosition = position;
-	t.mRotation = { 0, 0, 0, 0 };
+	t.mPosition = pos;
+	t.mRotation = rot;
 	t.mScale = scale;
 
 	ModelComponent m{};
@@ -221,21 +230,20 @@ void MyGame::updateCamera(float delta)
 
 void MyGame::updateMousePicking()
 {
-	const double mouseX = mWindowManager.getInput().getMouseX();
-	const double mouseY = mWindowManager.getInput().getMouseY();
+	double mouseX = InputManager::getMouseX();
+	double mouseY = InputManager::getMouseY();
 
-	const int windowWidth = WindowManager::getWidth();
-	const int windowHeight = WindowManager::getHeight();
+	if (WindowManager::isMouseFocused())
+	{
+		mouseX = WindowManager::getCenterX();
+		mouseY = WindowManager::getCenterY();
+	}
 
-	const int pixelX = std::clamp(
-		static_cast<int>(mouseX),
-		0,
-		windowWidth - 1);
+	const auto windowWidth = static_cast<int32_t>(WindowManager::getWidth());
+	const auto windowHeight = static_cast<int32_t>(WindowManager::getHeight());
 
-	const int pixelY = std::clamp(
-		static_cast<int>(mouseY),
-		0,
-		windowHeight - 1);
+	const int32_t pixelX = std::clamp(static_cast<int32_t>(mouseX), 0, windowWidth - 1);
+	const int32_t pixelY = std::clamp(static_cast<int32_t>(mouseY), 0, windowHeight - 1);
 
 	ascen::transfer::BufferImageRegion region
 	{

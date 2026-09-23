@@ -3,11 +3,11 @@
 #include <iostream>
 #include <ostream>
 
-std::array<std::atomic<int>, InputManager::MAX_KEYS> InputManager::mCurrKeys{};
-std::array<std::atomic<int>, InputManager::MAX_KEYS> InputManager::mPrevKeys{};
+std::array<std::atomic<bool>, InputManager::MAX_KEYS> InputManager::mCurrKeys{};
+std::array<std::atomic<bool>, InputManager::MAX_KEYS> InputManager::mPrevKeys{};
 
-std::array<std::atomic<int>, InputManager::MAX_MOUSE_BUTTONS> InputManager::mCurrButtons{};
-std::array<std::atomic<int>, InputManager::MAX_MOUSE_BUTTONS> InputManager::mPrevButtons{};
+std::array<std::atomic<bool>, InputManager::MAX_MOUSE_BUTTONS> InputManager::mCurrButtons{};
+std::array<std::atomic<bool>, InputManager::MAX_MOUSE_BUTTONS> InputManager::mPrevButtons{};
 
 std::atomic<bool> InputManager::mFirstMouse { true };
 std::atomic<bool> InputManager::mLockMouseToCenter { true };
@@ -20,24 +20,19 @@ InputManager::InputManager() {}
 
 void InputManager::update(GLFWwindow* window)
 {
-    for (int i = 0; i < MAX_KEYS; ++i)
+    for (int i = GLFW_KEY_SPACE; i < MAX_KEYS; i++)
     {
-        mPrevKeys[i].store(mCurrKeys[i].load(std::memory_order_relaxed), std::memory_order_relaxed);
+        const auto curr = glfwGetKey(window, i);
+        const auto prev = mCurrKeys[i].exchange(curr, std::memory_order_relaxed);
+        mPrevKeys[i].store(prev, std::memory_order_relaxed);
+
     }
 
-    for (int i = 0; i < MAX_MOUSE_BUTTONS; ++i)
+    for (int i = 0; i < MAX_MOUSE_BUTTONS; i++)
     {
-        mPrevButtons[i].store(mCurrButtons[i].load(std::memory_order_relaxed), std::memory_order_relaxed);
-    }
-
-    for (int i = GLFW_KEY_SPACE; i < GLFW_KEY_LAST; ++i)
-    {
-        mCurrKeys[i].store(glfwGetKey(window, i) == GLFW_PRESS ? 1 : 0, std::memory_order_relaxed);
-    }
-
-    for (int i = 0; i < MAX_MOUSE_BUTTONS; ++i)
-    {
-        mCurrButtons[i].store(glfwGetMouseButton(window, i) == GLFW_PRESS ? 1 : 0, std::memory_order_relaxed);
+        const auto curr = glfwGetMouseButton(window, i);
+        const auto prev = mCurrButtons[i].exchange(curr, std::memory_order_relaxed);
+        mPrevButtons[i].store(prev, std::memory_order_relaxed);
     }
 }
 
@@ -58,8 +53,16 @@ void InputManager::mouseCallback(GLFWwindow *window, double xpos, double ypos)
         const double oldMouseX = mMouseX.exchange(xpos, std::memory_order_relaxed);
         const double oldMouseY = mMouseY.exchange(ypos, std::memory_order_relaxed);
 
-        mMouseDeltaX.fetch_add(xpos - oldMouseX, std::memory_order_relaxed);
-        mMouseDeltaY.fetch_add(ypos - oldMouseY, std::memory_order_relaxed);
+        double deltaX = xpos - oldMouseX;
+        double deltaY = ypos - oldMouseY;
+
+        double sensitivity = 4.0;
+
+        deltaX = std::clamp(deltaX, -sensitivity, sensitivity);
+        deltaY = std::clamp(deltaY, -sensitivity, sensitivity);
+
+        mMouseDeltaX.fetch_add(deltaX, std::memory_order_relaxed);
+        mMouseDeltaY.fetch_add(deltaY, std::memory_order_relaxed);
     }
 }
 
@@ -70,7 +73,7 @@ bool InputManager::isKeyPressed(int key)
         return false;
     }
 
-    return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS;
+    return mCurrKeys[key].load(std::memory_order_relaxed);
 }
 
 bool InputManager::isKeyJustPressed(int key)
@@ -80,8 +83,10 @@ bool InputManager::isKeyJustPressed(int key)
         return false;
     }
 
-    return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS &&
-        mPrevKeys[key].load(std::memory_order_relaxed) == GLFW_RELEASE;
+    const auto curr = mCurrKeys[key].load(std::memory_order_relaxed);
+    const auto prev = mPrevKeys[key].load(std::memory_order_relaxed);
+
+    return curr && !prev;
 }
 
 bool InputManager::isKeyJustReleased(int key)
@@ -91,8 +96,10 @@ bool InputManager::isKeyJustReleased(int key)
         return false;
     }
 
-    return mCurrKeys[key].load(std::memory_order_relaxed) == GLFW_RELEASE &&
-        mPrevKeys[key].load(std::memory_order_relaxed) == GLFW_PRESS;
+    const auto curr = mCurrKeys[key].load(std::memory_order_relaxed);
+    const auto prev = mPrevKeys[key].load(std::memory_order_relaxed);
+
+    return !curr && prev;
 }
 
 bool InputManager::isButtonPressed(int button)
@@ -102,7 +109,7 @@ bool InputManager::isButtonPressed(int button)
         return false;
     }
 
-    return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS;
+    return mCurrButtons[button].load(std::memory_order_relaxed);
 }
 
 bool InputManager::isButtonJustPressed(int button)
@@ -112,8 +119,10 @@ bool InputManager::isButtonJustPressed(int button)
         return false;
     }
 
-    return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS &&
-        mPrevButtons[button].load(std::memory_order_relaxed) == GLFW_RELEASE;
+    const auto curr = mCurrButtons[button].load(std::memory_order_relaxed);
+    const auto prev = mPrevButtons[button].load(std::memory_order_relaxed);
+
+    return curr && !prev;
 }
 
 bool InputManager::isButtonJustReleased(int button)
@@ -123,8 +132,10 @@ bool InputManager::isButtonJustReleased(int button)
         return false;
     }
 
-    return mCurrButtons[button].load(std::memory_order_relaxed) == GLFW_RELEASE &&
-        mPrevButtons[button].load(std::memory_order_relaxed) == GLFW_PRESS;
+    const auto curr = mCurrButtons[button].load(std::memory_order_relaxed);
+    const auto prev = mPrevButtons[button].load(std::memory_order_relaxed);
+
+    return !curr && prev;
 }
 
 double InputManager::getMouseX()

@@ -33,8 +33,7 @@ public:
 
 private:
 	void loadTextures();
-	void createModel(const std::string& model, const glm::vec3 position, const glm::vec3 scale);
-	void createPhysicsWorld();
+	void createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale);
 	void updateCamera(float delta);
 	void updateMousePicking();
 
@@ -72,7 +71,7 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 16;
+	double mEntityCount = 96;
 
 	b3WorldId mWorldId;
 	EntityId mCharacter;

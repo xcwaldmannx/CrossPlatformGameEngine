@@ -29,11 +29,11 @@ private:
     static constexpr int MAX_KEYS = GLFW_KEY_LAST + 1;
     static constexpr int MAX_MOUSE_BUTTONS = GLFW_MOUSE_BUTTON_LAST + 1;
 
-    static std::array<std::atomic<int>, MAX_KEYS> mCurrKeys;
-    static std::array<std::atomic<int>, MAX_KEYS> mPrevKeys;
+    static std::array<std::atomic<bool>, MAX_KEYS> mCurrKeys;
+    static std::array<std::atomic<bool>, MAX_KEYS> mPrevKeys;
 
-    static std::array<std::atomic<int>, MAX_MOUSE_BUTTONS> mCurrButtons;
-    static std::array<std::atomic<int>, MAX_MOUSE_BUTTONS> mPrevButtons;
+    static std::array<std::atomic<bool>, MAX_MOUSE_BUTTONS> mCurrButtons;
+    static std::array<std::atomic<bool>, MAX_MOUSE_BUTTONS> mPrevButtons;
 
     static std::atomic<bool> mFirstMouse;
     static std::atomic<bool> mLockMouseToCenter;
