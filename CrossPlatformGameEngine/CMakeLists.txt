@@ -68,13 +68,13 @@ target_link_libraries(CrossPlatformGameEngine PRIVATE
 )
 
 # -------------------------
-# mass (prebuilt static .a)
+# mal (prebuilt static .a)
 # -------------------------
-target_include_directories(CrossPlatformGameEngine PRIVATE "${CMAKE_SOURCE_DIR}/Vendor/mass/include")
+target_include_directories(CrossPlatformGameEngine PRIVATE "${CMAKE_SOURCE_DIR}/Vendor/mal/include")
 
 target_link_libraries(CrossPlatformGameEngine PRIVATE
-		debug     "${CMAKE_SOURCE_DIR}/Vendor/mass/lib/libModelAttributeSelectiveSerializerd.a"
-		optimized "${CMAKE_SOURCE_DIR}/Vendor/mass/lib/libModelAttributeSelectiveSerializer.a"
+		debug     "${CMAKE_SOURCE_DIR}/Vendor/mal/lib/libModelAndAnimationLoaderd.a"
+		optimized "${CMAKE_SOURCE_DIR}/Vendor/mal/lib/libModelAndAnimationLoader.a"
 )
 
 # -------------------------

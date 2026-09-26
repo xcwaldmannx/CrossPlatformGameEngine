@@ -16,6 +16,8 @@ void MyPipeline::init()
 void MyPipeline::initResources()
 {
     // Vertices
+
+    // Tri
     const ascen::VertexBinding vertexBindingTri{ 0, sizeof(float) * 8, VK_VERTEX_INPUT_RATE_VERTEX };
     const std::vector<ascen::VertexAttribute> vertexAttribTri =
     {
@@ -26,6 +28,7 @@ void MyPipeline::initResources()
 
     mVertexTriangles = mEngine.registerResource<ascen::registry::VertexEntry>({ "VERTEX_TRIANGLES", vertexBindingTri, vertexAttribTri });
 
+    // Point
     const ascen::VertexBinding vertexBindingPoint{ 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX };
     const std::vector<ascen::VertexAttribute> vertexAttribPoint =
     {
@@ -34,10 +37,26 @@ void MyPipeline::initResources()
 
     mVertexPoint = mEngine.registerResource<ascen::registry::VertexEntry>({ "VERTEX_POINT", vertexBindingPoint, vertexAttribPoint });
 
-    // Buffers
-    // mEngine.resource().registerBuffer({ "BUFFER_CAMERA", ascen::BufferType::UNIFORM, 2, sizeof(glm::mat4) * 2 });
+    // Bones
+    const ascen::VertexBinding vertexBindingTriBones{ 0, sizeof(float) * 26, VK_VERTEX_INPUT_RATE_VERTEX };
+    const std::vector<ascen::VertexAttribute> vertexAttribTriBones =
+    {
+        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0 },
+        { 1, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3 },
+        { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 6 },
+        { 3, 0, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 9 },
+        { 4, 0, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 12 },
+        { 5, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 14 },
 
-    mBufferVertex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX", 100000, sizeof(float) * 8,
+        //bones
+        { 6, 0, VK_FORMAT_R32G32B32A32_SINT, sizeof(float) * 18 },
+        { 7, 0, VK_FORMAT_R32G32B32A32_SFLOAT, sizeof(float) * 22 }
+    };
+
+    mVertexTrianglesBones = mEngine.registerResource<ascen::registry::VertexEntry>({ "VERTEX_TRIANGLES_BONES", vertexBindingTriBones, vertexAttribTriBones });
+
+    // Buffers
+    mBufferVertex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX", 100000, sizeof(float) * 26, // 8 for Tri, 26 for Bones
         ascen::BUFFER_USAGE_VERTEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
     mBufferIndex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX", 100000, sizeof(uint32_t),
         ascen::BUFFER_USAGE_INDEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
@@ -259,7 +278,7 @@ void MyPipeline::initStages()
         graphicsPipelineEntryMousePicking.mName = "PIPELINE_MOUSE_PICKING";
         graphicsPipelineEntryMousePicking.mVertexShaderPath = "src/shaders/Simple/MousePickingVertexShader.spv";
         graphicsPipelineEntryMousePicking.mPixelShaderPath = "src/shaders/Simple/MousePickingPixelShader.spv";
-        graphicsPipelineEntryMousePicking.mVertexId = mVertexTriangles;
+        graphicsPipelineEntryMousePicking.mVertexId = mVertexTrianglesBones;
         graphicsPipelineEntryMousePicking.mRenderPassId = mRenderPassMousePicking;
         graphicsPipelineEntryMousePicking.mDescriptorSetLayoutIds = { mDescriptorSetLayoutMousePicking };
         graphicsPipelineEntryMousePicking.mParams.mEnableBlend = false;
@@ -318,7 +337,7 @@ void MyPipeline::initStages()
         graphicsPipelineEntryTriangles.mName = "PIPELINE_RENDER_ENTITY";
         graphicsPipelineEntryTriangles.mVertexShaderPath = "src/shaders/Simple/VertexShader.spv";
         graphicsPipelineEntryTriangles.mPixelShaderPath = "src/shaders/Simple/PixelShader.spv";
-        graphicsPipelineEntryTriangles.mVertexId = mVertexTriangles;
+        graphicsPipelineEntryTriangles.mVertexId = mVertexTrianglesBones;
         graphicsPipelineEntryTriangles.mRenderPassId = mRenderPass;
         graphicsPipelineEntryTriangles.mDescriptorSetLayoutIds = { mDescriptorSetLayoutGraphics };
         graphicsPipelineEntryTriangles.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;

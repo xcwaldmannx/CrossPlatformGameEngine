@@ -2,6 +2,57 @@
 
 ModelHandler::ModelHandler() {}
 
+void ModelHandler::load(const std::string& name, const std::string &filename)
+{
+    mal::Configuration config{};
+    config.mSupportedFileExtensions = { "glb" };
+
+    const mal::model::Model model = mal::ModelHandler::load(filename, config);
+    const mal::anim::AnimationSet animationSet = mal::AnimationHandler::load(filename, config);
+
+    Model m{};
+    m.mModel = model;
+    m.mAnimationSet = animationSet;
+    m.mVertexOffset = mGlobalVertexOffset;
+    m.mIndexOffset = mGlobalIndexOffset;
+    m.mIndexCount = model.getIndices().size();
+
+    const auto [maxX, maxY, maxZ] = model.getBoundsMax();
+    m.mBoundsMax = { maxX, maxY, maxZ };
+
+    const auto [minX, minY, minZ] = model.getBoundsMin();
+    m.mBoundsMin = { minX, minY, minZ };
+
+    mModels.emplace(name, m);
+
+    mGlobalVertexOffset += model.getVertices().size();
+    mGlobalIndexOffset += model.getIndices().size();
+
+    mVertices.append_range(model.getVertices());
+    mIndices.append_range(model.getIndices());
+}
+
+const Model& ModelHandler::getModel(const std::string& name)
+{
+    if (mModels.contains(name)) return mModels.at(name);
+    throw std::runtime_error("model does not exist");
+}
+
+const std::unordered_map<std::string, Model>& ModelHandler::getModels()
+{
+    return mModels;
+}
+
+const std::vector<mal::model::Vertex>& ModelHandler::getVertices()
+{
+    return mVertices;
+}
+const std::vector<uint32_t>& ModelHandler::getIndices()
+{
+    return mIndices;
+}
+
+/*
 void ModelHandler::loadModels(const std::vector<std::string>& filepaths)
 {
     mass::Configuration config{};
@@ -92,3 +143,4 @@ std::vector<float> ModelHandler::generateBoundingBox(glm::vec3 min, glm::vec3 ma
         min.x, max.y, min.z, min.x, max.y, max.z,
     };
 }
+*/

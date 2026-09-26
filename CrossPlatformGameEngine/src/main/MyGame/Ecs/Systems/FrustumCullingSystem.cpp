@@ -3,7 +3,7 @@
 #include "../Components/TransformComponent.h"
 #include "../Components/ModelComponent.h"
 
-FrustumCullingSystem::FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, MyModel>& models) :
+FrustumCullingSystem::FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, Model>& models) :
     mEngine(engine),
     mModels(models){}
 
@@ -30,9 +30,9 @@ void FrustumCullingSystem::update(const float delta)
         drawCommand.firstIndex = m.mIndexOffset;
         drawCommand.indexCount = m.mIndexCount;
 
-        if (!mModelToDrawCommands.contains(m.mModelId))
+        if (!mModelToDrawCommands.contains(m.mId))
         {
-            mModelToDrawCommands[m.mModelId] = drawCommand;
+            mModelToDrawCommands[m.mId] = drawCommand;
 
             Entity e{};
             e.mPosition   = transform.mPosition;
@@ -40,20 +40,20 @@ void FrustumCullingSystem::update(const float delta)
             e.mRotation   = transform.mRotation;
             e.mIsSelected = model.mIsSelected;
             e.mScale      = transform.mScale;
-            e.mBoundsPos  = m.mBoundsPos;
-            e.mBoundsNeg  = m.mBoundsNeg;
-            mModelToEntities[m.mModelId][entityId] = e;
+            e.mBoundsPos  = m.mBoundsMax;
+            e.mBoundsNeg  = m.mBoundsMin;
+            mModelToEntities[m.mId][entityId] = e;
         }
         else
         {
-            Entity& e = mModelToEntities[m.mModelId][entityId];
+            Entity& e = mModelToEntities[m.mId][entityId];
             e.mPosition   = transform.mPosition;
             e.mEntityId   = entityId;
             e.mRotation   = transform.mRotation;
             e.mIsSelected = model.mIsSelected;
             e.mScale      = transform.mScale;
-            e.mBoundsPos  = m.mBoundsPos;
-            e.mBoundsNeg  = m.mBoundsNeg;
+            e.mBoundsPos  = m.mBoundsMax;
+            e.mBoundsNeg  = m.mBoundsMin;
         }
 
     }
@@ -67,7 +67,8 @@ void FrustumCullingSystem::update(const float delta)
 
         mDrawCommands.push_back(mModelToDrawCommands[model]);
 
-        for (auto const& [key, value] : entities) {
+        for (auto const& [key, value] : entities)
+        {
             mEntitiesToCull.push_back(value);
         }
 

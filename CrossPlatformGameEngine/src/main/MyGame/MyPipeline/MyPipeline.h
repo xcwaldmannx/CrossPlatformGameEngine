@@ -19,6 +19,7 @@ private:
 
     uint64_t mVertexTriangles = 0;
     uint64_t mVertexPoint = 0;
+    uint64_t mVertexTrianglesBones = 0;
 
     uint64_t mBufferVertex = 0;
     uint64_t mBufferIndex = 0;

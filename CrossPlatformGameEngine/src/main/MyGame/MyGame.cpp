@@ -23,13 +23,21 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.reload();
 
-	mModelHandler.loadModels({ "assets/models/test.model", "assets/models/submarine.model", "assets/models/sphere.model" });
+	std::vector<std::pair<std::string, std::string>> modelFilenames =
+	{
+		{ "tentacle", "assets/models/tentacle.glb" }
+	};
+
+	for (const auto& [name, filename] : modelFilenames)
+	{
+		mModelHandler.load(name, filename);
+	}
 
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
 	const auto& indices = mModelHandler.getIndices();
 
-	mEngine.uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(float), 0);
+	mEngine.uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(mal::model::Vertex), 0);
 	mEngine.uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t), 0);
 
 	// init physics world
@@ -82,11 +90,11 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 		if (i < 180)
 		{
-			createModel("assets/models/test.model", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
+			createModel("tentacle", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
 		}
 		else
 		{
-			createModel("assets/models/submarine.model", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 3, 1 });
+			createModel("tentacle", { x, 3, z }, { rad, 0, 1, 0 }, { 2, 2, 2 });
 		}
 	}
 

@@ -36,13 +36,13 @@ public:
     };
 
 public:
-    FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, MyModel>& models);
+    FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, Model>& models);
 
     void update(const float delta) override;
 
 private:
     ascen::Engine& mEngine;
-    const std::unordered_map<std::string, MyModel>& mModels;
+    const std::unordered_map<std::string, Model>& mModels;
 
     std::map<uint32_t, ascen::IndexedIndirectDraw> mModelToDrawCommands;
     std::unordered_map<uint32_t, std::unordered_map<uint32_t, Entity>> mModelToEntities;

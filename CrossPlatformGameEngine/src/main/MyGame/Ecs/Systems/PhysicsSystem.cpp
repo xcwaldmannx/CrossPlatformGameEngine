@@ -48,10 +48,10 @@ void PhysicsSystem::update(const float delta)
             mBodies.emplace(e, bodyId);
 
             const auto& model = mSystem->getComponent<ModelComponent>(e);
-            const auto& m = mModelHandler.getModels().at(model.mName);
+            const auto& m = mModelHandler.getModel(model.mName);
 
-            glm::vec3 center = (m.mBoundsPos + m.mBoundsNeg) * 0.5f;
-            glm::vec3 halfExtents = glm::abs((m.mBoundsPos - m.mBoundsNeg) * 0.5f);
+            glm::vec3 center = (m.mBoundsMax+ m.mBoundsMin) * 0.5f;
+            glm::vec3 halfExtents = glm::abs((m.mBoundsMax - m.mBoundsMin) * 0.5f);
 
             center *= scale;
             halfExtents *= scale;
