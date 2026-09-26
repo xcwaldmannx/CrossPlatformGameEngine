@@ -25,14 +25,12 @@ public:
         uint32_t  mIsSelected;
 
         glm::vec3 mBoundsPos;
-        uint32_t _pad3;
+        uint32_t _pad0;
         glm::vec3 mBoundsNeg;
 
         uint32_t mIsVisible;
-
-        uint32_t mMeshCount;
-        uint32_t mMeshOffset;
-        uint32_t _pad4[2];
+        uint32_t mBoneOffset;
+        uint32_t _pad1;
     };
 
 public:

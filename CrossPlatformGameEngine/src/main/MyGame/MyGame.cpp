@@ -33,6 +33,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mModelHandler.load(name, filename);
 	}
 
+	auto& player = mModelHandler.getPlayer("tentacle");
+	player.setDefaultScene();
+	player.play("dead");
+
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
 	const auto& indices = mModelHandler.getIndices();
@@ -76,7 +80,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.uploadTexture("TEXTURE", mPixels);
 
-	constexpr double r = 50;
+	constexpr double r = 75;
 	constexpr double deg = 360;
 
 	// entities
@@ -115,7 +119,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 	}
 }
 
-void MyGame::run(float delta)
+void MyGame::run(const float delta)
 {
 	updateCamera(delta);
 
@@ -137,6 +141,10 @@ void MyGame::run(float delta)
 			selectedPhysicsBody.mAppliedForce = { 0, 1000, 0 };
 		}
 	}
+
+	mModelHandler.getPlayer("tentacle").update(delta);
+	const auto& boneTransforms = mModelHandler.getPlayer("tentacle").getBoneTransforms();
+	mEngine.uploadBuffer("BUFFER_BONE_TRANS", &boneTransforms[0], boneTransforms.size(), sizeof(glm::mat4), 0);
 
 	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 	mEngine.ecs().updateSystem<MoverSystem>(delta);

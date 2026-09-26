@@ -15,15 +15,18 @@ struct Entity
     vec3 boundsNeg;
 
     uint isVisible;
-
-    uint meshCount;
-    uint meshOffset;
-    uint _pad4[2];
+    uint boneOffset;
+    uint pad[3];
 };
 
 layout(std430, set = 0, binding = 0x00) readonly buffer Entities
 {
     Entity entities[];
+};
+
+layout(std430, set = 0, binding = 0x01) readonly buffer BoneTransforms
+{
+    mat4 boneTransforms[];
 };
 
 layout(push_constant) uniform PushConstants
@@ -90,12 +93,31 @@ layout(location = 2) in vec3 inTangent;
 layout(location = 3) in vec3 inBitangent;
 layout(location = 4) in vec2 inTexCoord;
 layout(location = 5) in vec4 inColor;
-layout(location = 6) in vec4 inBoneIds;
+layout(location = 6) in ivec4 inBoneIds;
 layout(location = 7) in vec4 inBoneWeights;
 
 layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) out flat uint outTextureId;
 layout(location = 2) out flat uint outSelected;
+
+vec4 skinPosition(vec4 position, uint boneOffset)
+{
+    vec4 result = vec4(0.0);
+    float totalWeight = 0.0;
+
+    for (int i = 0; i < 4; i++)
+    {
+        int id = inBoneIds[i];
+        float weight = inBoneWeights[i];
+
+        if (id < 0) continue;
+
+        result += weight * (boneTransforms[boneOffset + uint(id)] * position);
+        totalWeight += weight;
+    }
+
+    return totalWeight > 0.0 ? result / totalWeight : position;
+}
 
 void main()
 {
@@ -109,7 +131,7 @@ void main()
     {
         const mat4 entityTransform = buildTransform(entity.position, entity.rotation, entity.scale);
 
-        gl_Position = pushConstants.cameraVP * entityTransform * vec4(inPosition, 1.0);
+        gl_Position = pushConstants.cameraVP * entityTransform * skinPosition(vec4(inPosition, 1.0), entity.boneOffset);
     }
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);

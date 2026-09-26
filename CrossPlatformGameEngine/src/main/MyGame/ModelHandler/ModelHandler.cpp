@@ -2,6 +2,12 @@
 
 ModelHandler::ModelHandler() {}
 
+const Model& ModelHandler::getModel(const std::string& name)
+{
+    if (mModels.contains(name)) return mModels.at(name);
+    throw std::runtime_error("model does not exist");
+}
+
 void ModelHandler::load(const std::string& name, const std::string &filename)
 {
     mal::Configuration config{};
@@ -25,6 +31,9 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     mModels.emplace(name, m);
 
+    auto player = mal::AnimationPlayer(mModels.at(name).mModel, mModels.at(name).mAnimationSet);
+    mPlayers.emplace(name, player);
+
     mGlobalVertexOffset += model.getVertices().size();
     mGlobalIndexOffset += model.getIndices().size();
 
@@ -32,15 +41,15 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     mIndices.append_range(model.getIndices());
 }
 
-const Model& ModelHandler::getModel(const std::string& name)
-{
-    if (mModels.contains(name)) return mModels.at(name);
-    throw std::runtime_error("model does not exist");
-}
-
 const std::unordered_map<std::string, Model>& ModelHandler::getModels()
 {
     return mModels;
+}
+
+mal::AnimationPlayer& ModelHandler::getPlayer(const std::string& name)
+{
+    if (mPlayers.contains(name)) return mPlayers.at(name);
+    throw std::runtime_error("player does not exist");
 }
 
 const std::vector<mal::model::Vertex>& ModelHandler::getVertices()

@@ -13,10 +13,8 @@ struct Entity
     vec3 boundsNeg;
 
     uint isVisible;
-
-    uint meshCount;
-    uint meshOffset;
-    uint _pad4[2];
+    uint boneOffset;
+    uint pad[3];
 };
 
 layout(std430, set = 0, binding = 0) readonly buffer Entities

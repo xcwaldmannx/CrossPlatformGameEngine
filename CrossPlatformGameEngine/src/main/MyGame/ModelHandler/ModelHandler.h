@@ -28,11 +28,14 @@ public:
     const Model& getModel(const std::string& name);
     const std::unordered_map<std::string, Model>& getModels();
 
+    mal::AnimationPlayer& getPlayer(const std::string& name);
+
     const std::vector<mal::model::Vertex>& getVertices();
     const std::vector<uint32_t>& getIndices();
 
 private:
     std::unordered_map<std::string, Model> mModels;
+    std::unordered_map<std::string, mal::AnimationPlayer> mPlayers;
 
     inline static uint32_t mGlobalVertexOffset = 0;
     inline static uint32_t mGlobalIndexOffset = 0;
