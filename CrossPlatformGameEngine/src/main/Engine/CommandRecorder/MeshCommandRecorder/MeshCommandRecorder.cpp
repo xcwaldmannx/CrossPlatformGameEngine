@@ -55,6 +55,6 @@ void MeshCommandRecorder::record(
         commandBuffer,
         indirectBuffer,
         0,
-        1,
+        2, // TODO: replace with actual draw count
         sizeof(VkDrawIndexedIndirectCommand));
 }

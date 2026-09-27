@@ -10,13 +10,6 @@ AnimationSystem::AnimationSystem(ascen::Engine& engine, std::unordered_map<std::
 
 void AnimationSystem::update(const float delta)
 {
-    // this is more complicated because an animation
-    // could have any number of bones, so uploading
-    // them to the gpu might be difficult. The count
-    // and stride needs to be kept track of. Might
-    // want to store this in a separate SSBO for
-    // animation metadata.
-
     std::vector<AnimationData> animationData;
     animationData.resize(ENTITY_MAX);
     std::vector<glm::mat4> boneTransforms;

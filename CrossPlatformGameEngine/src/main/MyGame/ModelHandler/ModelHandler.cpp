@@ -20,6 +20,7 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     const auto& indices = model.getIndices();
 
     Model m{};
+    m.mId = std::hash<std::string>()(name);
     m.mModel = model;
     m.mAnimationSet = animationSet;
     m.mVertexOffset = mGlobalVertexOffset;
