@@ -15,7 +15,7 @@ struct Entity
     vec3 boundsNeg;
 
     uint isVisible;
-    uint boneOffset;
+    int boneOffset;
     uint pad[3];
 };
 
@@ -24,7 +24,12 @@ layout(std430, set = 0, binding = 0x00) readonly buffer Entities
     Entity entities[];
 };
 
-layout(std430, set = 0, binding = 0x01) readonly buffer BoneTransforms
+layout(std430, set = 0, binding = 0x01) readonly buffer BoneTransformOffsets
+{
+    int boneTransformOffsets[];
+};
+
+layout(std430, set = 0, binding = 0x02) readonly buffer BoneTransforms
 {
     mat4 boneTransforms[];
 };
@@ -131,7 +136,16 @@ void main()
     {
         const mat4 entityTransform = buildTransform(entity.position, entity.rotation, entity.scale);
 
-        gl_Position = pushConstants.cameraVP * entityTransform * skinPosition(vec4(inPosition, 1.0), entity.boneOffset);
+        int boneOffset = boneTransformOffsets[gl_InstanceIndex];
+
+        if (boneOffset >= 0)
+        {
+            gl_Position = pushConstants.cameraVP * entityTransform * skinPosition(vec4(inPosition, 1.0), boneOffset);
+        }
+        else
+        {
+            gl_Position = pushConstants.cameraVP * entityTransform * vec4(inPosition, 1.0);
+        }
     }
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);

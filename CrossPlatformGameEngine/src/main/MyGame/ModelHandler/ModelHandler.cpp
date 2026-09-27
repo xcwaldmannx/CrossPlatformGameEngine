@@ -16,29 +16,29 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     const mal::model::Model model = mal::ModelHandler::load(filename, config);
     const mal::anim::AnimationSet animationSet = mal::AnimationHandler::load(filename, config);
 
+    const auto& vertices = model.getVertices();
+    const auto& indices = model.getIndices();
+
     Model m{};
     m.mModel = model;
     m.mAnimationSet = animationSet;
     m.mVertexOffset = mGlobalVertexOffset;
     m.mIndexOffset = mGlobalIndexOffset;
-    m.mIndexCount = model.getIndices().size();
-
-    const auto [maxX, maxY, maxZ] = model.getBoundsMax();
-    m.mBoundsMax = { maxX, maxY, maxZ };
-
-    const auto [minX, minY, minZ] = model.getBoundsMin();
-    m.mBoundsMin = { minX, minY, minZ };
+    m.mIndexCount = indices.size();
+    m.mBoundsMax = model.getBoundsMax();
+    m.mBoundsMin = model.getBoundsMin();
 
     mModels.emplace(name, m);
 
     auto player = mal::AnimationPlayer(mModels.at(name).mModel, mModels.at(name).mAnimationSet);
     mPlayers.emplace(name, player);
 
-    mGlobalVertexOffset += model.getVertices().size();
-    mGlobalIndexOffset += model.getIndices().size();
+    mVertices.append_range(vertices);
+    mIndices.append_range(indices);
 
-    mVertices.append_range(model.getVertices());
-    mIndices.append_range(model.getIndices());
+    mGlobalVertexOffset += mVertices.size();
+    mGlobalIndexOffset += mIndices.size();
+
 }
 
 const std::unordered_map<std::string, Model>& ModelHandler::getModels()
@@ -50,6 +50,11 @@ mal::AnimationPlayer& ModelHandler::getPlayer(const std::string& name)
 {
     if (mPlayers.contains(name)) return mPlayers.at(name);
     throw std::runtime_error("player does not exist");
+}
+
+std::unordered_map<std::string, mal::AnimationPlayer>& ModelHandler::getPlayers()
+{
+    return mPlayers;
 }
 
 const std::vector<mal::model::Vertex>& ModelHandler::getVertices()

@@ -5,7 +5,7 @@
 
 FrustumCullingSystem::FrustumCullingSystem(ascen::Engine& engine, const std::unordered_map<std::string, Model>& models) :
     mEngine(engine),
-    mModels(models){}
+    mModels(models) {}
 
 void FrustumCullingSystem::update(const float delta)
 {

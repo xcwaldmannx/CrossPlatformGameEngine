@@ -2,10 +2,6 @@
 
 #include "TransformComponent.h"
 
-#include <cstdint>
-
-#include <glm/glm.hpp>
-
 struct ModelComponent
 {
 	std::string mName;

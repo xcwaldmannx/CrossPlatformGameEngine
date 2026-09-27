@@ -61,6 +61,8 @@ void MyPipeline::initResources()
     mBufferIndex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX", 100'000, sizeof(uint32_t),
         ascen::BUFFER_USAGE_INDEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
+    mBufferAnimData = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_ANIM_DATA", 256'000, sizeof(int32_t),
+    ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
     mBufferBoneTrans = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_BONE_TRANS", 100'000, sizeof(glm::mat4),
         ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
@@ -302,7 +304,7 @@ void MyPipeline::initStages()
         descriptorPoolEntry.mName = "DESCRIPTOR_POOL_GRAPHICS";
         descriptorPoolEntry.mDescriptorTypeCounts =
         {
-            { ascen::DESCRIPTOR_TYPE_SSBO,    1 },
+            { ascen::DESCRIPTOR_TYPE_SSBO,    3 },
             { ascen::DESCRIPTOR_TYPE_SAMPLER, 1 },
             { ascen::DESCRIPTOR_TYPE_IMAGE,   1 },
         };
@@ -311,17 +313,19 @@ void MyPipeline::initStages()
 
         ascen::registry::DescriptorLocation l0 { 0, ascen::DESCRIPTOR_TYPE_SSBO };
         ascen::registry::DescriptorLocation l1 { 1, ascen::DESCRIPTOR_TYPE_SSBO };
-        ascen::registry::DescriptorLocation l2 { 2, ascen::DESCRIPTOR_TYPE_SAMPLER };
-        ascen::registry::DescriptorLocation l3 { 3, ascen::DESCRIPTOR_TYPE_IMAGE };
+        ascen::registry::DescriptorLocation l2 { 2, ascen::DESCRIPTOR_TYPE_SSBO };
+        ascen::registry::DescriptorLocation l3 { 3, ascen::DESCRIPTOR_TYPE_SAMPLER };
+        ascen::registry::DescriptorLocation l4 { 4, ascen::DESCRIPTOR_TYPE_IMAGE };
 
         ascen::registry::DescriptorBinding b0 { l0, ascen::SHADER_STAGE_VERTEX };
         ascen::registry::DescriptorBinding b1 { l1, ascen::SHADER_STAGE_VERTEX };
-        ascen::registry::DescriptorBinding b2 { l2, ascen::SHADER_STAGE_PIXEL };
+        ascen::registry::DescriptorBinding b2 { l2, ascen::SHADER_STAGE_VERTEX };
         ascen::registry::DescriptorBinding b3 { l3, ascen::SHADER_STAGE_PIXEL };
+        ascen::registry::DescriptorBinding b4 { l4, ascen::SHADER_STAGE_PIXEL };
 
         ascen::registry::DescriptorSetLayoutEntry descriptorSetLayoutEntry{};
         descriptorSetLayoutEntry.mName = "DESCRIPTOR_SET_LAYOUT_GRAPHICS";
-        descriptorSetLayoutEntry.mBindings = { b0, b1, b2, b3 };
+        descriptorSetLayoutEntry.mBindings = { b0, b1, b2, b3, b4 };
 
         mDescriptorSetLayoutGraphics = mEngine.registerResource<ascen::registry::DescriptorSetLayoutEntry>(descriptorSetLayoutEntry);
 
@@ -332,9 +336,10 @@ void MyPipeline::initStages()
         descriptorSetEntry.mResources =
         {
             { mBufferEntity,    l0, VK_WHOLE_SIZE },
-            { mBufferBoneTrans, l1, VK_WHOLE_SIZE },
-            { mSampler,         l2, 0 },
-            { mTexture,         l3, 0 },
+            { mBufferAnimData,  l1, VK_WHOLE_SIZE },
+            { mBufferBoneTrans, l2, VK_WHOLE_SIZE },
+            { mSampler,         l3, 0 },
+            { mTexture,         l4, 0 },
         };
 
         mDescriptorSetGraphics = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);

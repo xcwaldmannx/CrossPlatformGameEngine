@@ -29,7 +29,7 @@ public:
         glm::vec3 mBoundsNeg;
 
         uint32_t mIsVisible;
-        uint32_t mBoneOffset;
+        int32_t mBoneOffset = -1;
         uint32_t _pad1;
     };
 

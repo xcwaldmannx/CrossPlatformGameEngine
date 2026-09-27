@@ -29,6 +29,7 @@ public:
     const std::unordered_map<std::string, Model>& getModels();
 
     mal::AnimationPlayer& getPlayer(const std::string& name);
+    std::unordered_map<std::string, mal::AnimationPlayer>& getPlayers();
 
     const std::vector<mal::model::Vertex>& getVertices();
     const std::vector<uint32_t>& getIndices();

@@ -71,7 +71,7 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 96;
+	double mEntityCount = 32;
 
 	b3WorldId mWorldId;
 	EntityId mCharacter;

@@ -4,15 +4,18 @@
 
 #include "../WindowManager/WindowManager.h"
 #include "../Utility/ImageLoader/ImageLoader.h"
+#include "Ecs/Components/AnimationComponent.h"
 
 #include "Ecs/Components/ModelComponent.h"
 #include "Ecs/Components/TransformComponent.h"
 #include "Ecs/Components/PhysicsBodyComponent.h"
 #include "Ecs/Components/MoverComponent.h"
+#include "Ecs/Components/AnimationComponent.h"
 
 #include "Ecs/Systems/FrustumCullingSystem.h"
 #include "Ecs/Systems/PhysicsSystem.h"
 #include "Ecs/Systems/MoverSystem.h"
+#include "Ecs/Systems/AnimationSystem.h"
 
 MyGame::MyGame(WindowManager& windowManager) :
 	mWindowManager(windowManager),
@@ -25,17 +28,14 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	std::vector<std::pair<std::string, std::string>> modelFilenames =
 	{
-		{ "tentacle", "assets/models/tentacle.glb" }
+		{ "tentacle", "assets/models/tentacle.glb" },
+		{ "anim_test", "assets/models/anim_test.glb" },
 	};
 
 	for (const auto& [name, filename] : modelFilenames)
 	{
 		mModelHandler.load(name, filename);
 	}
-
-	auto& player = mModelHandler.getPlayer("tentacle");
-	player.setDefaultScene();
-	player.play("dead");
 
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
@@ -54,6 +54,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mEngine.ecs().registerComponent<ModelComponent>();
 	mEngine.ecs().registerComponent<PhysicsBodyComponent>();
 	mEngine.ecs().registerComponent<MoverComponent>();
+	mEngine.ecs().registerComponent<AnimationComponent>();
 
 	{
 		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
@@ -76,11 +77,18 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mEngine.ecs().registerSystem<MoverSystem>(readSig, writeSig, mWorldId);
 	}
 
+	{
+		const auto readSig = mEngine.ecs().getSignature<ModelComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<AnimationComponent>();
+
+		mEngine.ecs().registerSystem<AnimationSystem>(readSig, writeSig, mEngine, mModelHandler.getPlayers());
+	}
+
 	loadTextures();
 
 	mEngine.uploadTexture("TEXTURE", mPixels);
 
-	constexpr double r = 75;
+	constexpr double r = 25;
 	constexpr double deg = 360;
 
 	// entities
@@ -94,7 +102,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 		if (i < 180)
 		{
-			createModel("tentacle", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
+			createModel("anim_test", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
 		}
 		else
 		{
@@ -142,13 +150,10 @@ void MyGame::run(const float delta)
 		}
 	}
 
-	mModelHandler.getPlayer("tentacle").update(delta);
-	const auto& boneTransforms = mModelHandler.getPlayer("tentacle").getBoneTransforms();
-	mEngine.uploadBuffer("BUFFER_BONE_TRANS", &boneTransforms[0], boneTransforms.size(), sizeof(glm::mat4), 0);
-
 	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
 	mEngine.ecs().updateSystem<MoverSystem>(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
+	mEngine.ecs().updateSystem<AnimationSystem>(delta);
 
 	mEngine.drawFrame();
 
@@ -204,9 +209,33 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 	p.mBodyType = DYNAMIC;
 	p.mDensity = 3.0f;
 
+	AnimationComponent anim{};
+	if (model == "tentacle")
+	{
+		const float r = rand() % 15;
+
+		if (r < 5.0f)
+		{
+		    anim.mCurrentAnimation = "dead";
+		}
+		else if (r >= 5.0f && r < 10.0f)
+		{
+		    anim.mCurrentAnimation = "idle";
+		}
+		else
+		{
+		    anim.mCurrentAnimation = "attack";
+		}
+	}
+	else if (model == "anim_test")
+	{
+		anim.mCurrentAnimation = "wobble";
+	}
+
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
+	mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
 }
 
 void MyGame::updateCamera(float delta)

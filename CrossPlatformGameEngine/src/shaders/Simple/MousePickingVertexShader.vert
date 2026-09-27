@@ -13,7 +13,7 @@ struct Entity
     vec3 boundsNeg;
 
     uint isVisible;
-    uint boneOffset;
+    int boneOffset;
     uint pad[3];
 };
 
