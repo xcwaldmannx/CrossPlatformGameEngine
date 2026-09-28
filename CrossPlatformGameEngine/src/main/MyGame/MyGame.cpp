@@ -28,8 +28,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	std::vector<std::pair<std::string, std::string>> modelFilenames =
 	{
-		{ "tentacle", "assets/models/tentacle.glb" },
+		{ "model_test", "assets/models/model_test.glb" },
 		{ "anim_test", "assets/models/anim_test.glb" },
+		{ "tentacle", "assets/models/tentacle.glb" },
+		{ "minigun", "assets/models/minigun.glb" },
 	};
 
 	for (const auto& [name, filename] : modelFilenames)
@@ -102,7 +104,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 		if (i < 180)
 		{
-			createModel("anim_test", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
+			createModel("model_test", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
 		}
 		else
 		{
@@ -235,7 +237,8 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
-	mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
+
+	if (model != "minigun" && model != "model_test") mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
 }
 
 void MyGame::updateCamera(float delta)

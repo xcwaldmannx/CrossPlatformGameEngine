@@ -53,5 +53,5 @@ void LineCommandRecorder::record(
             nullptr); //&dynamicOffets[0]);
     }
 
-    vkCmdDrawIndexed(commandBuffer, 10'000, 1, 0, 0, 0);
+    vkCmdDrawIndexed(commandBuffer, 10'000, 1, 0, 0, 0); // TODO: replace 10'000 magic number
 }

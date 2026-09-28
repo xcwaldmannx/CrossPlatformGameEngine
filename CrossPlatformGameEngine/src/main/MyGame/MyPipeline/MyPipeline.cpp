@@ -56,9 +56,9 @@ void MyPipeline::initResources()
     mVertexTrianglesBones = mEngine.registerResource<ascen::registry::VertexEntry>({ "VERTEX_TRIANGLES_BONES", vertexBindingTriBones, vertexAttribTriBones });
 
     // Buffers
-    mBufferVertex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX", 100'000, sizeof(float) * 26, // 8 for Tri, 26 for Bones
+    mBufferVertex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX", 1'000'000, sizeof(float) * 26, // 8 for Tri, 26 for Bones
         ascen::BUFFER_USAGE_VERTEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
-    mBufferIndex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX", 100'000, sizeof(uint32_t),
+    mBufferIndex = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX", 1'000'000, sizeof(uint32_t),
         ascen::BUFFER_USAGE_INDEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
     mBufferAnimData = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_ANIM_DATA", 256'000, sizeof(int32_t),
