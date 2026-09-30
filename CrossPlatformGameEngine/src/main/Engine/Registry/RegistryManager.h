@@ -59,7 +59,7 @@ namespace ascen
     public:
         RegistryManager(
             const VulkanContext& vulkanContext,
-            const RenderContext& renderContext);
+            RenderContext& renderContext);
 
         template<Derived<registry::Entry> E>
         uint64_t registerResource(const E& entry)
@@ -78,6 +78,8 @@ namespace ascen
         void reconstruct();
 
         void deconstruct();
+
+        dim::Extent2D resolveExtent(const dim::Extent2D& extent) const;
 
         /* might need this later
         template<typename T>
@@ -192,7 +194,7 @@ namespace ascen
     private:
         const VkPhysicalDevice mPhysicalDevice;
         const VkDevice mDevice;
-        const RenderContext& mRenderContext;
+        RenderContext& mRenderContext;
         const VkQueue mGraphicsQueue;
         const CommandPoolPtr& mCommandPool;
 

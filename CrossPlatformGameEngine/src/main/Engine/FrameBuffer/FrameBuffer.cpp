@@ -12,32 +12,21 @@ FrameBuffer::FrameBuffer(
     const RenderPassPtr& renderPass,
     const RenderTargetPtr& renderTarget,
     const dim::Extent2D extent) :
-    mDevice(device),
-    mRenderPass(renderPass->handle()),
-    mImageViews(renderTarget->getImageViews()),
-    mExtent(extent)
+    mDevice(device)
 {
-    resize(extent.mExtent.width, extent.mExtent.height);
-}
-
-void FrameBuffer::destroy(const VkDevice device)
-{
-    vkDestroyFramebuffer(device, mHandle, nullptr);
-}
-
-void FrameBuffer::resize(const uint32_t width = 0, const uint32_t height = 0)
-{
-    if (width != 0 && height != 0)
+    if (extent.mExtent.width != 0 && extent.mExtent.height != 0)
     {
         destroy(mDevice);
 
+        const auto imageViews = renderTarget->getImageViews();
+
         VkFramebufferCreateInfo framebufferInfo{};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = mRenderPass;
-        framebufferInfo.attachmentCount = static_cast<uint32_t>(mImageViews.size());
-        framebufferInfo.pAttachments = mImageViews.data();
-        framebufferInfo.width = width;
-        framebufferInfo.height = height;
+        framebufferInfo.renderPass = renderPass->handle();
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(imageViews.size());
+        framebufferInfo.pAttachments = imageViews.data();
+        framebufferInfo.width = extent.mExtent.width;
+        framebufferInfo.height = extent.mExtent.height;
         framebufferInfo.layers = 1;
 
         if (vkCreateFramebuffer(mDevice, &framebufferInfo, nullptr, &mHandle) != VK_SUCCESS)
@@ -45,4 +34,9 @@ void FrameBuffer::resize(const uint32_t width = 0, const uint32_t height = 0)
             throw std::runtime_error("failed to create framebuffer!");
         }
     }
+}
+
+void FrameBuffer::destroy(const VkDevice device)
+{
+    vkDestroyFramebuffer(device, mHandle, nullptr);
 }

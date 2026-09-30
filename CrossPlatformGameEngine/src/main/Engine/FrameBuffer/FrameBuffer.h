@@ -19,13 +19,8 @@ namespace ascen
 
         void destroy(const VkDevice device) override;
 
-        void resize(const uint32_t width, const uint32_t height);
-
     private:
         const VkDevice mDevice;
-        const VkRenderPass mRenderPass;
-        const std::vector<VkImageView> mImageViews;
-        dim::Extent2D mExtent;
     };
 
 }

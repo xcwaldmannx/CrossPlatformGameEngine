@@ -8,7 +8,7 @@ using namespace ascen;
 
 RegistryManager::RegistryManager(
     const VulkanContext& vulkanContext,
-    const RenderContext& renderContext) :
+    RenderContext& renderContext) :
     mPhysicalDevice(vulkanContext.getPhysicalDevice()),
     mDevice(vulkanContext.getDevice()),
     mRenderContext(renderContext),
@@ -78,6 +78,23 @@ void RegistryManager::deconstruct()
         if (!resource) continue;
         resource->destroy(mDevice);
     }
+}
+
+dim::Extent2D RegistryManager::resolveExtent(const dim::Extent2D& extent) const
+{
+    switch (extent.mMode)
+    {
+        case dim::Extent2D::Mode::FIXED:
+            return extent;
+
+        case dim::Extent2D::Mode::SWAPCHAIN:
+        {
+            const auto swapchainExtent = mRenderContext.getSwapchain()->getExtent();
+            return dim::Extent2D::fixedSize(swapchainExtent.width, swapchainExtent.height);
+        }
+    }
+
+    throw std::runtime_error("unknown Extent2D mode");
 }
 
 void RegistryManager::uploadBuffer(
@@ -202,16 +219,7 @@ void RegistryManager::resizeTexture(const uint64_t id, const dim::Extent2D exten
         const auto entryIt = mIdToEntry.find(id);
         auto& entry = *std::any_cast<std::shared_ptr<registry::TextureEntry>&>(entryIt->second);
 
-        switch (extent.mMode)
-        {
-            case dim::Extent2D::Mode::SWAPCHAIN:
-                entry.mExtent.mExtent.width = mRenderContext.getSwapchain()->getExtent().width;
-                entry.mExtent.mExtent.height = mRenderContext.getSwapchain()->getExtent().height;
-                break;
-            case dim::Extent2D::Mode::FIXED:
-                entry.mExtent = extent;
-                break;
-        }
+        entry.mExtent = resolveExtent(extent);
 
         if (mIdToResource.contains(id))
         {
@@ -259,37 +267,7 @@ void RegistryManager::resizeSwapchainDependentResources()
 {
     vkDeviceWaitIdle(mDevice);
 
-    // framebuffers
-    auto framebuffersIt = mTypeToIds.find(typeid(FrameBufferPtr));
-
-    if (framebuffersIt != mTypeToIds.end())
-    {
-        for (uint64_t framebufferId : framebuffersIt->second)
-        {
-            auto& framebufferEntry = *std::any_cast<std::shared_ptr<registry::FrameBufferEntry>>(mIdToEntry.at(framebufferId));
-
-            if (framebufferEntry.mExtent.mMode == dim::Extent2D::Mode::SWAPCHAIN)
-            {
-                auto framebufferIt = mIdToResource.find(framebufferId);
-
-                if (framebufferIt != mIdToResource.end())
-                {
-                    FrameBufferPtr framebufferResource = std::dynamic_pointer_cast<FrameBuffer>(framebufferIt->second);
-
-                    for (auto& registryVariant : mRegistries)
-                    {
-                        if (auto* registry = std::get_if<FrameBufferRegistry>(&registryVariant))
-                        {
-                            registry->reconstruct(framebufferEntry, framebufferResource);
-                            break;
-                        }
-                    }
-
-                    framebufferIt->second = framebufferResource;
-                }
-            }
-        }
-    }
+    mRenderContext.resize();
 
     // textures
     auto texturesIt = mTypeToIds.find(typeid(TexturePtr));
@@ -302,6 +280,8 @@ void RegistryManager::resizeSwapchainDependentResources()
 
             if (textureEntry.mExtent.mMode == dim::Extent2D::Mode::SWAPCHAIN)
             {
+                textureEntry.mExtent = resolveExtent(dim::Extent2D::swapchain());
+
                 auto textureIt = mIdToResource.find(textureId);
 
                 if (textureIt != mIdToResource.end())
@@ -375,6 +355,40 @@ void RegistryManager::resizeSwapchainDependentResources()
                             }
                         }
                     }
+                }
+            }
+        }
+    }
+
+    // framebuffers
+    auto framebuffersIt = mTypeToIds.find(typeid(FrameBufferPtr));
+
+    if (framebuffersIt != mTypeToIds.end())
+    {
+        for (uint64_t framebufferId : framebuffersIt->second)
+        {
+            auto& framebufferEntry = *std::any_cast<std::shared_ptr<registry::FrameBufferEntry>>(mIdToEntry.at(framebufferId));
+
+            if (framebufferEntry.mExtent.mMode == dim::Extent2D::Mode::SWAPCHAIN)
+            {
+                framebufferEntry.mExtent = resolveExtent(dim::Extent2D::swapchain());
+
+                auto framebufferIt = mIdToResource.find(framebufferId);
+
+                if (framebufferIt != mIdToResource.end())
+                {
+                    FrameBufferPtr framebufferResource = std::dynamic_pointer_cast<FrameBuffer>(framebufferIt->second);
+
+                    for (auto& registryVariant : mRegistries)
+                    {
+                        if (auto* registry = std::get_if<FrameBufferRegistry>(&registryVariant))
+                        {
+                            registry->reconstruct(framebufferEntry, framebufferResource);
+                            break;
+                        }
+                    }
+
+                    framebufferIt->second = framebufferResource;
                 }
             }
         }
