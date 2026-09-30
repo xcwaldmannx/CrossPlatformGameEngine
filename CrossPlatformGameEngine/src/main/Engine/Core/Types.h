@@ -67,6 +67,27 @@ namespace ascen
 	template<typename T, typename U>
 	concept Derived = std::is_base_of_v<U, T>;
 
+	namespace dim
+	{
+		struct Extent2D
+		{
+			enum class Mode { FIXED, SWAPCHAIN };
+
+			Mode mMode = Mode::FIXED;
+			VkExtent2D mExtent{};
+
+			static Extent2D fixedSize(const uint32_t w, const uint32_t h)
+			{
+				return { Mode::FIXED, { w, h } };
+			}
+
+			static Extent2D swapchain()
+			{
+				return { Mode::SWAPCHAIN, {} };
+			}
+		};
+	}
+
 	namespace renderpass
 	{
 		struct Attachment
@@ -266,8 +287,7 @@ namespace ascen
 
 			TextureType mType = TextureType::NONE;
 			Format mFormat = FORMAT_RGBA8_SRGB;
-			uint32_t mWidth = 0;
-			uint32_t mHeight = 0;
+			dim::Extent2D mExtent{};
 			uint32_t mLayers = 0;
 		};
 
@@ -293,8 +313,7 @@ namespace ascen
 
 			uint64_t mRenderPassId = 0;
 			uint64_t mRenderTargetId = 0;
-			uint32_t mWidth = 0;
-			uint32_t mHeight = 0;
+			dim::Extent2D mExtent{};
 		};
 
 		struct PipelineEntry : Entry

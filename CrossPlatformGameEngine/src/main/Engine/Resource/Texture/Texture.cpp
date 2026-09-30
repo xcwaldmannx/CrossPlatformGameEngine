@@ -8,8 +8,7 @@ Texture::Texture(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
-	uint32_t width,
-	uint32_t height,
+	dim::Extent2D extent,
 	uint32_t layers,
 	VkFormat format,
 	VkImageTiling tiling,
@@ -18,7 +17,7 @@ Texture::Texture(
 	VkImageAspectFlags aspectFlags) :
 	mImage(
 		physicalDevice, device, commandPool,
-		width, height, layers,
+		extent, layers,
 		format, tiling, usageFlags, memoryFlags, aspectFlags)
 {
 

@@ -11,12 +11,13 @@ FrameBuffer::FrameBuffer(
     const VkDevice device,
     const RenderPassPtr& renderPass,
     const RenderTargetPtr& renderTarget,
-    const VkExtent2D& extent) :
+    const dim::Extent2D extent) :
     mDevice(device),
     mRenderPass(renderPass->handle()),
-    mImageViews(renderTarget->getImageViews())
+    mImageViews(renderTarget->getImageViews()),
+    mExtent(extent)
 {
-    resize(extent.width, extent.height);
+    resize(extent.mExtent.width, extent.mExtent.height);
 }
 
 void FrameBuffer::destroy(const VkDevice device)

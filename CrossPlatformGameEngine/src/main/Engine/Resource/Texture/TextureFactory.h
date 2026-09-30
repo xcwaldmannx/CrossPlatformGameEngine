@@ -19,21 +19,18 @@ namespace ascen
 
 		TexturePtr createImage(
 			const CommandPoolPtr& commandPool,
-			uint32_t width,
-			uint32_t height,
+			dim::Extent2D extent,
 			uint32_t layers) const;
 
 		TexturePtr createWritable(
 			const CommandPoolPtr& commandPool,
 			const Format format,
-			uint32_t width,
-			uint32_t height,
+			dim::Extent2D extent,
 			uint32_t layers) const;
 
 		TexturePtr createDepth(
 			const CommandPoolPtr& commandPool,
-			uint32_t width,
-			uint32_t height) const;
+			dim::Extent2D extent) const;
 
 	private:
 		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;

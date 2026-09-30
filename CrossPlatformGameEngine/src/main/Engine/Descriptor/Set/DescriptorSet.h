@@ -21,6 +21,19 @@ namespace ascen
 			std::variant<VkDescriptorBufferInfo, VkDescriptorImageInfo> mInfo{};
 		};
 
+		void updateBuffer(
+			VkDevice device,
+			const uint32_t binding,
+			const VkDescriptorType type,
+			VkBuffer buffer,
+			const VkDeviceSize range);
+
+		void updateTexture(
+			VkDevice device,
+			uint32_t binding,
+			VkDescriptorType type,
+			VkImageView imageView);
+
 	private:
 		DescriptorSet(
 			VkDevice device,
@@ -32,6 +45,8 @@ namespace ascen
 		void destroy(VkDevice device) override;
 
 	private:
+		VkDescriptorPool mPool = VK_NULL_HANDLE;
+
 		friend class DescriptorFactory;
 	};
 

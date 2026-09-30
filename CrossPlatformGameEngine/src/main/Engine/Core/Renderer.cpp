@@ -260,6 +260,7 @@ bool Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		mRenderContext.resize();
+		mRegistryManager.resizeSwapchainDependentResources();
 		return false;
 	}
 
@@ -318,6 +319,7 @@ bool Renderer::presentFrame(const SwapchainPtr& swapchain) const
 		mWindowManager.isResized())
 	{
 		mRenderContext.resize();
+		mRegistryManager.resizeSwapchainDependentResources();
 		return false;
 	}
 

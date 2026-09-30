@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../FrameGraph/FrameGraph.h"
-#include "../Registry2/RegistryManager.h"
+#include "../Registry/RegistryManager.h"
 
 #include <vulkan/vulkan.h>
 

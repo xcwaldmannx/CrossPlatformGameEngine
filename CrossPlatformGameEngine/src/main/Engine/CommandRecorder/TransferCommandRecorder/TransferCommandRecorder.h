@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../CommandRecorder_I.h"
-#include "../../Registry2/RegistryManager.h"
+#include "../../Registry/RegistryManager.h"
 #include "../../Core/Types.h"
 
 namespace ascen
