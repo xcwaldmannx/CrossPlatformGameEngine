@@ -62,6 +62,8 @@ void RegistryManager::reconstruct()
 
         }, registryVariant);
     }
+
+    resizeSwapchainDependentResources();
 }
 
 void RegistryManager::deconstruct()
@@ -280,7 +282,8 @@ void RegistryManager::resizeSwapchainDependentResources()
 
             if (textureEntry.mExtent.mMode == dim::Extent2D::Mode::SWAPCHAIN)
             {
-                textureEntry.mExtent = resolveExtent(dim::Extent2D::swapchain());
+                auto resolvedEntry = textureEntry;
+                resolvedEntry.mExtent = resolveExtent(textureEntry.mExtent);
 
                 auto textureIt = mIdToResource.find(textureId);
 
@@ -292,7 +295,7 @@ void RegistryManager::resizeSwapchainDependentResources()
                     {
                         if (auto* registry = std::get_if<TextureRegistry>(&registryVariant))
                         {
-                            registry->reconstruct(textureEntry, textureResource);
+                            registry->reconstruct(resolvedEntry, textureResource);
                             break;
                         }
                     }
@@ -347,6 +350,7 @@ void RegistryManager::resizeSwapchainDependentResources()
                                             if (auto* registry = std::get_if<RenderTargetRegistry>(&registryVariant))
                                             {
                                                 registry->reconstruct(targetEntry, targetResource);
+                                                targetIt->second = targetResource;
                                                 break;
                                             }
                                         }
@@ -371,7 +375,8 @@ void RegistryManager::resizeSwapchainDependentResources()
 
             if (framebufferEntry.mExtent.mMode == dim::Extent2D::Mode::SWAPCHAIN)
             {
-                framebufferEntry.mExtent = resolveExtent(dim::Extent2D::swapchain());
+                auto resolvedEntry = framebufferEntry;
+                resolvedEntry.mExtent = resolveExtent(framebufferEntry.mExtent);
 
                 auto framebufferIt = mIdToResource.find(framebufferId);
 
@@ -383,7 +388,7 @@ void RegistryManager::resizeSwapchainDependentResources()
                     {
                         if (auto* registry = std::get_if<FrameBufferRegistry>(&registryVariant))
                         {
-                            registry->reconstruct(framebufferEntry, framebufferResource);
+                            registry->reconstruct(resolvedEntry, framebufferResource);
                             break;
                         }
                     }

@@ -31,8 +31,12 @@ FrameBuffer::FrameBuffer(
 
         if (vkCreateFramebuffer(mDevice, &framebufferInfo, nullptr, &mHandle) != VK_SUCCESS)
         {
-            throw std::runtime_error("failed to create framebuffer!");
+            throw std::runtime_error("Failed to create framebuffer.");
         }
+    }
+    else
+    {
+        // throw std::runtime_error("Failed to create framebuffer. Extent was zero.");
     }
 }
 

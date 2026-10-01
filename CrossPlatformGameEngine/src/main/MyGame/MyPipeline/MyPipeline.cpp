@@ -88,9 +88,9 @@ void MyPipeline::initResources()
 
     // Mouse picking images
     mWritableTextureMousePicking = mEngine.registerResource<ascen::registry::TextureEntry>({ "MOUSE_PICKING_WRITABLE_TEXTURE", ascen::TextureType::WRITABLE,
-        ascen::FORMAT_R32_UINT, ascen::dim::Extent2D::fixedSize(800, 600), 1 });
+        ascen::FORMAT_R32_UINT, ascen::dim::Extent2D::swapchain(), 1 });
     mDepthTextureMousePicking = mEngine.registerResource<ascen::registry::TextureEntry>({ "MOUSE_PICKING_DEPTH_TEXTURE", ascen::TextureType::DEPTH,
-        mEngine.getDepthFormat(), ascen::dim::Extent2D::fixedSize(800, 600), 1 });
+        mEngine.getDepthFormat(), ascen::dim::Extent2D::swapchain(), 1 });
 
     // Main RenderPass and RenderTarget
     {
@@ -407,7 +407,7 @@ void MyPipeline::initFramePasses()
     framePassMousePickingEntry.mGraphicsParams.mRenderPassId = mRenderPassMousePicking;
     framePassMousePickingEntry.mGraphicsParams.mRenderTargetId = mRenderTargetMousePicking;
     framePassMousePickingEntry.mGraphicsParams.mFrameBufferId = mFrameBufferMousePicking;
-    framePassMousePickingEntry.mGraphicsParams.mExtent = { 800, 600 };
+    framePassMousePickingEntry.mGraphicsParams.mExtent = { 0, 0 };
     framePassMousePickingEntry.mGraphicsParams.mVertexBufferIds = { mBufferVertex };
     framePassMousePickingEntry.mGraphicsParams.mIndexBufferId = mBufferIndex;
     framePassMousePickingEntry.mGraphicsParams.mIndirectBufferId = mBufferIndirect;
