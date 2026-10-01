@@ -5,7 +5,7 @@
 
 #include "Values.h"
 
-#include "../Registry2/RegistryManager.h"
+#include "../Registry/RegistryManager.h"
 
 #include "Renderer.h"
 
@@ -35,6 +35,8 @@ namespace ascen
 			const uint32_t itemCount,
 			const uint32_t itemSize,
 			const uint32_t offset) const;
+
+		void resizeBuffer(const std::string& name, const uint32_t itemCount);
 
 		void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
 

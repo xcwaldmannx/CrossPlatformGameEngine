@@ -78,7 +78,6 @@ void Renderer::drawFrame()
 					else // use specific framebuffer
 					{
 						const auto& frameBufferPtr = mRegistryManager.getResource<FrameBuffer>(framePass->mFrameBufferId);
-						frameBufferPtr->resize(swapchain->getExtent().width, swapchain->getExtent().height);
 						frameBuffer = frameBufferPtr->handle();
 					}
 
@@ -259,7 +258,7 @@ bool Renderer::acquireNextFrame(const SwapchainPtr& swapchain)
 
 	if (nextImageResult == VK_ERROR_OUT_OF_DATE_KHR)
 	{
-		mRenderContext.resize();
+		mRegistryManager.resizeSwapchainDependentResources();
 		return false;
 	}
 
@@ -317,7 +316,7 @@ bool Renderer::presentFrame(const SwapchainPtr& swapchain) const
 		queuePresentResult == VK_SUBOPTIMAL_KHR ||
 		mWindowManager.isResized())
 	{
-		mRenderContext.resize();
+		mRegistryManager.resizeSwapchainDependentResources();
 		return false;
 	}
 

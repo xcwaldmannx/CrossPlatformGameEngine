@@ -6,15 +6,13 @@ ImageTexture::ImageTexture(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
-	uint32_t width,
-	uint32_t height,
+	dim::Extent2D extent,
 	uint32_t layers) :
 	Texture(
 		physicalDevice,
 		device,
 		commandPool,
-		width,
-		height,
+		extent,
 		layers,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_TILING_OPTIMAL,

@@ -12,12 +12,14 @@ layout(location = 0) out vec4 outColor;
 
 void main()
 {
+    vec4 t = texture(sampler2DArray(texArray, texSampler), vec3(inTexCoord, float(inTextureId)));
+
     if (inSelected > 0)
     {
-        outColor = vec4(1);
+        outColor = mix(vec4(1, 0, 0, 1), t, 0.75);
     }
     else
     {
-        outColor = texture(sampler2DArray(texArray, texSampler), vec3(inTexCoord, float(inTextureId)));
+        outColor = t;
     }
 }

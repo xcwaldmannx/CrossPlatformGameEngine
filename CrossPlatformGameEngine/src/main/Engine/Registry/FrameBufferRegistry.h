@@ -25,7 +25,7 @@ namespace ascen
         {
             if (resource) resource->destroy(mDevice);
 
-            const VkExtent2D extent(entry.mWidth, entry.mHeight);
+            const dim::Extent2D extent = entry.mExtent;
 
             const RenderPassPtr& renderPass = std::dynamic_pointer_cast<RenderPass>(mIdToResource->at(entry.mRenderPassId));
             const RenderTargetPtr& renderTarget = std::dynamic_pointer_cast<RenderTarget>(mIdToResource->at(entry.mRenderTargetId));

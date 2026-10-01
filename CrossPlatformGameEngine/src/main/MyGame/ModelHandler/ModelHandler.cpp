@@ -40,8 +40,8 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     mVertices.append_range(vertices);
     mIndices.append_range(indices);
 
-    sGlobalVertexOffset += mVertices.size();
-    sGlobalIndexOffset += mIndices.size();
+    sGlobalVertexOffset = mVertices.size();
+    sGlobalIndexOffset = mIndices.size();
 }
 
 const std::unordered_map<std::string, Model>& ModelHandler::getModels()

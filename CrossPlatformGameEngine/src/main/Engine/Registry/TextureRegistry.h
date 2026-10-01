@@ -28,23 +28,20 @@ namespace ascen
                 case TextureType::IMAGE:
                     resource = mTextureFactory.createImage(
                         mCommandPool,
-                        entry.mWidth,
-                        entry.mHeight,
+                        entry.mExtent,
                         entry.mLayers);
                     break;
                 case TextureType::WRITABLE:
                     resource = mTextureFactory.createWritable(
                         mCommandPool,
                         entry.mFormat,
-                        entry.mWidth,
-                        entry.mHeight,
+                        entry.mExtent,
                         entry.mLayers);
                     break;
                 case TextureType::DEPTH:
                     resource = mTextureFactory.createDepth(
                         mCommandPool,
-                        entry.mWidth,
-                        entry.mHeight);
+                        entry.mExtent);
                     break;
                 case TextureType::NONE:
                 default:

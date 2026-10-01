@@ -15,7 +15,7 @@ namespace ascen
         FrameBufferPtr create(
             const RenderPassPtr& renderPass,
             const RenderTargetPtr& renderTarget,
-            const VkExtent2D extent) const;
+            const dim::Extent2D extent) const;
 
     private:
         VkDevice mDevice = VK_NULL_HANDLE;

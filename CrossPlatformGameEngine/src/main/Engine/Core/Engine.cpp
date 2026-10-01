@@ -24,6 +24,11 @@ void Engine::uploadBuffer(
 	mRegistryManager.uploadBuffer(name, items, itemCount, itemSize, offset);
 }
 
+void Engine::resizeBuffer(const std::string& name, const uint32_t itemCount)
+{
+	mRegistryManager.resizeBuffer(name, itemCount);
+}
+
 void Engine::uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const
 {
 	mRegistryManager.uploadTexture(name, pixels);

@@ -11,16 +11,14 @@ Image::Image(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
-	uint32_t width,
-	uint32_t height,
+	dim::Extent2D extent,
 	uint32_t layers,
 	VkFormat format,
 	VkImageTiling tiling,
 	VkImageUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryFlags,
 	VkImageAspectFlags aspectFlags) :
-	mWidth(width),
-	mHeight(height),
+	mExtent(extent),
 	mLayers(layers),
 	mFormat(format),
 	mAspectFlags(aspectFlags)
@@ -28,8 +26,8 @@ Image::Image(
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	imageInfo.imageType = VK_IMAGE_TYPE_2D;
-	imageInfo.extent.width = mWidth;
-	imageInfo.extent.height = mHeight;
+	imageInfo.extent.width = extent.mExtent.width;
+	imageInfo.extent.height = extent.mExtent.height;
 	imageInfo.extent.depth = 1;
 	imageInfo.mipLevels = 1;
 	imageInfo.arrayLayers = mLayers;
@@ -87,7 +85,7 @@ void Image::update(
 		VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
-	uint32_t layerCount = imageSizeBytes / (mWidth * mHeight * 4);
+	uint32_t layerCount = imageSizeBytes / (mExtent.mExtent.width * mExtent.mExtent.height * 4);
 	copy(device, queue, commandPool, stagingBuffer, *this, layerCount);
 
 	transitionLayout(
@@ -166,7 +164,7 @@ void Image::copy(
 {
 	VkCommandBuffer commandBuffer = commandPool->beginSingle(device);
 
-	VkDeviceSize layerSize = static_cast<VkDeviceSize>(mWidth * mHeight * 4);
+	VkDeviceSize layerSize = static_cast<VkDeviceSize>(mExtent.mExtent.width * mExtent.mExtent.height * 4);
 
 	std::vector<VkBufferImageCopy> regions(layers);
 
@@ -191,8 +189,8 @@ void Image::copy(
 		region.imageOffset = { 0, 0, 0 };
 		region.imageExtent =
 		{
-			mWidth,
-			mHeight,
+			mExtent.mExtent.width,
+			mExtent.mExtent.height,
 			1
 		};
 	}

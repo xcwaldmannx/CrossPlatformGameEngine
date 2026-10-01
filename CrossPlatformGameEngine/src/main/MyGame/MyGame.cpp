@@ -43,7 +43,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 	const auto& vertices = mModelHandler.getVertices();
 	const auto& indices = mModelHandler.getIndices();
 
+	mEngine.resizeBuffer("BUFFER_VERTEX", vertices.size());
 	mEngine.uploadBuffer("BUFFER_VERTEX", &vertices[0], vertices.size(), sizeof(mal::model::Vertex), 0);
+
+	mEngine.resizeBuffer("BUFFER_INDEX", indices.size());
 	mEngine.uploadBuffer("BUFFER_INDEX", &indices[0], indices.size(), sizeof(uint32_t), 0);
 
 	// init physics world
@@ -104,7 +107,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 		if (i < 180)
 		{
-			createModel("model_test", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
+			createModel("minigun", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
 		}
 		else
 		{
@@ -233,12 +236,16 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 	{
 		anim.mCurrentAnimation = "wobble";
 	}
+	else if (model == "minigun")
+	{
+		anim.mCurrentAnimation = "rotate";
+	}
 
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
 
-	if (model != "minigun" && model != "model_test") mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
+	if (model != "model_test") mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
 }
 
 void MyGame::updateCamera(float delta)

@@ -8,14 +8,12 @@ DepthTexture::DepthTexture(
 	VkPhysicalDevice physicalDevice,
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
-	uint32_t width,
-	uint32_t height) :
+	dim::Extent2D extent) :
 	Texture(
 		physicalDevice,
 		device,
 		commandPool,
-		width,
-		height,
+		extent,
 		1,
 		PhysicalDevice::findDepthFormat(physicalDevice),
 		VK_IMAGE_TILING_OPTIMAL,

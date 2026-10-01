@@ -50,8 +50,7 @@ void RenderContext::resize()
 
 	mDepthTexture = mTextureFactory.createDepth(
 		mCommandPool,
-		mSwapchain->getExtent().width,
-		mSwapchain->getExtent().height);
+		dim::Extent2D::fixedSize(mSwapchain->getExtent().width, mSwapchain->getExtent().height));
 
 	mSwapchain->setDepthTexture(mDepthTexture);
 

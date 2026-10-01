@@ -221,21 +221,15 @@ void Swapchain::createFrameBuffers(
         };
 
         VkFramebufferCreateInfo framebufferInfo{};
-        framebufferInfo.sType =
-            VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = renderPass;
-        framebufferInfo.attachmentCount =
-            static_cast<uint32_t>(attachments.size());
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
         framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = mExtent.width;
         framebufferInfo.height = mExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(
-                device,
-                &framebufferInfo,
-                nullptr,
-                &mFrameBuffers[i]) != VK_SUCCESS)
+        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr, &mFrameBuffers[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("failed to create framebuffer!");
         }

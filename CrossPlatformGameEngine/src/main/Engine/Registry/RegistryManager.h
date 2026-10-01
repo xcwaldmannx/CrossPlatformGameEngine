@@ -59,7 +59,7 @@ namespace ascen
     public:
         RegistryManager(
             const VulkanContext& vulkanContext,
-            const RenderContext& renderContext);
+            RenderContext& renderContext);
 
         template<Derived<registry::Entry> E>
         uint64_t registerResource(const E& entry)
@@ -78,6 +78,8 @@ namespace ascen
         void reconstruct();
 
         void deconstruct();
+
+        dim::Extent2D resolveExtent(const dim::Extent2D& extent) const;
 
         /* might need this later
         template<typename T>
@@ -102,8 +104,16 @@ namespace ascen
         void uploadBuffer(const std::string& name, const void* items, uint32_t itemCount, uint32_t itemSize, uint32_t offset) const;
         void uploadBuffer(const uint64_t id, const void* items, uint32_t itemCount, uint32_t itemSize, uint32_t offset) const;
 
+        void resizeBuffer(const std::string& name, const uint32_t itemCount);
+        void resizeBuffer(const uint64_t id, const uint32_t itemCount);
+
         void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
         void uploadTexture(const uint64_t id, const std::vector<unsigned char>& pixels) const;
+
+        void resizeTexture(const std::string& name, const dim::Extent2D extent);
+        void resizeTexture(const uint64_t id, const dim::Extent2D extent);
+
+        void resizeSwapchainDependentResources();
 
         void updateTransfer(
             const std::string& name,
@@ -184,6 +194,7 @@ namespace ascen
     private:
         const VkPhysicalDevice mPhysicalDevice;
         const VkDevice mDevice;
+        RenderContext& mRenderContext;
         const VkQueue mGraphicsQueue;
         const CommandPoolPtr& mCommandPool;
 
