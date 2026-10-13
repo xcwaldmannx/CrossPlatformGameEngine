@@ -6,7 +6,8 @@ struct Instance
 {
 	mat4 mTransform;
 	uint mTextureIndex;
-	uint _pad[3];
+	bool mIsVisible;
+	uint _pad[2];
 };
 
 layout(std140, set = 0, binding = 0x00) uniform Camera
@@ -30,10 +31,18 @@ layout(location = 1) out flat uint outTextureId;
 void main() {
     const Instance instance = instances[gl_InstanceIndex];
 
+    if (!instance.mIsVisible)
+    {
+        gl_Position = vec4(0.0);
+    }
+    else
+    {
+
     const mat4 cameraTransform = camera.proj * camera.view;
 
     gl_Position = cameraTransform * instance.mTransform * vec4(inPosition, 1.0);
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);
     outTextureId = instance.mTextureIndex;
+    }
 }

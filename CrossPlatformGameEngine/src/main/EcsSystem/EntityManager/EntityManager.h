@@ -7,15 +7,19 @@
 #include <array>
 #include <queue>
 
-class EntityManager {
+class EntityManager
+{
 public:
-	EntityManager() : mEntityCount(0) {
-		for (EntityId i = 0; i < ENTITY_MAX; i++) {
+	EntityManager() : mEntityCount(0)
+	{
+		for (EntityId i = 0; i < ENTITY_MAX; i++)
+		{
 			mAvailableEntityIds.push(i);
 		}
 	};
 
-	EntityId addEntity() {
+	EntityId addEntity()
+	{
 		assert((mEntityCount >= ENTITY_MIN && mEntityCount < ENTITY_MAX) &&
 			!mAvailableEntityIds.empty() &&
 			"Max entities reached. Cannot add.");
@@ -27,14 +31,16 @@ public:
 		return id;
 	}
 
-	void removeEntity(EntityId entity) {
+	void removeEntity(EntityId entity)
+	{
 		assert(mEntityCount > ENTITY_MIN && "No entities to remove. Cannot remove.");
 
 		mAvailableEntityIds.push(entity);
 		mEntityCount--;
 	}
 
-	uint32_t count() {
+	uint32_t count() const
+	{
 		return mEntityCount;
 	}
 

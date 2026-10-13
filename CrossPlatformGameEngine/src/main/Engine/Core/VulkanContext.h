@@ -1,0 +1,88 @@
+#pragma once
+
+#include "../CommandPool/CommandPoolFactory.h"
+#include "../Descriptor/DescriptorFactory.h"
+#include "../Swapchain/SwapchainFactory.h"
+#include "../Pipeline/PushConstant/PushConstantFactory.h"
+#include "../Pipeline/GraphicsPipeline/GraphicsPipelineFactory.h"
+#include "../Pipeline/ComputePipeline/ComputePipelineFactory.h"
+#include "../Resource/Buffer/BufferFactory.h"
+#include "../Resource/Texture/TextureFactory.h"
+#include "../Resource/Sampler/SamplerFactory.h"
+#include "../FrameBuffer/FrameBufferFactory.h"
+#include "../RenderPass/RenderPassFactory.h"
+#include "../RenderTarget/RenderTargetFactory.h"
+
+#include <vulkan/vulkan.h>
+
+class WindowManager;
+
+namespace ascen
+{
+
+	using ::WindowManager;
+
+	class VulkanContext
+	{
+	public:
+		VulkanContext(WindowManager& windowManager);
+
+		VkPhysicalDevice getPhysicalDevice() const;
+		VkDevice getDevice() const;
+		uint32_t getGraphicsFamilyIndex() const;
+		uint32_t getPresentFamilyIndex() const;
+		uint32_t getComputeFamilyIndex() const;
+		VkQueue getGraphicsQueue() const;
+		VkQueue getPresentQueue() const;
+		VkQueue getComputeQueue() const;
+
+		const CommandPoolFactory& getCommandPoolFactory() const;
+		const DescriptorFactory& getDescriptorFactory() const;
+		const SwapchainFactory& getSwapchainFactory() const;
+		const GraphicsPipelineFactory& getGraphicsPipelineFactory() const;
+		const ComputePipelineFactory& getComputePipelineFactory() const;
+		const PushConstantFactory& getPushConstantFactory() const;
+		const BufferFactory& getBufferFactory() const;
+		const TextureFactory& getTextureFactory() const;
+		const SamplerFactory& getSamplerFactory() const;
+		const FrameBufferFactory& getFrameBufferFactory() const;
+		const RenderPassFactory& getRenderPassFactory() const;
+		const RenderTargetFactory& getRenderTargetFactory() const;
+
+		void waitIdle() const;
+
+		void cleanup() const;
+
+	private:
+		WindowManager& mWindowManager;
+
+		std::vector<const char*> mExtensions;
+		std::vector<const char*> mValidationLayers;
+		VkDebugUtilsMessengerEXT mDebugMessenger{};
+
+		VkInstance mInstance = VK_NULL_HANDLE;
+		VkSurfaceKHR mSurface = VK_NULL_HANDLE;
+		VkPhysicalDevice mPhysicalDevice = VK_NULL_HANDLE;
+		uint32_t mGraphicsFamilyIndex = 0;
+		uint32_t mPresentFamilyIndex = 0;
+		uint32_t mComputeFamilyIndex = 0;
+		VkQueue mGraphicsQueue = VK_NULL_HANDLE;
+		VkQueue mPresentQueue = VK_NULL_HANDLE;
+		VkQueue mComputeQueue = VK_NULL_HANDLE;
+		VkDevice mDevice = VK_NULL_HANDLE;
+
+		CommandPoolFactory mCommandPoolFactory;
+		DescriptorFactory mDescriptorFactory;
+		SwapchainFactory mSwapchainFactory;
+		GraphicsPipelineFactory mGraphicsPipelineFactory;
+		ComputePipelineFactory mComputePipelineFactory;
+		PushConstantFactory mPushConstantFactory;
+		BufferFactory mBufferFactory;
+		TextureFactory mTextureFactory;
+		SamplerFactory mSamplerFactory;
+		FrameBufferFactory mFrameBufferFactory;
+		RenderPassFactory mRenderPassFactory;
+		RenderTargetFactory mRenderTargetFactory;
+	};
+
+}

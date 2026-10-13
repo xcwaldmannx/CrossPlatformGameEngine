@@ -1,5 +1,6 @@
 #include "WindowManager.h"
 
+#include <iostream>
 #include <stdexcept>
 
 void WindowManager::create()
@@ -19,6 +20,17 @@ void WindowManager::destroy()
     {
         mWindowThread.join();
     }
+
+    mIsRunning.store(false, std::memory_order_release);
+    mWindowReady.store(false, std::memory_order_release);
+
+    glfwDestroyWindow(mWindow);
+    glfwTerminate();
+}
+
+void WindowManager::poll()
+{
+    mPoll.store(true, std::memory_order_release);
 }
 
 void WindowManager::framebufferSizeCallback(GLFWwindow* window, int width, int height)
@@ -35,24 +47,39 @@ void WindowManager::iconifyCallback(GLFWwindow* window, int iconified)
     mIsMinimized.store(iconified == GLFW_TRUE, std::memory_order_release);
 }
 
+void WindowManager::windowCloseCallback(GLFWwindow* window)
+{
+    mIsCloseRequested.store(true, std::memory_order_release);
+}
+
 void WindowManager::setResized(bool resized)
 {
     mIsResized.store(resized, std::memory_order_release);
 }
 
-bool WindowManager::isRunning() const
+bool WindowManager::isRunning()
 {
     return mIsRunning.load(std::memory_order_acquire);
 }
 
-bool WindowManager::isResized() const
+bool WindowManager::isResized()
 {
     return mIsResized.load(std::memory_order_acquire);
 }
 
-bool WindowManager::isMinimized() const
+bool WindowManager::isMinimized()
 {
     return mIsMinimized.load(std::memory_order_acquire);
+}
+
+bool WindowManager::isCloseRequested()
+{
+    return mIsCloseRequested.load(std::memory_order_acquire);
+}
+
+bool WindowManager::isMouseFocused()
+{
+    return mFocusMouse.load(std::memory_order_acquire);
 }
 
 GLFWwindow* WindowManager::getWindow() const
@@ -67,6 +94,18 @@ InputManager& WindowManager::getInput()
 
 void WindowManager::windowThread()
 {
+    glfwSetErrorCallback(
+    [](int error, const char* description)
+    {
+        std::cerr
+            << "GLFW error " << error << ": "
+            << (description ? description : "unknown")
+            << '\n';
+    });
+
+    // enable this for renderdoc
+    // glfwInitHint(GLFW_PLATFORM, GLFW_PLATFORM_X11);
+
     if (!glfwInit())
     {
         throw std::runtime_error("Failed to initialize GLFW");
@@ -75,7 +114,13 @@ void WindowManager::windowThread()
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
-    mWindow = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Vulkan Window", nullptr, nullptr);
+    mWindow = glfwCreateWindow(
+        static_cast<int>(WINDOW_WIDTH),
+        static_cast<int>(WINDOW_HEIGHT),
+        "Vulkan Window",
+        nullptr,
+        nullptr);
+
     if (!mWindow)
     {
         glfwTerminate();
@@ -87,6 +132,8 @@ void WindowManager::windowThread()
 
     glfwSetFramebufferSizeCallback(mWindow, framebufferSizeCallback);
     glfwSetWindowIconifyCallback(mWindow, iconifyCallback);
+    glfwSetWindowCloseCallback(mWindow, windowCloseCallback);
+    glfwSetCursorPosCallback(mWindow, InputManager::mouseCallback);
 
     mIsRunning.store(true, std::memory_order_release);
     mWindowReady.store(true, std::memory_order_release);
@@ -94,15 +141,31 @@ void WindowManager::windowThread()
     glfwMakeContextCurrent(mWindow);
     glfwSwapInterval(1);
 
-    while (!glfwWindowShouldClose(mWindow) && mIsRunning.load(std::memory_order_acquire))
+    while (!mIsCloseRequested.load(std::memory_order_acquire) && mIsRunning.load(std::memory_order_acquire))
     {
-        glfwPollEvents();
-        mInputManager.update(mWindow);
+        const auto& poll = mPoll.load(std::memory_order_acquire);
+        if (poll)
+        {
+            glfwPollEvents();
+            InputManager::update(mWindow);
+
+            if (InputManager::isKeyJustPressed(GLFW_KEY_TAB))
+            {
+                const bool focus = !mFocusMouse.load(std::memory_order_acquire);
+
+                mFocusMouse.exchange(focus, std::memory_order_release);
+                glfwFocusWindow(mWindow);
+
+                if (!focus)
+                {
+                    glfwSetCursorPos(mWindow, getCenterX(), getCenterY());
+                }
+
+                const int cursorMode = focus ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL;
+                glfwSetInputMode(mWindow, GLFW_CURSOR, cursorMode);
+            }
+
+            mPoll.store(false, std::memory_order_release);
+        }
     }
-
-    mIsRunning.store(false, std::memory_order_release);
-    mWindowReady.store(false, std::memory_order_release);
-
-    glfwDestroyWindow(mWindow);
-    glfwTerminate();
 }

@@ -1,5 +1,5 @@
 ﻿#include "WindowManager/WindowManager.h"
-#include "MyGame.h"
+#include "MyGame/MyGame.h"
 
 #include "Utility/FrameCounter.h"
 
@@ -17,8 +17,10 @@ int main()
 
 	mGame = new MyGame(mWindow);
 
-	while (mWindow.isRunning())
+	while (mWindow.isRunning() && !mWindow.isCloseRequested())
 	{
+		mWindow.poll();
+
 		frameCounter.frame();
 		const float delta = frameCounter.deltaTime();
 

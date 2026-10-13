@@ -5,7 +5,7 @@
 #include <bitset>
 
 const uint32_t ENTITY_MIN = 0;
-const uint32_t ENTITY_MAX = 128'000;
+const uint32_t ENTITY_MAX = 256'000;
 
 const uint32_t COMPONENT_MIN = 0;
 const uint32_t COMPONENT_MAX = 128;

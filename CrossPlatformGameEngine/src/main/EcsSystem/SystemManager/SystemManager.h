@@ -12,13 +12,14 @@
 #include <unordered_set>
 #include <unordered_map>
 
-class SystemManager {
+class SystemManager
+{
 public:
 	template<typename T, typename... Args>
 	void registerSystem(
 		Signature readSignature,
 		Signature writeSignature,
-		ComponentManager& componentManager,
+		EcsSystem* system,
 		Args&&... args) 
 	{
 		std::type_index id = typeid(T);
@@ -27,36 +28,53 @@ public:
 		mSystems[id] = std::make_shared<T>(std::forward<Args>(args)...);
 		mSystemReadSignatures[id] = readSignature;
 		mSystemWriteSignatures[id] = writeSignature;
-		mSystems[id]->mComponentManager = &componentManager;
+		mSystems[id]->mSystem = system;
 
 		scheduleSystemUpdate<T>(readSignature, writeSignature);
 	}
 
 	void addEntity(EntityId entity, Signature signature) 
 	{
-		for (auto& pair : mSystems) {
-			auto& systemId = pair.first;
-
-			const auto& systemReadSig = mSystemReadSignatures[systemId];
-			const auto& systemWriteSig = mSystemWriteSignatures[systemId];
+		for (auto& [id, system] : mSystems)
+		{
+			const auto& systemReadSig = mSystemReadSignatures[id];
+			const auto& systemWriteSig = mSystemWriteSignatures[id];
 
 			if ((systemReadSig & signature) == systemReadSig &&
-				(systemWriteSig & signature) == systemWriteSig) {
-				mSystems[systemId]->mEntities.emplace(entity);
+				(systemWriteSig & signature) == systemWriteSig)
+			{
+				system->mEntities.emplace(entity);
+			}
+		}
+	}
+
+	void addDirtyEntity(EntityId entity, Signature signature)
+	{
+		for (auto& [id, system] : mSystems)
+		{
+			const auto& systemReadSig = mSystemReadSignatures[id];
+			const auto& systemWriteSig = mSystemWriteSignatures[id];
+
+			if ((systemReadSig & signature) == systemReadSig &&
+				(systemWriteSig & signature) == systemWriteSig)
+			{
+				system->mDirtyEntities.emplace(entity);
 			}
 		}
 	}
 
 	void removeEntity(EntityId entity, Signature signature) 
 	{
-		for (auto& pair : mSystems) {
+		for (auto& pair : mSystems)
+		{
 			auto& systemId = pair.first;
 
 			const auto& systemReadSig = mSystemReadSignatures[systemId];
 			const auto& systemWriteSig = mSystemWriteSignatures[systemId];
 
 			if ((systemReadSig & signature) != systemReadSig ||
-				(systemWriteSig & signature) != systemWriteSig) {
+				(systemWriteSig & signature) != systemWriteSig)
+			{
 				mSystems[systemId]->mEntities.erase(entity);
 			}
 		}
@@ -64,7 +82,8 @@ public:
 
 	void removeEntity(EntityId entity) 
 	{
-		for (auto& pair : mSystems) {
+		for (auto& pair : mSystems)
+		{
 			auto& systemId = pair.first;
 
 			mSystems[systemId]->mEntities.erase(entity);
@@ -87,6 +106,7 @@ public:
 		assert(mSystems.find(id) != mSystems.end() && "System is not registered. Cannot update.");
 
 		mSystems[id]->update(deltaTime);
+		mSystems[id]->mDirtyEntities.clear();
 	}
 
 	void updateAllSystems(float deltaTime)
@@ -98,6 +118,7 @@ public:
 			for (auto& systemId : group)
 			{
 				mSystems[systemId]->update(deltaTime);
+				mSystems[systemId]->mDirtyEntities.clear();
 			}
 			std::cout << std::endl;
 

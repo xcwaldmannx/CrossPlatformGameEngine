@@ -1,0 +1,91 @@
+#pragma once
+
+#include "VulkanContext.h"
+#include "RenderContext.h"
+
+#include "Values.h"
+
+#include "../Registry/RegistryManager.h"
+
+#include "Renderer.h"
+
+#include "../../EcsSystem/EcsSystem.h"
+
+class WindowManager;
+
+namespace ascen
+{
+
+	using ::WindowManager;
+
+	class Engine
+	{
+	public:
+		Engine(::WindowManager& windowManager);
+
+		template<Derived<registry::Entry> E>
+		uint64_t registerResource(const E& entry)
+		{
+			return mRegistryManager.registerResource<E>(entry);
+		}
+
+		void uploadBuffer(
+			const std::string& name,
+			const void* items,
+			const uint32_t itemCount,
+			const uint32_t itemSize,
+			const uint32_t offset) const;
+
+		void resizeBuffer(const std::string& name, const uint32_t itemCount);
+
+		void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
+
+		void updateTransfer(
+			const std::string& name,
+			uint32_t transferId,
+			const std::variant<transfer::BufferRegion, transfer::ImageRegion, transfer::BufferImageRegion> &region);
+
+		template<typename T>
+		void downloadTransfer(
+			const std::string& name,
+			uint32_t transferId,
+			T* data)
+		{
+			mRegistryManager.downloadTransfer(name, transferId, data);
+		}
+
+		template<typename T>
+		void updatePushConstant(const std::string& name, uint32_t pushConstantId, const T& data)
+		{
+			mRegistryManager.updatePushConstant<T>(name, pushConstantId, data);
+		}
+
+		EcsSystem& ecs();
+
+		void reload();
+
+		void drawFrame();
+
+		void cleanup();
+
+		uint32_t getScreenWidth() const;
+		uint32_t getScreenHeight() const;
+		Format getDepthFormat() const;
+		uint32_t getFrameIndex() const;
+		const std::vector<VkImage>& getPresentImages() const;
+		Format getImageFormat() const;
+
+	private:
+		::WindowManager& mWindowManager;
+
+		VulkanContext mVulkanContext;
+		RenderContext mRenderContext;
+
+		RegistryManager mRegistryManager;
+
+		Renderer mRenderer;
+
+		EcsSystem mEcs;
+	};
+
+}
