@@ -20,4 +20,5 @@ private:
     ModelHandler& mModelHandler;
     b3WorldId& mWorldId;
     std::unordered_map<EntityId, b3BodyId> mBodies;
+    float mPhysicsAccumulatedDelta = 0;
 };

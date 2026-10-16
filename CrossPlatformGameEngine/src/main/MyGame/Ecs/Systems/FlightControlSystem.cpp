@@ -62,7 +62,7 @@ glm::vec3 FlightControlSystem::calculateCollective(
 
     const float gravity = 10.0f;
     const float collectiveStrength = 500.0f;
-    const float responsiveness = 20.0f;
+    const float responsiveness = 50.0f;
 
     const float minAcceleration = -300.0f;
     const float maxAcceleration = 300.0f;
@@ -96,8 +96,8 @@ glm::vec3 FlightControlSystem::calculateCyclic(
 {
     const float mass = b3Body_GetMass(bodyId);
 
-    const float mousePitchSensitivity = 50.0f;
-    const float mouseRollSensitivity = 25.0f;
+    const float mousePitchSensitivity = 5.0f;
+    const float mouseRollSensitivity = 5.0f;
 
     const float pitchInput = glm::clamp(static_cast<float>(InputManager::getMouseDeltaY()) * mousePitchSensitivity, -1.0f, 1.0f);
 
@@ -108,8 +108,8 @@ glm::vec3 FlightControlSystem::calculateCyclic(
     const float pitchTilt = pitchInput * maxCyclicTilt;
     const float rollTilt = rollInput * maxCyclicTilt;
 
-    const float pitchStrength = 1000.0f;
-    const float rollStrength = 1000.0f;
+    const float pitchStrength = 2000.0f;
+    const float rollStrength = 2000.0f;
 
     const glm::vec3 pitchTorque = -right * sinf(pitchTilt) * pitchStrength * mass;
 
@@ -130,7 +130,7 @@ glm::vec3 FlightControlSystem::calculateYaw(
     if (InputManager::isKeyPressed(GLFW_KEY_A)) yawInput = 1.0f;
     else if (InputManager::isKeyPressed(GLFW_KEY_D)) yawInput = -1.0f;
 
-    const float yawStrength = 200.0f;
+    const float yawStrength = 500.0f;
 
     return up * yawInput * yawStrength * mass;
 }
@@ -148,8 +148,8 @@ glm::vec3 FlightControlSystem::calculateSCAS(
 
     const float mass = b3Body_GetMass(bodyId);
 
-    const float pitchDamping = 200.0f;
-    const float yawDamping = 300.0f;
+    const float pitchDamping = 250.0f;
+    const float yawDamping = 500.0f;
     const float rollDamping = 250.0f;
 
     return

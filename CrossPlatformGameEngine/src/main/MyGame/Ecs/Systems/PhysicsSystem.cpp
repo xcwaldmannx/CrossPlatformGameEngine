@@ -86,5 +86,5 @@ void PhysicsSystem::update(const float delta)
         transform.mRotation = glm::eulerAngles(q);
     }
 
-    b3World_Step(mWorldId, delta, 8);
+    b3World_Step(mWorldId, delta, 4);
 }

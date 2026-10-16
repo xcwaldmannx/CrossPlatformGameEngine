@@ -73,9 +73,12 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 128;
+	double mEntityCount = 64;
 
 	b3WorldId mWorldId;
 	EntityId mCharacter;
 	EntityId mHelicopter;
+
+	const float mPhysicsDelta = 1.0f / 60.0f;
+	float mAccumulatedPhysicsDelta = 0.0f;
 };

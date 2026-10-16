@@ -264,8 +264,18 @@ void MyGame::run(const float delta)
 
 	mEngine.ecs().updateSystem<CameraSystem>(delta);
 	mEngine.ecs().updateSystem<MoverSystem>(delta);
-	mEngine.ecs().updateSystem<FlightControlSystem>(delta);
-	mEngine.ecs().updateSystem<PhysicsSystem>(delta);
+
+	mAccumulatedPhysicsDelta += delta;
+
+	while (mAccumulatedPhysicsDelta >= mPhysicsDelta)
+	{
+		mEngine.ecs().updateSystem<FlightControlSystem>(mPhysicsDelta);
+		mEngine.ecs().updateSystem<PhysicsSystem>(mPhysicsDelta);
+
+		mAccumulatedPhysicsDelta -= mPhysicsDelta;
+	}
+
+
 	mEngine.ecs().updateSystem<AnimationSystem>(delta);
 	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
 
