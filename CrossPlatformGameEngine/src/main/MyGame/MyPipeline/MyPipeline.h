@@ -36,7 +36,8 @@ private:
     uint64_t mBufferMousePicking = 0;
 
     uint64_t mSampler = 0;
-    uint64_t mTexture = 0;
+    uint64_t mTextureArray = 0;
+
     uint64_t mWritableTextureMousePicking = 0;
     uint64_t mDepthTextureMousePicking = 0;
 

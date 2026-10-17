@@ -17,6 +17,8 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     const auto& vertices = model.getVertices();
     const auto& indices = model.getIndices();
+    const auto& textures = model.getTextures();
+    const auto& materials = model.getMaterials();
 
     mModels.emplace(name, Model());
     Model& m = mModels.at(name);
@@ -26,9 +28,10 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     m.mVertexOffset = sGlobalVertexOffset;
     m.mIndexOffset = sGlobalIndexOffset;
     m.mIndexCount = indices.size();
+    m.mTextureOffset = sGlobalTextureOffset;
+    m.mMaterialOffset = sGlobalMaterialOffset;
     m.mBoundsMax = model.getBoundsMax();
     m.mBoundsMin = model.getBoundsMin();
-
 
     if (model.hasAnimations())
     {
@@ -39,9 +42,13 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     mVertices.append_range(vertices);
     mIndices.append_range(indices);
+    mTextures.append_range(textures);
+    mMaterials.append_range(materials);
 
     sGlobalVertexOffset = mVertices.size();
     sGlobalIndexOffset = mIndices.size();
+    sGlobalTextureOffset = mTextures.size();
+    sGlobalMaterialOffset = mMaterials.size();
 }
 
 const std::unordered_map<std::string, Model>& ModelHandler::getModels()
@@ -60,11 +67,22 @@ std::unordered_map<std::string, mal::AnimationPlayer>& ModelHandler::getPlayers(
     return mPlayers;
 }
 
-const std::vector<mal::model::Vertex>& ModelHandler::getVertices()
+const mal::model::VertexArray& ModelHandler::getVertices()
 {
     return mVertices;
 }
-const std::vector<uint32_t>& ModelHandler::getIndices()
+const mal::model::IndexArray& ModelHandler::getIndices()
 {
     return mIndices;
 }
+
+const mal::model::TextureArray& ModelHandler::getTextures()
+{
+    return mTextures;
+}
+
+const mal::model::MaterialArray& ModelHandler::getMaterials()
+{
+    return mMaterials;
+}
+

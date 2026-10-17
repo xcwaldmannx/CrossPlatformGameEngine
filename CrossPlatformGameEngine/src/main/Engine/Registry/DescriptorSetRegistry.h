@@ -34,28 +34,68 @@ namespace ascen
 
             for (const auto& r : entry.mResources)
             {
-                switch (r.mLocation.mType)
+                switch (r.mSlot.mType)
                 {
                     case DESCRIPTOR_TYPE_IMAGE:
                     {
-                        const auto& texture = std::dynamic_pointer_cast<Texture>(mIdToResource->at(r.mResourceId));
+                        if (const auto* textureId = std::get_if<uint64_t>(&r.mResourceIds))
+                        {
+                            if (*textureId == 0) break;
 
-                        writes.push_back(mDescriptorFactory.createImageWrite(
-                            static_cast<VkDescriptorType>(r.mLocation.mType),
-                            texture->handle(),
-                            VK_NULL_HANDLE,
-                            r.mLocation.mSlot));
+                            const auto& texture = std::dynamic_pointer_cast<Texture>(mIdToResource->at(*textureId));
+
+                            writes.push_back(mDescriptorFactory.createImageWrite(
+                                static_cast<VkDescriptorType>(r.mSlot.mType),
+                                texture->handle(),
+                                VK_NULL_HANDLE,
+                                r.mSlot.mSlot));
+                        }
+                        else if (const auto* textureIds = std::get_if<std::vector<uint64_t>>(&r.mResourceIds))
+                        {
+                            if (!textureIds->empty())
+                            {
+                                std::vector<VkDescriptorImageInfo> infos;
+                                infos.reserve(textureIds->size());
+
+                                for (const auto id : *textureIds)
+                                {
+                                    if (id == 0) continue;
+
+                                    const auto& texture = std::dynamic_pointer_cast<Texture>(mIdToResource->at(id));
+
+                                    VkDescriptorImageInfo info{};
+                                    info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+                                    info.imageView = texture->handle();
+                                    info.sampler = VK_NULL_HANDLE;
+
+                                    infos.push_back(info);
+                                }
+
+                                DescriptorSet::Write write{};
+                                write.mWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+                                write.mWrite.dstBinding = r.mSlot.mSlot;
+                                write.mWrite.dstArrayElement = 0;
+                                write.mWrite.descriptorType = static_cast<VkDescriptorType>(r.mSlot.mType);
+                                write.mWrite.descriptorCount = infos.size();
+                                write.mInfo = infos;
+
+                                writes.push_back(write);
+                            }
+                        }
                         break;
                     }
                     case DESCRIPTOR_TYPE_SAMPLER:
                     {
-                        const auto& sampler = std::dynamic_pointer_cast<Sampler>(mIdToResource->at(r.mResourceId));
+                        if (const auto* samplerId = std::get_if<uint64_t>(&r.mResourceIds))
+                        {
+                            const auto& sampler = std::dynamic_pointer_cast<Sampler>(mIdToResource->at(*samplerId));
 
-                        writes.push_back(mDescriptorFactory.createImageWrite(
-                            static_cast<VkDescriptorType>(r.mLocation.mType),
-                            VK_NULL_HANDLE,
-                            sampler->handle(),
-                            r.mLocation.mSlot));
+                            writes.push_back(mDescriptorFactory.createImageWrite(
+                                static_cast<VkDescriptorType>(r.mSlot.mType),
+                                VK_NULL_HANDLE,
+                                sampler->handle(),
+                                r.mSlot.mSlot));
+                        }
                         break;
                     }
                     case DESCRIPTOR_TYPE_IMAGE_SAMPLER:
@@ -65,14 +105,18 @@ namespace ascen
                     case DESCRIPTOR_TYPE_SSBO:
                     case DESCRIPTOR_TYPE_SSBO_DYNAMIC:
                     {
-                        const auto& buffer = std::dynamic_pointer_cast<Buffer>(mIdToResource->at(r.mResourceId));
+                        if (const auto* bufferId = std::get_if<uint64_t>(&r.mResourceIds))
+                        {
+                            const auto& buffer = std::dynamic_pointer_cast<Buffer>(mIdToResource->at(*bufferId));
 
-                        writes.push_back(mDescriptorFactory.createBufferWrite(
-                            static_cast<VkDescriptorType>(r.mLocation.mType),
-                            buffer->handle(),
-                            0,
-                            r.mSize,
-                            r.mLocation.mSlot));
+                            writes.push_back(mDescriptorFactory.createBufferWrite(
+                                static_cast<VkDescriptorType>(r.mSlot.mType),
+                                buffer->handle(),
+                                0,
+                                r.mSize,
+                                r.mSlot.mSlot));
+                        }
+                        break;
                     }
                     default:
                         break;

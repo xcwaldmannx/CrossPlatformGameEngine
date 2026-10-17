@@ -113,6 +113,9 @@ namespace ascen
         void resizeTexture(const std::string& name, const dim::Extent2D extent);
         void resizeTexture(const uint64_t id, const dim::Extent2D extent);
 
+        void uploadTextureArray(const std::string& descriptorSetName, uint32_t binding, const std::vector<uint64_t>& textureIds) const;
+        void uploadTextureArray(uint64_t descriptorSetId, uint32_t binding, const std::vector<uint64_t>& textureIds) const;
+
         void resizeSwapchainDependentResources();
 
         void updateTransfer(

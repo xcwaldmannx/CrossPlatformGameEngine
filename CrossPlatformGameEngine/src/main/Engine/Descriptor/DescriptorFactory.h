@@ -22,7 +22,8 @@ namespace ascen
 			const std::vector<DescriptorPool::Size>& sizes) const;
 
 		DescriptorSetLayoutPtr createSetLayout(
-			const std::vector<DescriptorSetLayout::Binding>& bindings) const;
+			const std::vector<DescriptorSetLayout::Binding>& bindings,
+			const std::vector<uint32_t>& bindFlags) const;
 
 		DescriptorSetPtr createSet(
 			const DescriptorPoolPtr& pool,
@@ -32,6 +33,7 @@ namespace ascen
 		DescriptorSetLayout::Binding createBinding(
 			uint32_t slot,
 			VkDescriptorType type,
+			uint32_t count,
 			uint32_t stageFlags) const;
 
 		DescriptorSet::Write createBufferWrite(

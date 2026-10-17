@@ -19,9 +19,10 @@ DescriptorPoolPtr DescriptorFactory::createPool(
 }
 
 DescriptorSetLayoutPtr DescriptorFactory::createSetLayout(
-	const std::vector<DescriptorSetLayout::Binding>& bindings) const
+	const std::vector<DescriptorSetLayout::Binding>& bindings,
+	const std::vector<uint32_t>& bindFlags) const
 {
-	DescriptorSetLayoutPtr ptr(new DescriptorSetLayout(mDevice, bindings));
+	DescriptorSetLayoutPtr ptr(new DescriptorSetLayout(mDevice, bindings, bindFlags));
 	return ptr;
 }
 
@@ -37,13 +38,14 @@ DescriptorSetPtr DescriptorFactory::createSet(
 DescriptorSetLayout::Binding DescriptorFactory::createBinding(
 	uint32_t slot,
 	VkDescriptorType type,
+	uint32_t count,
 	uint32_t stageFlags) const
 {
 	DescriptorSetLayout::Binding binding{};
 
 	binding.binding = slot;
 	binding.descriptorType = static_cast<VkDescriptorType>(type);
-	binding.descriptorCount = 1;
+	binding.descriptorCount = count;
 	binding.stageFlags = static_cast<VkShaderStageFlagBits>(stageFlags);
 	binding.pImmutableSamplers = nullptr;
 

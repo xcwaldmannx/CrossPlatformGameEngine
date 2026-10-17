@@ -18,7 +18,11 @@ namespace ascen
 		struct Write
 		{
 			VkWriteDescriptorSet mWrite{};
-			std::variant<VkDescriptorBufferInfo, VkDescriptorImageInfo> mInfo{};
+			std::variant<
+				VkDescriptorBufferInfo,
+				VkDescriptorImageInfo,
+				std::vector<VkDescriptorBufferInfo>,
+				std::vector<VkDescriptorImageInfo>> mInfo{};
 		};
 
 		void updateBuffer(
@@ -26,13 +30,19 @@ namespace ascen
 			const uint32_t binding,
 			const VkDescriptorType type,
 			VkBuffer buffer,
-			const VkDeviceSize range);
+			const VkDeviceSize range) const;
 
 		void updateTexture(
 			VkDevice device,
 			uint32_t binding,
 			VkDescriptorType type,
-			VkImageView imageView);
+			VkImageView imageView) const;
+
+		void updateTextures(
+			VkDevice device,
+			const uint32_t binding,
+			const VkDescriptorType type,
+			const std::vector<VkImageView>& imageViews) const;
 
 	private:
 		DescriptorSet(

@@ -22,15 +22,20 @@ namespace ascen
 
             std::vector<VkDescriptorSetLayoutBinding> bindings;
 
+            std::vector<uint32_t> bindFlags;
+
             for (const auto& binding : entry.mBindings)
             {
                 bindings.push_back(mDescriptorFactory.createBinding(
-                    binding.mLocation.mSlot,
-                    static_cast<VkDescriptorType>(binding.mLocation.mType),
+                    binding.mSlot.mSlot,
+                    static_cast<VkDescriptorType>(binding.mSlot.mType),
+                    binding.mCount,
                     binding.mStage));
+
+                bindFlags.push_back(binding.mBindFlags);
             }
 
-            resource = mDescriptorFactory.createSetLayout(bindings);
+            resource = mDescriptorFactory.createSetLayout(bindings, bindFlags);
         }
 
     private:

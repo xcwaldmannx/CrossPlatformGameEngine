@@ -18,7 +18,8 @@ namespace ascen
 	private:
 		DescriptorSetLayout(
 			VkDevice device,
-			const std::vector<Binding>& bindings);
+			const std::vector<Binding>& bindings,
+			const std::vector<uint32_t>& bindFlags);
 
 	public:
 		void destroy(VkDevice device) override;

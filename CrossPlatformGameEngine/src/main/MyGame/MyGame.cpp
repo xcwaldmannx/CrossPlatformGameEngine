@@ -91,8 +91,6 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	loadTextures();
 
-	mEngine.uploadTexture("TEXTURE", mPixels);
-
 	constexpr double r = 25;
 	constexpr double deg = 360;
 
@@ -176,23 +174,45 @@ void MyGame::cleanup()
 
 void MyGame::loadTextures()
 {
-	const std::vector<const char*> mTextureFilepaths =
+	const auto& textures = mModelHandler.getTextures();
+	std::vector<uint64_t> textureIds;
+
+	int textureNameId = 0;
+	for (const auto& texture : textures)
 	{
-		"assets/textures/metal.jpg",
-	};
+		ascen::registry::TextureEntry textureEntry{};
+		textureEntry.mName = "texture_" + std::to_string(textureNameId);
+		textureEntry.mType = ascen::TextureType::IMAGE;
+		textureEntry.mFormat = ascen::FORMAT_RGBA8_SRGB;
+		textureEntry.mExtent = ascen::dim::Extent2D::fixedSize(texture.mWidth, texture.mHeight);
+		auto textureId = mEngine.registerResource<ascen::registry::TextureEntry>(textureEntry);
 
-	uint32_t width = 1024;
-	uint32_t height = 1024;
-	uint32_t channels = 4;
+		textureIds.push_back(textureId);
 
-	mPixels.reserve(width * height * channels * mTextureFilepaths.size());
-
-	for (const auto& filepath : mTextureFilepaths)
-	{
-		RawImage raw;
-		ImageLoader::loadImage(filepath, &raw);
-		mPixels.insert(mPixels.end(), raw.mPixels.begin(), raw.mPixels.end());
+		textureNameId++;
 	}
+
+	mEngine.reload();
+	mEngine.uploadTextureArray("DESCRIPTOR_SET_GRAPHICS", 4, textureIds);
+
+	// const auto& materials = mModelHandler.getMaterials();
+	// int bufferNameId = 0;
+	// for (const auto& material : materials)
+	// {
+	// 	ascen::registry::BufferEntry bufferEntry{};
+	// 	bufferEntry.mName = "material_buffer_" + std::to_string(bufferNameId);
+	// 	bufferEntry.mCapacity = materials.size();
+	// 	bufferEntry.mStride = sizeof(mal::model::Material);
+	// 	bufferEntry.mUsageFlags = ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST;
+	// 	bufferEntry.mMemoryFlags = ascen::BUFFER_MEMORY_LOCAL;
+	// 	mEngine.registerResource<ascen::registry::BufferEntry>(bufferEntry);
+	//
+	// 	bufferNameId++;
+	// }
+
+	// RawImage img;
+	// ImageLoader::loadImage("assets/textures/flesh.jpg", &img);
+	// mEngine.uploadTexture("TEXTURE", img.mPixels);
 }
 
 void MyGame::createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale)

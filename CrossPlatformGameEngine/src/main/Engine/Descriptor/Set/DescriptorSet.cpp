@@ -35,15 +35,29 @@ DescriptorSet::DescriptorSet(
 		VkWriteDescriptorSet ws = w.mWrite;
 		ws.dstSet = mHandle;
 
-		if (std::holds_alternative<VkDescriptorBufferInfo>(w.mInfo))
+		if (const auto* buffer = std::get_if<VkDescriptorBufferInfo>(&w.mInfo))
 		{
-			ws.pBufferInfo = &std::get<VkDescriptorBufferInfo>(w.mInfo);
-			ws.pImageInfo = nullptr;
+			ws.pBufferInfo = buffer;
 		}
-		else
+		else if (const auto* image = std::get_if<VkDescriptorImageInfo>(&w.mInfo))
 		{
-			ws.pImageInfo = &std::get<VkDescriptorImageInfo>(w.mInfo);
-			ws.pBufferInfo = nullptr;
+			ws.pImageInfo = image;
+		}
+		else if (const auto* buffers = std::get_if<std::vector<VkDescriptorBufferInfo>>(&w.mInfo))
+		{
+			if (!buffers->empty())
+			{
+				ws.pBufferInfo = buffers->data();
+				ws.descriptorCount = static_cast<uint32_t>(buffers->size());
+			}
+		}
+		else if (const auto* images = std::get_if<std::vector<VkDescriptorImageInfo>>(&w.mInfo))
+		{
+			if (!images->empty())
+			{
+				ws.pImageInfo = images->data();
+				ws.descriptorCount = static_cast<uint32_t>(images->size());
+			}
 		}
 
 		vkWrites.push_back(ws);
@@ -57,7 +71,7 @@ void DescriptorSet::updateBuffer(
 	const uint32_t binding,
 	const VkDescriptorType type,
 	VkBuffer buffer,
-	const VkDeviceSize range)
+	const VkDeviceSize range) const
 {
 	const VkDescriptorBufferInfo info
 	{
@@ -81,11 +95,11 @@ void DescriptorSet::updateTexture(
 	VkDevice device,
 	const uint32_t binding,
 	const VkDescriptorType type,
-	VkImageView imageView)
+	VkImageView imageView) const
 {
 	VkDescriptorImageInfo info{};
 	info.imageView = imageView;
-	info.imageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	info.sampler = VK_NULL_HANDLE;
 
 	VkWriteDescriptorSet write{};
@@ -95,6 +109,38 @@ void DescriptorSet::updateTexture(
 	write.descriptorCount = 1;
 	write.descriptorType = type;
 	write.pImageInfo = &info;
+
+	vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+}
+
+void DescriptorSet::updateTextures(
+	VkDevice device,
+	const uint32_t binding,
+	const VkDescriptorType type,
+	const std::vector<VkImageView>& imageViews) const
+{
+	if (imageViews.empty()) return;
+
+	std::vector<VkDescriptorImageInfo> infos;
+	infos.reserve(imageViews.size());
+
+	for (const auto& view : imageViews)
+	{
+		VkDescriptorImageInfo info{};
+		info.imageView = view;
+		info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		info.sampler = VK_NULL_HANDLE;
+
+		infos.push_back(info);
+	}
+
+	VkWriteDescriptorSet write{};
+	write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	write.dstSet = mHandle;
+	write.dstBinding = binding;
+	write.descriptorCount = static_cast<uint32_t>(infos.size());
+	write.descriptorType = type;
+	write.pImageInfo = infos.data();
 
 	vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
 }
