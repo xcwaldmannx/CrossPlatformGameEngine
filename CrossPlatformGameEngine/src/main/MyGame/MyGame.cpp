@@ -26,18 +26,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	mEngine.reload();
 
-	std::vector<std::pair<std::string, std::string>> modelFilenames =
-	{
-		{ "model_test", "assets/models/model_test.glb" },
-		{ "anim_test", "assets/models/anim_test.glb" },
-		{ "tentacle", "assets/models/tentacle.glb" },
-		{ "minigun", "assets/models/minigun.glb" },
-	};
-
-	for (const auto& [name, filename] : modelFilenames)
-	{
-		mModelHandler.load(name, filename);
-	}
+	loadTextures();
 
 	const auto& models = mModelHandler.getModels();
 	const auto& vertices = mModelHandler.getVertices();
@@ -89,9 +78,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mEngine.ecs().registerSystem<AnimationSystem>(readSig, writeSig, mEngine, mModelHandler.getPlayers());
 	}
 
-	loadTextures();
-
-	constexpr double r = 25;
+	constexpr double r = 100;
 	constexpr double deg = 360;
 
 	// entities
@@ -105,7 +92,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 		if (i < 180)
 		{
-			createModel("minigun", { x, 3, z }, { rad, 0, 1, 0 }, { 1, 1, 1 });
+			createModel("uh-1y", { x, 3, z }, { rad, 0, 1, 0 }, { 0.2f, 0.2f, 0.2f });
 		}
 		else
 		{
@@ -174,6 +161,20 @@ void MyGame::cleanup()
 
 void MyGame::loadTextures()
 {
+	std::vector<std::pair<std::string, std::string>> modelFilenames =
+	{
+		{ "model_test", "assets/models/model_test.glb" },
+		{ "anim_test", "assets/models/anim_test.glb" },
+		{ "tentacle", "assets/models/tentacle.glb" },
+		{ "minigun", "assets/models/minigun.glb" },
+		{ "uh-1y", "assets/models/uh-1y.glb" },
+	};
+
+	for (const auto& [name, filename] : modelFilenames)
+	{
+		mModelHandler.load(name, filename);
+	}
+
 	const auto& textures = mModelHandler.getTextures();
 	std::vector<uint64_t> textureIds;
 
@@ -193,26 +194,19 @@ void MyGame::loadTextures()
 	}
 
 	mEngine.reload();
+
+	for (size_t i = 0; i < textures.size(); ++i)
+	{
+		mEngine.uploadTexture(
+			"texture_" + std::to_string(i),
+			textures[i].mPixels
+		);
+	}
+
 	mEngine.uploadTextureArray("DESCRIPTOR_SET_GRAPHICS", 4, textureIds);
 
-	// const auto& materials = mModelHandler.getMaterials();
-	// int bufferNameId = 0;
-	// for (const auto& material : materials)
-	// {
-	// 	ascen::registry::BufferEntry bufferEntry{};
-	// 	bufferEntry.mName = "material_buffer_" + std::to_string(bufferNameId);
-	// 	bufferEntry.mCapacity = materials.size();
-	// 	bufferEntry.mStride = sizeof(mal::model::Material);
-	// 	bufferEntry.mUsageFlags = ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST;
-	// 	bufferEntry.mMemoryFlags = ascen::BUFFER_MEMORY_LOCAL;
-	// 	mEngine.registerResource<ascen::registry::BufferEntry>(bufferEntry);
-	//
-	// 	bufferNameId++;
-	// }
-
-	// RawImage img;
-	// ImageLoader::loadImage("assets/textures/flesh.jpg", &img);
-	// mEngine.uploadTexture("TEXTURE", img.mPixels);
+	const auto& materials = mModelHandler.getMaterials();
+	mEngine.uploadBuffer("BUFFER_MATERIAL", materials.data(), materials.size(), sizeof(mal::model::Material), 0);
 }
 
 void MyGame::createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale)
@@ -259,6 +253,10 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 	else if (model == "minigun")
 	{
 		anim.mCurrentAnimation = "rotate";
+	}
+	else if (model == "uh-1y")
+	{
+		anim.mCurrentAnimation = "idle";
 	}
 
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));

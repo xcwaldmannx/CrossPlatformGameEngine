@@ -25,6 +25,7 @@ private:
     uint64_t mBufferIndex = 0;
     uint64_t mBufferAnimData = 0;
     uint64_t mBufferBoneTrans = 0;
+    uint64_t mBufferMaterial = 0;
 
     uint64_t mBufferIndirect = 0;
     uint32_t mBufferIndirectSize = 1'000'000;
@@ -36,8 +37,6 @@ private:
     uint64_t mBufferMousePicking = 0;
 
     uint64_t mSampler = 0;
-    uint64_t mTextureArray = 0;
-
     uint64_t mWritableTextureMousePicking = 0;
     uint64_t mDepthTextureMousePicking = 0;
 

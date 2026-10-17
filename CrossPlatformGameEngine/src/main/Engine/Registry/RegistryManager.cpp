@@ -35,6 +35,8 @@ RegistryManager::RegistryManager(
 
 void RegistryManager::reconstruct()
 {
+    deconstruct();
+
     for (auto& registryVariant : mRegistries)
     {
         std::visit([this](auto& concreteRegistry)
@@ -52,12 +54,34 @@ void RegistryManager::reconstruct()
 
             for (const uint64_t id : ids)
             {
-                const std::shared_ptr<CurrentEntryType>& storedEntry = std::any_cast<std::shared_ptr<CurrentEntryType>>(mIdToEntry.at(id));
+                const auto& storedEntry = std::any_cast<const std::shared_ptr<CurrentEntryType>&>(mIdToEntry.at(id));
 
-                std::shared_ptr<Handle_I>& genericResource = mIdToResource[id];
-                CurrentResourceType& concreteResource = reinterpret_cast<CurrentResourceType&>(genericResource);
+                auto& genericResource = mIdToResource[id];
 
-                concreteRegistry.reconstruct(*storedEntry, concreteResource);
+                if (genericResource) continue;
+
+                CurrentResourceType concreteResource{};
+
+                if constexpr (std::is_same_v<CurrentEntryType, registry::TextureEntry>)
+                {
+                    auto resolvedEntry = *storedEntry;
+                    resolvedEntry.mExtent = resolveExtent(resolvedEntry.mExtent);
+
+                    concreteRegistry.reconstruct(resolvedEntry, concreteResource);
+                }
+                else if constexpr (std::is_same_v<CurrentEntryType, registry::FrameBufferEntry>)
+                {
+                    auto resolvedEntry = *storedEntry;
+                    resolvedEntry.mExtent = resolveExtent(resolvedEntry.mExtent);
+
+                    concreteRegistry.reconstruct(resolvedEntry, concreteResource);
+                }
+                else
+                {
+                    concreteRegistry.reconstruct(*storedEntry, concreteResource);
+                }
+
+                genericResource = concreteResource;
             }
 
         }, registryVariant);
@@ -80,6 +104,8 @@ void RegistryManager::deconstruct()
         if (!resource) continue;
         resource->destroy(mDevice);
     }
+
+    mIdToResource.clear();
 }
 
 dim::Extent2D RegistryManager::resolveExtent(const dim::Extent2D& extent) const

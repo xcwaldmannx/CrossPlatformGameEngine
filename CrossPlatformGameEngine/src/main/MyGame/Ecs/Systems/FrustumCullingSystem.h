@@ -30,7 +30,7 @@ public:
 
         uint32_t mIsVisible;
         int32_t mBoneOffset = -1;
-        uint32_t _pad1;
+        uint32_t mMaterialId = 0;;
     };
 
 public:

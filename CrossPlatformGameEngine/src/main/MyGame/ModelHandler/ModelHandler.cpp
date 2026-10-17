@@ -7,7 +7,7 @@ const Model& ModelHandler::getModel(const std::string& name)
     if (mModels.contains(name)) return mModels.at(name);
     throw std::runtime_error("model does not exist");
 }
-
+#include <iostream>
 void ModelHandler::load(const std::string& name, const std::string &filename)
 {
     mal::Configuration config{};
@@ -43,7 +43,38 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     mVertices.append_range(vertices);
     mIndices.append_range(indices);
     mTextures.append_range(textures);
-    mMaterials.append_range(materials);
+
+    std::cout << "Model: " << name << '\n';
+    std::cout << "Textures: " << textures.size() << '\n';
+    std::cout << "Materials: " << materials.size() << '\n';
+    std::cout << "Global texture offset: " << m.mTextureOffset << '\n';
+
+    for (size_t i = 0; i < materials.size(); ++i)
+    {
+        const auto& mat = materials[i];
+
+        std::cout
+            << "Material " << i
+            << " baseColorTextureId: " << mat.mBaseColorTextureId
+            << " normalTextureId: " << mat.mNormalTextureId
+            << '\n';
+    }
+
+    for (auto material : materials)
+    {
+        auto remap = [&](int32_t& textureId)
+        {
+            if (textureId >= 0) textureId += static_cast<int32_t>(m.mTextureOffset);
+        };
+
+        remap(material.mBaseColorTextureId);
+        remap(material.mNormalTextureId);
+        remap(material.mMetallicRoughnessTextureId);
+        remap(material.mOcclusionTextureId);
+        remap(material.mEmissiveTextureId);
+
+        mMaterials.push_back(material);
+    }
 
     sGlobalVertexOffset = mVertices.size();
     sGlobalIndexOffset = mIndices.size();

@@ -42,6 +42,7 @@ void FrustumCullingSystem::update(const float delta)
             e.mScale      = transform.mScale;
             e.mBoundsPos  = m.mBoundsMax;
             e.mBoundsNeg  = m.mBoundsMin;
+            e.mMaterialId = 3;//m.mMaterialOffset;
             mModelToEntities[m.mId][entityId] = e;
         }
         else
@@ -54,6 +55,7 @@ void FrustumCullingSystem::update(const float delta)
             e.mScale      = transform.mScale;
             e.mBoundsPos  = m.mBoundsMax;
             e.mBoundsNeg  = m.mBoundsMin;
+            e.mMaterialId = 3;//m.mMaterialOffset;
         }
 
     }

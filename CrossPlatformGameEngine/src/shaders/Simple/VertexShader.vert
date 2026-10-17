@@ -16,7 +16,8 @@ struct Entity
 
     uint isVisible;
     int boneOffset;
-    uint pad[3];
+    int materialId;
+    uint pad[2];
 };
 
 layout(std430, set = 0, binding = 0x00) readonly buffer Entities
@@ -102,7 +103,7 @@ layout(location = 6) in ivec4 inBoneIds;
 layout(location = 7) in vec4 inBoneWeights;
 
 layout(location = 0) out vec2 outTexCoord;
-layout(location = 1) out flat uint outTextureId;
+layout(location = 1) out flat uint outMaterialId;
 layout(location = 2) out flat uint outSelected;
 
 vec4 skinPosition(vec4 position, uint boneOffset)
@@ -149,6 +150,6 @@ void main()
     }
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);
-    outTextureId = 0;
+    outMaterialId = entity.materialId;
     outSelected = entity.isSelected;
 }
