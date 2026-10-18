@@ -15,6 +15,8 @@ struct Material
     int metallicRoughnessTextureId;
     int occlusionTextureId;
     int emissiveTextureId;
+
+    int pad;
 };
 
 layout(set = 0, binding = 0x03) uniform sampler texSampler;
@@ -26,7 +28,7 @@ layout(std430, set = 0, binding = 0x05) readonly buffer Materials
 };
 
 layout(location = 0) in vec2 inTexCoord;
-layout(location = 1) in flat uint inMaterialId;
+layout(location = 1) in flat int inMaterialId;
 layout(location = 2) in flat uint inSelected;
 
 layout(location = 0) out vec4 outColor;
@@ -35,15 +37,11 @@ void main()
 {
     Material material = materials[inMaterialId];
 
-    vec4 t;
+    vec4 t = material.baseColor;
 
     if (material.baseColorTextureId >= 0)
     {
-        t = texture(sampler2D(textures[nonuniformEXT(material.baseColorTextureId)], texSampler), inTexCoord);
-    }
-    else
-    {
-        t = texture(sampler2D(textures[nonuniformEXT(1)], texSampler), inTexCoord);
+        t *= texture(sampler2D(textures[nonuniformEXT(material.baseColorTextureId)], texSampler), inTexCoord);
     }
 
     if (inSelected > 0)

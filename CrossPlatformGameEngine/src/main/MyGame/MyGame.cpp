@@ -195,7 +195,7 @@ void MyGame::loadTextures()
 
 	mEngine.reload();
 
-	for (size_t i = 0; i < textures.size(); ++i)
+	for (size_t i = 0; i < textures.size(); i++)
 	{
 		mEngine.uploadTexture(
 			"texture_" + std::to_string(i),
@@ -206,7 +206,8 @@ void MyGame::loadTextures()
 	mEngine.uploadTextureArray("DESCRIPTOR_SET_GRAPHICS", 4, textureIds);
 
 	const auto& materials = mModelHandler.getMaterials();
-	mEngine.uploadBuffer("BUFFER_MATERIAL", materials.data(), materials.size(), sizeof(mal::model::Material), 0);
+	mEngine.resizeBuffer("BUFFER_MATERIAL", materials.size());
+	mEngine.uploadBuffer("BUFFER_MATERIAL", materials.data(), materials.size(), sizeof(Material), 0);
 }
 
 void MyGame::createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale)

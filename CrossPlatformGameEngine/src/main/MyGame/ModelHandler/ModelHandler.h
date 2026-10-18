@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 #include <Mal.h>
-#include <glm/vec3.hpp>
 
 struct Model
 {
@@ -18,6 +17,20 @@ struct Model
     uint32_t mMaterialOffset = 0;
     glm::vec3 mBoundsMax = glm::vec3(0.0f);
     glm::vec3 mBoundsMin = glm::vec3(0.0f);
+};
+
+struct Material
+{
+    glm::vec4 mBaseColor{ 1.0f };
+    float mMetallic = 1.0f;
+    float mRoughness = 1.0f;
+
+    int32_t mBaseColorTextureId = -1;
+    int32_t mNormalTextureId = -1;
+    int32_t mMetallicRoughnessTextureId = -1;
+    int32_t mOcclusionTextureId = -1;
+    int32_t mEmissiveTextureId = -1;
+    int32_t _pad;
 };
 
 class ModelHandler

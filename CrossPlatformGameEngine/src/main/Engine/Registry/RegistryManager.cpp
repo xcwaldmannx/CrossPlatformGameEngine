@@ -35,8 +35,6 @@ RegistryManager::RegistryManager(
 
 void RegistryManager::reconstruct()
 {
-    deconstruct();
-
     for (auto& registryVariant : mRegistries)
     {
         std::visit([this](auto& concreteRegistry)

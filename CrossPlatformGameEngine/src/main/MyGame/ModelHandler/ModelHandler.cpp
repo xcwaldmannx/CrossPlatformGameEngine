@@ -44,22 +44,6 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     mIndices.append_range(indices);
     mTextures.append_range(textures);
 
-    std::cout << "Model: " << name << '\n';
-    std::cout << "Textures: " << textures.size() << '\n';
-    std::cout << "Materials: " << materials.size() << '\n';
-    std::cout << "Global texture offset: " << m.mTextureOffset << '\n';
-
-    for (size_t i = 0; i < materials.size(); ++i)
-    {
-        const auto& mat = materials[i];
-
-        std::cout
-            << "Material " << i
-            << " baseColorTextureId: " << mat.mBaseColorTextureId
-            << " normalTextureId: " << mat.mNormalTextureId
-            << '\n';
-    }
-
     for (auto material : materials)
     {
         auto remap = [&](int32_t& textureId)

@@ -103,7 +103,7 @@ layout(location = 6) in ivec4 inBoneIds;
 layout(location = 7) in vec4 inBoneWeights;
 
 layout(location = 0) out vec2 outTexCoord;
-layout(location = 1) out flat uint outMaterialId;
+layout(location = 1) out flat int outMaterialId;
 layout(location = 2) out flat uint outSelected;
 
 vec4 skinPosition(vec4 position, uint boneOffset)

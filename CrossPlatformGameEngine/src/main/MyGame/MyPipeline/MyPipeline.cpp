@@ -66,7 +66,7 @@ void MyPipeline::initResources()
     mBufferBoneTrans = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_BONE_TRANS", 100'000, sizeof(glm::mat4),
         ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
-    mBufferMaterial = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_MATERIAL", 1'000, sizeof(mal::model::Material),
+    mBufferMaterial = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_MATERIAL", 1'000, sizeof(Material),
         ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
     mBufferVertexBounds = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX_BOUNDS", 10'000, sizeof(float) * 4,
