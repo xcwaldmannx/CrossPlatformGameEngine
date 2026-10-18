@@ -26,6 +26,7 @@ private:
     uint64_t mBufferAnimData = 0;
     uint64_t mBufferBoneTrans = 0;
     uint64_t mBufferMaterial = 0;
+    uint64_t mBufferDrawMaterial = 0;
 
     uint64_t mBufferIndirect = 0;
     uint32_t mBufferIndirectSize = 1'000'000;

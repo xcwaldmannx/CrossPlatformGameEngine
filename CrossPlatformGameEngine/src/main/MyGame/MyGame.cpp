@@ -207,7 +207,7 @@ void MyGame::loadTextures()
 
 	const auto& materials = mModelHandler.getMaterials();
 	mEngine.resizeBuffer("BUFFER_MATERIAL", materials.size());
-	mEngine.uploadBuffer("BUFFER_MATERIAL", materials.data(), materials.size(), sizeof(Material), 0);
+	mEngine.uploadBuffer("BUFFER_MATERIAL", materials.data(), materials.size(), sizeof(mal::model::Material), 0);
 }
 
 void MyGame::createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale)

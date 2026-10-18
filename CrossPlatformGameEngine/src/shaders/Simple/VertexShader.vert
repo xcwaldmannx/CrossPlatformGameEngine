@@ -1,7 +1,7 @@
 #version 450
 
 #extension GL_KHR_vulkan_glsl : enable
-
+#extension GL_ARB_shader_draw_parameters : enable
 struct Entity
 {
     vec3 position;
@@ -33,6 +33,11 @@ layout(std430, set = 0, binding = 0x01) readonly buffer BoneTransformOffsets
 layout(std430, set = 0, binding = 0x02) readonly buffer BoneTransforms
 {
     mat4 boneTransforms[];
+};
+
+layout(std430, set = 0, binding = 0x06) readonly buffer DrawMaterialIds
+{
+    int drawMaterialIds[];
 };
 
 layout(push_constant) uniform PushConstants
@@ -150,6 +155,6 @@ void main()
     }
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);
-    outMaterialId = entity.materialId;
+    outMaterialId = drawMaterialIds[gl_DrawIDARB];
     outSelected = entity.isSelected;
 }

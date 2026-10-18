@@ -17,6 +17,7 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     const auto& vertices = model.getVertices();
     const auto& indices = model.getIndices();
+    const auto meshes = model.getMeshes();
     const auto& textures = model.getTextures();
     const auto& materials = model.getMaterials();
 
@@ -32,6 +33,7 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     m.mMaterialOffset = sGlobalMaterialOffset;
     m.mBoundsMax = model.getBoundsMax();
     m.mBoundsMin = model.getBoundsMin();
+    m.mMeshes.append_range(meshes);
 
     if (model.hasAnimations())
     {
@@ -46,17 +48,7 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     for (const auto& material : materials)
     {
-        Material gpuMaterial{};
-
-        gpuMaterial.mBaseColor = material.mBaseColor;
-        gpuMaterial.mMetallic = material.mMetallic;
-        gpuMaterial.mRoughness = material.mRoughness;
-
-        gpuMaterial.mBaseColorTextureId = material.mBaseColorTextureId;
-        gpuMaterial.mNormalTextureId = material.mNormalTextureId;
-        gpuMaterial.mMetallicRoughnessTextureId = material.mMetallicRoughnessTextureId;
-        gpuMaterial.mOcclusionTextureId = material.mOcclusionTextureId;
-        gpuMaterial.mEmissiveTextureId = material.mEmissiveTextureId;
+        mal::model::Material gpuMaterial = material;
 
         auto remap = [&](int32_t& textureId)
         {
@@ -108,7 +100,7 @@ const mal::model::TextureArray& ModelHandler::getTextures()
     return mTextures;
 }
 
-const std::vector<Material>& ModelHandler::getMaterials()
+const mal::model::MaterialArray& ModelHandler::getMaterials()
 {
     return mMaterials;
 }
