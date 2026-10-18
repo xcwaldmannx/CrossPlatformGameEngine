@@ -47,6 +47,7 @@ void FrustumCullingSystem::update(const float delta)
     for (const auto& [name, model] : mModels)
     {
         modelsById[model.mId] = &model;
+
     }
 
     for (const auto& [modelId, entities] : mModelToEntities)
@@ -71,16 +72,16 @@ void FrustumCullingSystem::update(const float delta)
         {
             ascen::IndexedIndirectDraw drawCommand{};
 
-            drawCommand.firstIndex = mesh.mIndexOffset;
+            drawCommand.firstIndex = model.mIndexOffset + mesh.mIndexOffset;
             drawCommand.indexCount = mesh.mIndexCount;
-            drawCommand.vertexOffset = static_cast<int32_t>(mesh.mVertexOffset);
+            drawCommand.vertexOffset = static_cast<int32_t>(model.mVertexOffset);
 
             drawCommand.firstInstance = firstInstance;
             drawCommand.instanceCount = instanceCount;
 
             mDrawCommands.push_back(drawCommand);
 
-            mDrawMaterialIds.push_back(static_cast<int32_t>(mesh.mMaterialIndex));
+            mDrawMaterialIds.push_back(static_cast<int32_t>(model.mMaterialOffset + mesh.mMaterialIndex));
         }
 
         firstInstance += instanceCount;
