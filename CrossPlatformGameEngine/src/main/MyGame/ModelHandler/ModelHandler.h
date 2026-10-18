@@ -49,7 +49,7 @@ public:
     const mal::model::VertexArray& getVertices();
     const mal::model::IndexArray& getIndices();
     const mal::model::TextureArray& getTextures();
-    const mal::model::MaterialArray& getMaterials();
+    const std::vector<Material>& getMaterials();
 
 private:
     std::unordered_map<std::string, Model> mModels;
@@ -63,5 +63,5 @@ private:
     mal::model::VertexArray mVertices;
     mal::model::IndexArray mIndices;
     mal::model::TextureArray mTextures;
-    mal::model::MaterialArray mMaterials;
+    std::vector<Material> mMaterials;
 };

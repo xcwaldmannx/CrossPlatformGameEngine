@@ -51,13 +51,19 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
             if (textureId >= 0) textureId += static_cast<int32_t>(m.mTextureOffset);
         };
 
-        remap(material.mBaseColorTextureId);
-        remap(material.mNormalTextureId);
-        remap(material.mMetallicRoughnessTextureId);
-        remap(material.mOcclusionTextureId);
-        remap(material.mEmissiveTextureId);
+        Material gpuMaterial{};
 
-        mMaterials.push_back(material);
+        gpuMaterial.mBaseColor = material.mBaseColor;
+        gpuMaterial.mMetallic = material.mMetallic;
+        gpuMaterial.mRoughness = material.mRoughness;
+
+        remap(gpuMaterial.mBaseColorTextureId);
+        remap(gpuMaterial.mNormalTextureId);
+        remap(gpuMaterial.mMetallicRoughnessTextureId);
+        remap(gpuMaterial.mOcclusionTextureId);
+        remap(gpuMaterial.mEmissiveTextureId);
+
+        mMaterials.push_back(gpuMaterial);
     }
 
     sGlobalVertexOffset = mVertices.size();
@@ -96,7 +102,7 @@ const mal::model::TextureArray& ModelHandler::getTextures()
     return mTextures;
 }
 
-const mal::model::MaterialArray& ModelHandler::getMaterials()
+const std::vector<Material>& ModelHandler::getMaterials()
 {
     return mMaterials;
 }

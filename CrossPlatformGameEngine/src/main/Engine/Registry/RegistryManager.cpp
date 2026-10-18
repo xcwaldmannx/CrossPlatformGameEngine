@@ -84,8 +84,6 @@ void RegistryManager::reconstruct()
 
         }, registryVariant);
     }
-
-    resizeSwapchainDependentResources();
 }
 
 void RegistryManager::deconstruct()
