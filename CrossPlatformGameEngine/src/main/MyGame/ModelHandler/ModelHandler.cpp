@@ -44,18 +44,24 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     mIndices.append_range(indices);
     mTextures.append_range(textures);
 
-    for (auto material : materials)
+    for (const auto& material : materials)
     {
-        auto remap = [&](int32_t& textureId)
-        {
-            if (textureId >= 0) textureId += static_cast<int32_t>(m.mTextureOffset);
-        };
-
         Material gpuMaterial{};
 
         gpuMaterial.mBaseColor = material.mBaseColor;
         gpuMaterial.mMetallic = material.mMetallic;
         gpuMaterial.mRoughness = material.mRoughness;
+
+        gpuMaterial.mBaseColorTextureId = material.mBaseColorTextureId;
+        gpuMaterial.mNormalTextureId = material.mNormalTextureId;
+        gpuMaterial.mMetallicRoughnessTextureId = material.mMetallicRoughnessTextureId;
+        gpuMaterial.mOcclusionTextureId = material.mOcclusionTextureId;
+        gpuMaterial.mEmissiveTextureId = material.mEmissiveTextureId;
+
+        auto remap = [&](int32_t& textureId)
+        {
+            if (textureId >= 0) textureId += static_cast<int32_t>(m.mTextureOffset);
+        };
 
         remap(gpuMaterial.mBaseColorTextureId);
         remap(gpuMaterial.mNormalTextureId);
