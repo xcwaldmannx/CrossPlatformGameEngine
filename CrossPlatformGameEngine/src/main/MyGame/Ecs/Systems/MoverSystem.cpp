@@ -21,90 +21,93 @@ void MoverSystem::update(float delta)
         const auto& mover = mSystem->getComponent<MoverComponent>(e);
         auto& transform = mSystem->getComponent<TransformComponent>(e);
 
-        const auto& pos = transform.mPosition;
-        auto& rot = transform.mRotation;
-
-        double mouseDeltaX = InputManager::getMouseDeltaX();
-        double mouseDeltaY = InputManager::getMouseDeltaY();
-
-        float sensitivity = 0.0025f;
-        mYaw   -= static_cast<float>(mouseDeltaX) * mover.mLookSpeed * sensitivity;
-        mPitch -= static_cast<float>(mouseDeltaY) * mover.mLookSpeed * sensitivity;
-
-        mPitch = glm::clamp(mPitch, glm::radians(-89.0f), glm::radians(89.0f));
-
-        const glm::quat yawRotation = glm::angleAxis(mYaw, glm::vec3(0.0f, 1.0f, 0.0f));
-        const glm::quat pitchRotation = glm::angleAxis(mPitch, glm::vec3(1.0f, 0.0f, 0.0f));
-
-        transform.mRotation = glm::normalize(yawRotation * pitchRotation);
-
-        rot = transform.mRotation;
-
-        const glm::vec3 forward = rot * glm::vec3(0.0f, 0.0f, -1.0f);
-        const glm::vec3 right = rot * glm::vec3(1.0f, 0.0f, 0.0f);
-        const glm::vec3 up = rot * glm::vec3(0.0f, 1.0f, 0.0f);
-
-        glm::vec3 direction { 0, 0, 0 };
-
-        if (InputManager::isKeyPressed(GLFW_KEY_A))
+        if (mover.mIsActive)
         {
-            direction -= right;
-        }
+            const auto& pos = transform.mPosition;
+            auto& rot = transform.mRotation;
 
-        if (InputManager::isKeyPressed(GLFW_KEY_D))
-        {
-            direction += right;
-        }
+            double mouseDeltaX = InputManager::getMouseDeltaX();
+            double mouseDeltaY = InputManager::getMouseDeltaY();
 
-        if (InputManager::isKeyPressed(GLFW_KEY_W))
-        {
-            direction += forward;
-        }
+            float sensitivity = 0.0025f;
+            mYaw   -= static_cast<float>(mouseDeltaX) * mover.mLookSpeed * sensitivity;
+            mPitch -= static_cast<float>(mouseDeltaY) * mover.mLookSpeed * sensitivity;
 
-        if (InputManager::isKeyPressed(GLFW_KEY_S))
-        {
-            direction -= forward;
-        }
+            mPitch = glm::clamp(mPitch, glm::radians(-89.0f), glm::radians(89.0f));
 
-        if (InputManager::isKeyPressed(GLFW_KEY_SPACE))
-        {
-            direction += up;
-        }
+            const glm::quat yawRotation = glm::angleAxis(mYaw, glm::vec3(0.0f, 1.0f, 0.0f));
+            const glm::quat pitchRotation = glm::angleAxis(mPitch, glm::vec3(1.0f, 0.0f, 0.0f));
 
-        if (InputManager::isKeyPressed(GLFW_KEY_C))
-        {
-            direction -= up;
-        }
+            transform.mRotation = glm::normalize(yawRotation * pitchRotation);
 
-        if (glm::dot(direction, direction) > 0.0f)
-        {
-            direction = glm::normalize(direction);
-        }
+            rot = transform.mRotation;
 
-        direction *= mover.mWalkSpeed;
+            const glm::vec3 forward = rot * glm::vec3(0.0f, 0.0f, -1.0f);
+            const glm::vec3 right = rot * glm::vec3(1.0f, 0.0f, 0.0f);
+            const glm::vec3 up = rot * glm::vec3(0.0f, 1.0f, 0.0f);
 
-        MoverContext context{};
+            glm::vec3 direction { 0, 0, 0 };
 
-        const b3Vec3 origin = { pos.x, pos.y, pos.z };
-        const b3Vec3 translation = { direction.x * delta, direction.y * delta, direction.z * delta };
-        const b3QueryFilter filter = b3DefaultQueryFilter();
-        const float fraction = b3World_CastMover(mWorldId, origin, &capsuleMover, translation, filter, castMoverCallback, &context);
+            if (InputManager::isKeyPressed(GLFW_KEY_A))
+            {
+                direction -= right;
+            }
 
-        const b3Vec3 safeDelta = b3MulSV(fraction, translation);
+            if (InputManager::isKeyPressed(GLFW_KEY_D))
+            {
+                direction += right;
+            }
 
-        transform.mPosition.x += safeDelta.x;
-        transform.mPosition.y += safeDelta.y;
-        transform.mPosition.z += safeDelta.z;
+            if (InputManager::isKeyPressed(GLFW_KEY_W))
+            {
+                direction += forward;
+            }
 
-        capsuleMover.center1 += safeDelta;
-        capsuleMover.center2 += safeDelta;
+            if (InputManager::isKeyPressed(GLFW_KEY_S))
+            {
+                direction -= forward;
+            }
 
-        if (fraction < 1.0f && context.mHasHit && b3Body_IsValid(context.mHitBodyId))
-        {
-            b3Vec3 pushDirection = b3Normalize(context.mPosition - b3Vec3(pos.x, pos.y, pos.z));
-            b3Vec3 pushStrength = b3MulSV(10.0f, pushDirection);
+            if (InputManager::isKeyPressed(GLFW_KEY_SPACE))
+            {
+                direction += up;
+            }
 
-            b3Body_ApplyLinearImpulseToCenter(context.mHitBodyId, pushStrength, true);
+            if (InputManager::isKeyPressed(GLFW_KEY_C))
+            {
+                direction -= up;
+            }
+
+            if (glm::dot(direction, direction) > 0.0f)
+            {
+                direction = glm::normalize(direction);
+            }
+
+            direction *= mover.mWalkSpeed;
+
+            MoverContext context{};
+
+            const b3Vec3 origin = { pos.x, pos.y, pos.z };
+            const b3Vec3 translation = { direction.x * delta, direction.y * delta, direction.z * delta };
+            const b3QueryFilter filter = b3DefaultQueryFilter();
+            const float fraction = b3World_CastMover(mWorldId, origin, &capsuleMover, translation, filter, castMoverCallback, &context);
+
+            const b3Vec3 safeDelta = b3MulSV(fraction, translation);
+
+            transform.mPosition.x += safeDelta.x;
+            transform.mPosition.y += safeDelta.y;
+            transform.mPosition.z += safeDelta.z;
+
+            capsuleMover.center1 += safeDelta;
+            capsuleMover.center2 += safeDelta;
+
+            if (fraction < 1.0f && context.mHasHit && b3Body_IsValid(context.mHitBodyId))
+            {
+                b3Vec3 pushDirection = b3Normalize(context.mPosition - b3Vec3(pos.x, pos.y, pos.z));
+                b3Vec3 pushStrength = b3MulSV(10.0f, pushDirection);
+
+                b3Body_ApplyLinearImpulseToCenter(context.mHitBodyId, pushStrength, true);
+            }
         }
     }
 }

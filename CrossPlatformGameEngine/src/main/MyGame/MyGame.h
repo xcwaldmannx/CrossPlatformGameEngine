@@ -9,7 +9,10 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
 
+#ifndef GLM_ENABLE_EXPERIMENTAL
 #define GLM_ENABLE_EXPERIMENTAL
+#endif
+
 #include <glm/gtx/quaternion.hpp>
 
 #include <box3d/box3d.h>
@@ -34,7 +37,6 @@ public:
 private:
 	void loadTextures();
 	void createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale);
-	void updateCamera(float delta);
 	void updateMousePicking();
 
 private:
@@ -71,13 +73,12 @@ private:
 		{ FROSTY,     "res/models/frosty.model"     },
 	};
 
-	double mEntityCount = 32;
+	double mEntityCount = 64;
 
 	b3WorldId mWorldId;
 	EntityId mCharacter;
+	EntityId mHelicopter;
 
-	glm::vec3 camUpWorld { 0.0f, 1.0f, 0.0f };
-	glm::vec3 camPosition { 0.0f, 5.0f, 0.0f };
-	glm::quat camRotation;
-	float camSpeed = 15.0f;
+	const float mPhysicsDelta = 1.0f / 60.0f;
+	float mAccumulatedPhysicsDelta = 0.0f;
 };
