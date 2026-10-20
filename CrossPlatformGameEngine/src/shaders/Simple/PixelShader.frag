@@ -46,7 +46,7 @@ void main()
 
     if (inSelected > 0)
     {
-        outColor = mix(vec4(1, 0, 0, 1), t, 0.75);
+        outColor = mix(t, vec4(1, 0, 0, 1), 0.1);
     }
     else
     {

@@ -99,7 +99,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mEngine.ecs().registerSystem<FlightControlSystem>(readSig, writeSig);
 	}
 
-	constexpr double radius = 8192.0;
+	constexpr double radius = 4096.0;
 
 	std::random_device rd;
 	std::mt19937 rng(rd());
@@ -117,23 +117,44 @@ MyGame::MyGame(WindowManager& windowManager) :
 		const double x = distance * std::cos(angle);
 		const double z = distance * std::sin(angle);
 
-		const float rotation = static_cast<float>(-angle);
+		const float rotation = static_cast<float>(angleDist(rng) * 180 / M_PI);
 
 		if (i < mEntityCount / 2)
 		{
-			createModel("minigun", { x, 3, z },
-						{ rotation, 0, 1, 0 }, { 1, 1, 1 });
+			auto id = mEngine.ecs().addEntity();
+
+			TransformComponent transform{};
+			transform.mPosition = { x, 0, z };
+			transform.mRotation = { 180.0f, 0, rotation, 1 };
+			transform.mScale = { 1, 1, 1 };
+
+			ModelComponent model{};
+			model.mName = "mud_hut_1";
+
+			mEngine.ecs().addComponent<TransformComponent>(id, std::move(transform));
+			mEngine.ecs().addComponent<ModelComponent>(id, std::move(model));
 		}
 		else
 		{
-			createModel("tentacle", { x, 3, z },
-						{ rotation, 0, 1, 0 }, { 2, 2, 2 });
+			auto id = mEngine.ecs().addEntity();
+
+			TransformComponent transform{};
+			transform.mPosition = { x, 0, z };
+			transform.mRotation = { 180.0f, 0, rotation, 1 };
+			transform.mScale = { 1, 1, 1 };
+
+			ModelComponent model{};
+			model.mName = "mud_hut_2";
+
+			mEngine.ecs().addComponent<TransformComponent>(id, std::move(transform));
+			mEngine.ecs().addComponent<ModelComponent>(id, std::move(model));
 		}
 	}
 
-	mEntityCount += 2;
+	mEntityCount += 3;
 
-	{ // helicopter
+	{
+		// helicopter
 		mHelicopter = mEngine.ecs().addEntity();
 
 		TransformComponent transform{};
@@ -180,7 +201,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		camera.mIsActive = true;
 
 		MoverComponent m{};
-		m.mWalkSpeed = 10.0f;
+		m.mWalkSpeed = 100.0f;
 		m.mIsActive = true;
 
 		mEngine.ecs().addComponent<TransformComponent>(mCharacter, std::move(t));
@@ -288,6 +309,8 @@ void MyGame::loadTextures()
 		{ "tentacle", "assets/models/tentacle.glb" },
 		{ "minigun", "assets/models/minigun.glb" },
 		{ "uh-1y", "assets/models/uh-1y.glb" },
+		{ "mud_hut_1", "assets/models/mud_hut_1.glb" },
+		{ "mud_hut_2", "assets/models/mud_hut_2.glb" },
 	};
 
 	for (const auto& [name, filename] : modelFilenames)
@@ -393,7 +416,7 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
 	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
 
-	if (model != "model_test") mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
+	if (model != "model_test" && model != "tentacle") mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
 }
 
 void MyGame::updateMousePicking()
