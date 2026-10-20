@@ -19,14 +19,12 @@ namespace ascen
 
 		TexturePtr createImage(
 			const CommandPoolPtr& commandPool,
-			dim::Extent2D extent,
-			uint32_t layers) const;
+			dim::Extent2D extent) const;
 
 		TexturePtr createWritable(
 			const CommandPoolPtr& commandPool,
 			const Format format,
-			dim::Extent2D extent,
-			uint32_t layers) const;
+			dim::Extent2D extent) const;
 
 		TexturePtr createDepth(
 			const CommandPoolPtr& commandPool,

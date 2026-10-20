@@ -6,7 +6,6 @@
 #include "../Components/PhysicsBodyComponent.h"
 
 #include <glm/gtc/quaternion.hpp>
-//#include <glm/gtx/quaternion.hpp>
 
 PhysicsSystem::PhysicsSystem(ModelHandler& modelHandler, b3WorldId& worldId) :
     mWorldId(worldId), mModelHandler(modelHandler)
@@ -16,7 +15,7 @@ PhysicsSystem::PhysicsSystem(ModelHandler& modelHandler, b3WorldId& worldId) :
 
     b3BodyId groundId = b3CreateBody(mWorldId, &groundBodyDef);
 
-    b3BoxHull groundBox = b3MakeBoxHull(1024.0f, 1.0f, 1024.0f);
+    b3BoxHull groundBox = b3MakeBoxHull(8192.0f, 1.0f, 8192.0f);
 
     b3ShapeDef groundShapeDef = b3DefaultShapeDef();
     b3CreateHullShape(groundId, &groundShapeDef, &groundBox.base);
@@ -45,6 +44,7 @@ void PhysicsSystem::update(const float delta)
             bodyDef.position = b3Vec3{ pos.x, pos.y, pos.z };
             bodyDef.rotation = b3MakeQuatFromAxisAngle({ rot.x, rot.y, rot.z }, rot.w);
             b3BodyId bodyId = b3CreateBody(mWorldId, &bodyDef);
+            physicsBody.mId = bodyId;
             mBodies.emplace(e, bodyId);
 
             const auto& model = mSystem->getComponent<ModelComponent>(e);
@@ -59,7 +59,7 @@ void PhysicsSystem::update(const float delta)
             b3BoxHull box = b3MakeOffsetBoxHull(halfExtents.x, halfExtents.y, halfExtents.z, { center.x, center.y, center.z });
 
             b3ShapeDef shapeDef = b3DefaultShapeDef();
-            shapeDef.density = 3.0f;
+            shapeDef.density = physicsBody.mDensity;
             shapeDef.baseMaterial.friction = 0.5f;
 
             b3CreateHullShape(bodyId, &shapeDef, &box.base);
@@ -68,8 +68,14 @@ void PhysicsSystem::update(const float delta)
         const auto bodyTrans = b3Body_GetTransform(mBodies.at(e));
 
         auto& bodyId = mBodies.at(e);
-        b3Body_ApplyLinearImpulseToCenter(bodyId, b3Vec3(physicsBody.mAppliedForce.x, physicsBody.mAppliedForce.y, physicsBody.mAppliedForce.z), true);
+
+        // linear
+        b3Body_ApplyForceToCenter(bodyId, b3Vec3(physicsBody.mAppliedForce.x, physicsBody.mAppliedForce.y, physicsBody.mAppliedForce.z), true);
         physicsBody.mAppliedForce = glm::vec3(0);
+
+        // rotational
+        b3Body_ApplyTorque(bodyId, b3Vec3(physicsBody.mAppliedTorque.x, physicsBody.mAppliedTorque.y, physicsBody.mAppliedTorque.z), true);
+        physicsBody.mAppliedTorque = glm::vec3(0);
 
         const auto bodyPos = bodyTrans.p;
         transform.mPosition = { bodyPos.x, bodyPos.y, bodyPos.z };
@@ -80,5 +86,5 @@ void PhysicsSystem::update(const float delta)
         transform.mRotation = glm::eulerAngles(q);
     }
 
-    b3World_Step(mWorldId, delta, 8);
+    b3World_Step(mWorldId, delta, 4);
 }

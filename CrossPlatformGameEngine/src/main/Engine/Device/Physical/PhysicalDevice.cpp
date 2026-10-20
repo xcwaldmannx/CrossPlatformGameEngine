@@ -98,7 +98,7 @@ bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR su
     // TODO: improve the usability of checking support and enabling features
 
     // other support
-    VkPhysicalDeviceFeatures supportedFeatures;
+    VkPhysicalDeviceFeatures supportedFeatures{};
     vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
     VkBool32 anisotropicSupport = supportedFeatures.samplerAnisotropy;
@@ -106,16 +106,31 @@ bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR su
     VkBool32 multiDrawIndirect = supportedFeatures.multiDrawIndirect;
     VkBool32 drawIndirectFirstInstance = supportedFeatures.drawIndirectFirstInstance;
 
+    // Synchronization2
     VkPhysicalDeviceSynchronization2FeaturesKHR sync2Features{};
     sync2Features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
 
+    // Descriptor indexing
+    VkPhysicalDeviceDescriptorIndexingFeatures indexingFeatures{};
+    indexingFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES;
+
+    // Feature chain
     VkPhysicalDeviceFeatures2 features2{};
     features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-    features2.pNext = &sync2Features;
 
+    features2.pNext = &sync2Features;
+    sync2Features.pNext = &indexingFeatures;
+
+    // Query supported features
     vkGetPhysicalDeviceFeatures2(device, &features2);
 
+    // Synchronization2 support
     VkBool32 sync2Support = sync2Features.synchronization2;
+
+    // Descriptor indexing support
+    VkBool32 partiallyBoundSupport = indexingFeatures.descriptorBindingPartiallyBound;
+    VkBool32 sampledImageUpdateAfterBindSupport = indexingFeatures.descriptorBindingSampledImageUpdateAfterBind;
+    VkBool32 nonUniformIndexingSupport = indexingFeatures.shaderSampledImageArrayNonUniformIndexing;
 
     return hasQueueFamilySupport &&
         hasSurfaceSupport &&
@@ -124,7 +139,10 @@ bool PhysicalDevice::checkDeviceSupport(VkPhysicalDevice device, VkSurfaceKHR su
         fillModeNonSolidSupport &&
         multiDrawIndirect &&
         drawIndirectFirstInstance &&
-        sync2Support;
+        sync2Support &&
+        partiallyBoundSupport &&
+        sampledImageUpdateAfterBindSupport &&
+        nonUniformIndexingSupport;
 }
 
 VkFormat PhysicalDevice::findDepthFormat(VkPhysicalDevice physicalDevice)

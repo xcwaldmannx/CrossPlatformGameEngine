@@ -231,7 +231,7 @@ namespace ascen
 			std::unordered_map<DescriptorType, uint32_t> mDescriptorTypeCounts;
 		};
 
-		struct DescriptorLocation
+		struct DescriptorSlot
 		{
 			uint32_t mSlot = 0;
 			DescriptorType mType = DESCRIPTOR_TYPE_SSBO;
@@ -239,14 +239,16 @@ namespace ascen
 
 		struct DescriptorBinding
 		{
-			DescriptorLocation mLocation;
+			DescriptorSlot mSlot{};
 			ShaderStageFlags mStage = SHADER_STAGE_VERTEX;
+			uint32_t mCount = 1;
+			VkDescriptorBindingFlags mBindFlags = 0;
 		};
 
 		struct DescriptorResource
 		{
-			uint64_t mResourceId = 0;
-			DescriptorLocation mLocation;
+			std::variant<uint64_t, std::vector<uint64_t>> mResourceIds;
+			DescriptorSlot mSlot{};
 			uint64_t mSize = 0;
 		};
 
@@ -288,7 +290,6 @@ namespace ascen
 			TextureType mType = TextureType::NONE;
 			Format mFormat = FORMAT_RGBA8_SRGB;
 			dim::Extent2D mExtent{};
-			uint32_t mLayers = 0;
 		};
 
 		struct RenderPassEntry : Entry

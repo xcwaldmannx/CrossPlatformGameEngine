@@ -7,7 +7,7 @@ const Model& ModelHandler::getModel(const std::string& name)
     if (mModels.contains(name)) return mModels.at(name);
     throw std::runtime_error("model does not exist");
 }
-
+#include <iostream>
 void ModelHandler::load(const std::string& name, const std::string &filename)
 {
     mal::Configuration config{};
@@ -17,6 +17,9 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     const auto& vertices = model.getVertices();
     const auto& indices = model.getIndices();
+    const auto meshes = model.getMeshes();
+    const auto& textures = model.getTextures();
+    const auto& materials = model.getMaterials();
 
     mModels.emplace(name, Model());
     Model& m = mModels.at(name);
@@ -26,9 +29,11 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
     m.mVertexOffset = sGlobalVertexOffset;
     m.mIndexOffset = sGlobalIndexOffset;
     m.mIndexCount = indices.size();
+    m.mTextureOffset = sGlobalTextureOffset;
+    m.mMaterialOffset = sGlobalMaterialOffset;
     m.mBoundsMax = model.getBoundsMax();
     m.mBoundsMin = model.getBoundsMin();
-
+    m.mMeshes.append_range(meshes);
 
     if (model.hasAnimations())
     {
@@ -39,9 +44,30 @@ void ModelHandler::load(const std::string& name, const std::string &filename)
 
     mVertices.append_range(vertices);
     mIndices.append_range(indices);
+    mTextures.append_range(textures);
+
+    for (const auto& material : materials)
+    {
+        mal::model::Material gpuMaterial = material;
+
+        auto remap = [&](int32_t& textureId)
+        {
+            if (textureId >= 0) textureId += static_cast<int32_t>(m.mTextureOffset);
+        };
+
+        remap(gpuMaterial.mBaseColorTextureId);
+        remap(gpuMaterial.mNormalTextureId);
+        remap(gpuMaterial.mMetallicRoughnessTextureId);
+        remap(gpuMaterial.mOcclusionTextureId);
+        remap(gpuMaterial.mEmissiveTextureId);
+
+        mMaterials.push_back(gpuMaterial);
+    }
 
     sGlobalVertexOffset = mVertices.size();
     sGlobalIndexOffset = mIndices.size();
+    sGlobalTextureOffset = mTextures.size();
+    sGlobalMaterialOffset = mMaterials.size();
 }
 
 const std::unordered_map<std::string, Model>& ModelHandler::getModels()
@@ -60,11 +86,22 @@ std::unordered_map<std::string, mal::AnimationPlayer>& ModelHandler::getPlayers(
     return mPlayers;
 }
 
-const std::vector<mal::model::Vertex>& ModelHandler::getVertices()
+const mal::model::VertexArray& ModelHandler::getVertices()
 {
     return mVertices;
 }
-const std::vector<uint32_t>& ModelHandler::getIndices()
+const mal::model::IndexArray& ModelHandler::getIndices()
 {
     return mIndices;
 }
+
+const mal::model::TextureArray& ModelHandler::getTextures()
+{
+    return mTextures;
+}
+
+const mal::model::MaterialArray& ModelHandler::getMaterials()
+{
+    return mMaterials;
+}
+

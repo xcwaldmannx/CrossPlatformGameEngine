@@ -7,14 +7,12 @@ WritableTexture::WritableTexture(
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
 	const Format format,
-	dim::Extent2D extent,
-	uint32_t layers) :
+	dim::Extent2D extent) :
 	Texture(
 		physicalDevice,
 		device,
 		commandPool,
 		extent,
-		layers,
 		static_cast<VkFormat>(format),
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,

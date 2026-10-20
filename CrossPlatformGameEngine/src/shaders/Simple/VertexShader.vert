@@ -1,7 +1,7 @@
 #version 450
 
 #extension GL_KHR_vulkan_glsl : enable
-
+#extension GL_ARB_shader_draw_parameters : enable
 struct Entity
 {
     vec3 position;
@@ -16,7 +16,8 @@ struct Entity
 
     uint isVisible;
     int boneOffset;
-    uint pad[3];
+    int materialId;
+    uint pad[2];
 };
 
 layout(std430, set = 0, binding = 0x00) readonly buffer Entities
@@ -32,6 +33,11 @@ layout(std430, set = 0, binding = 0x01) readonly buffer BoneTransformOffsets
 layout(std430, set = 0, binding = 0x02) readonly buffer BoneTransforms
 {
     mat4 boneTransforms[];
+};
+
+layout(std430, set = 0, binding = 0x06) readonly buffer DrawMaterialIds
+{
+    int drawMaterialIds[];
 };
 
 layout(push_constant) uniform PushConstants
@@ -102,7 +108,7 @@ layout(location = 6) in ivec4 inBoneIds;
 layout(location = 7) in vec4 inBoneWeights;
 
 layout(location = 0) out vec2 outTexCoord;
-layout(location = 1) out flat uint outTextureId;
+layout(location = 1) out flat int outMaterialId;
 layout(location = 2) out flat uint outSelected;
 
 vec4 skinPosition(vec4 position, uint boneOffset)
@@ -149,6 +155,6 @@ void main()
     }
 
     outTexCoord = vec2(inTexCoord.x, -inTexCoord.y);
-    outTextureId = 0;
+    outMaterialId = drawMaterialIds[gl_DrawIDARB];
     outSelected = entity.isSelected;
 }

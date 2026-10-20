@@ -138,8 +138,8 @@ void WindowManager::windowThread()
     mIsRunning.store(true, std::memory_order_release);
     mWindowReady.store(true, std::memory_order_release);
 
-    glfwMakeContextCurrent(mWindow);
-    glfwSwapInterval(1);
+    // glfwMakeContextCurrent(mWindow);
+    // glfwSwapInterval(1);
 
     while (!mIsCloseRequested.load(std::memory_order_acquire) && mIsRunning.load(std::memory_order_acquire))
     {

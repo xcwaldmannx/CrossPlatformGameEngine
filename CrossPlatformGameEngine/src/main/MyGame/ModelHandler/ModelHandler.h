@@ -3,7 +3,6 @@
 #include <unordered_map>
 
 #include <Mal.h>
-#include <glm/vec3.hpp>
 
 struct Model
 {
@@ -14,8 +13,12 @@ struct Model
     uint32_t mVertexOffset = 0;
     uint32_t mIndexOffset = 0;
     uint32_t mIndexCount = 0;
+    uint32_t mTextureOffset = 0;
+    uint32_t mMaterialOffset = 0;
     glm::vec3 mBoundsMax = glm::vec3(0.0f);
     glm::vec3 mBoundsMin = glm::vec3(0.0f);
+
+    std::vector<mal::model::Mesh> mMeshes;
 };
 
 class ModelHandler
@@ -31,8 +34,10 @@ public:
     mal::AnimationPlayer& getPlayer(const std::string& name);
     std::unordered_map<std::string, mal::AnimationPlayer>& getPlayers();
 
-    const std::vector<mal::model::Vertex>& getVertices();
-    const std::vector<uint32_t>& getIndices();
+    const mal::model::VertexArray& getVertices();
+    const mal::model::IndexArray& getIndices();
+    const mal::model::TextureArray& getTextures();
+    const mal::model::MaterialArray& getMaterials();
 
 private:
     std::unordered_map<std::string, Model> mModels;
@@ -40,7 +45,11 @@ private:
 
     inline static uint32_t sGlobalVertexOffset = 0;
     inline static uint32_t sGlobalIndexOffset = 0;
+    inline static uint32_t sGlobalTextureOffset = 0;
+    inline static uint32_t sGlobalMaterialOffset = 0;
 
-    std::vector<mal::model::Vertex> mVertices;
-    std::vector<uint32_t> mIndices;
+    mal::model::VertexArray mVertices;
+    mal::model::IndexArray mIndices;
+    mal::model::TextureArray mTextures;
+    mal::model::MaterialArray mMaterials;
 };

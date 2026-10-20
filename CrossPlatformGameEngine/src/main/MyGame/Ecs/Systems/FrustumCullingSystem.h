@@ -30,7 +30,7 @@ public:
 
         uint32_t mIsVisible;
         int32_t mBoneOffset = -1;
-        uint32_t _pad1;
+        uint32_t mMaterialId = 0;;
     };
 
 public:
@@ -42,7 +42,7 @@ private:
     ascen::Engine& mEngine;
     const std::unordered_map<std::string, Model>& mModels;
 
-    std::map<uint32_t, ascen::IndexedIndirectDraw> mModelToDrawCommands;
+    std::vector<int32_t> mDrawMaterialIds;
     std::unordered_map<uint32_t, std::unordered_map<uint32_t, Entity>> mModelToEntities;
 
     std::vector<ascen::IndexedIndirectDraw> mDrawCommands;

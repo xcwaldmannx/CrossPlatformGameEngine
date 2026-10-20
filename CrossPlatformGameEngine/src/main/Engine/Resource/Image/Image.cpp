@@ -12,14 +12,12 @@ Image::Image(
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
 	dim::Extent2D extent,
-	uint32_t layers,
 	VkFormat format,
 	VkImageTiling tiling,
 	VkImageUsageFlags usageFlags,
 	VkMemoryPropertyFlags memoryFlags,
 	VkImageAspectFlags aspectFlags) :
 	mExtent(extent),
-	mLayers(layers),
 	mFormat(format),
 	mAspectFlags(aspectFlags)
 {
@@ -30,7 +28,7 @@ Image::Image(
 	imageInfo.extent.height = extent.mExtent.height;
 	imageInfo.extent.depth = 1;
 	imageInfo.mipLevels = 1;
-	imageInfo.arrayLayers = mLayers;
+	imageInfo.arrayLayers = 1;
 	imageInfo.format = mFormat;
 	imageInfo.tiling = tiling;
 	imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -145,7 +143,7 @@ void Image::transitionLayout(
 	}
 
 	Barrier::image(
-		commandBuffer, mHandle, mLayers,
+		commandBuffer, mHandle, 1,
 		oldLayout, newLayout,
 		srcAccess, srcStage,
 		dstAccess, dstStage,

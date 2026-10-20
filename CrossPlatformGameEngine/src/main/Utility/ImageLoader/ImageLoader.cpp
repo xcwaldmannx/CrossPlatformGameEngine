@@ -2,10 +2,9 @@
 
 #include <stdexcept>
 
-#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_STATIC
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-#endif
 
 void ImageLoader::loadImage(const char* filepath, RawImage* image) {
     // Set filepath (no need to cast away const)

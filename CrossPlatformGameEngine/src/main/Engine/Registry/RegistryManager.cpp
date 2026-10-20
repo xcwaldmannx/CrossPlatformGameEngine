@@ -52,18 +52,38 @@ void RegistryManager::reconstruct()
 
             for (const uint64_t id : ids)
             {
-                const std::shared_ptr<CurrentEntryType>& storedEntry = std::any_cast<std::shared_ptr<CurrentEntryType>>(mIdToEntry.at(id));
+                const auto& storedEntry = std::any_cast<const std::shared_ptr<CurrentEntryType>&>(mIdToEntry.at(id));
 
-                std::shared_ptr<Handle_I>& genericResource = mIdToResource[id];
-                CurrentResourceType& concreteResource = reinterpret_cast<CurrentResourceType&>(genericResource);
+                auto& genericResource = mIdToResource[id];
 
-                concreteRegistry.reconstruct(*storedEntry, concreteResource);
+                if (genericResource) continue;
+
+                CurrentResourceType concreteResource{};
+
+                if constexpr (std::is_same_v<CurrentEntryType, registry::TextureEntry>)
+                {
+                    auto resolvedEntry = *storedEntry;
+                    resolvedEntry.mExtent = resolveExtent(resolvedEntry.mExtent);
+
+                    concreteRegistry.reconstruct(resolvedEntry, concreteResource);
+                }
+                else if constexpr (std::is_same_v<CurrentEntryType, registry::FrameBufferEntry>)
+                {
+                    auto resolvedEntry = *storedEntry;
+                    resolvedEntry.mExtent = resolveExtent(resolvedEntry.mExtent);
+
+                    concreteRegistry.reconstruct(resolvedEntry, concreteResource);
+                }
+                else
+                {
+                    concreteRegistry.reconstruct(*storedEntry, concreteResource);
+                }
+
+                genericResource = concreteResource;
             }
 
         }, registryVariant);
     }
-
-    resizeSwapchainDependentResources();
 }
 
 void RegistryManager::deconstruct()
@@ -80,6 +100,8 @@ void RegistryManager::deconstruct()
         if (!resource) continue;
         resource->destroy(mDevice);
     }
+
+    mIdToResource.clear();
 }
 
 dim::Extent2D RegistryManager::resolveExtent(const dim::Extent2D& extent) const
@@ -170,16 +192,19 @@ void RegistryManager::resizeBuffer(const uint64_t id, const uint32_t itemCount)
 
                     for (const auto& resource : setEntry.mResources)
                     {
-                        if (resource.mResourceId != id) continue;
+                        if (const auto* bufferId = std::get_if<uint64_t>(&resource.mResourceIds))
+                        {
+                            if (*bufferId != id) continue;
 
-                        auto set = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(setId));
+                            auto set = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(setId));
 
-                        set->updateBuffer(
-                            mDevice,
-                            resource.mLocation.mSlot,
-                            static_cast<VkDescriptorType>(resource.mLocation.mType),
-                            buffer->handle(),
-                            resource.mSize);
+                            set->updateBuffer(
+                                mDevice,
+                                resource.mSlot.mSlot,
+                                static_cast<VkDescriptorType>(resource.mSlot.mType),
+                                buffer->handle(),
+                                resource.mSize);
+                        }
                     }
                 }
             }
@@ -249,20 +274,51 @@ void RegistryManager::resizeTexture(const uint64_t id, const dim::Extent2D exten
 
                     for (const auto& resource : setEntry.mResources)
                     {
-                        if (resource.mResourceId != id) continue;
+                        if (const auto* textureId = std::get_if<uint64_t>(&resource.mResourceIds))
+                        {
+                            if (*textureId != id) continue;
 
-                        auto set = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(setId));
+                            auto set = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(setId));
 
-                        set->updateTexture(
-                            mDevice,
-                            resource.mLocation.mSlot,
-                            static_cast<VkDescriptorType>(resource.mLocation.mType),
-                            texture->handle());
+                            set->updateTexture(
+                                mDevice,
+                                resource.mSlot.mSlot,
+                                static_cast<VkDescriptorType>(resource.mSlot.mType),
+                                texture->handle());
+                        }
                     }
                 }
             }
         }
     }
+}
+
+void RegistryManager::uploadTextureArray(const std::string& descriptorSetName, const uint32_t binding, const std::vector<uint64_t>& textureIds) const
+{
+    uploadTextureArray(mHasher(descriptorSetName), binding, textureIds);
+}
+
+void RegistryManager::uploadTextureArray(const uint64_t descriptorSetId, const uint32_t binding, const std::vector<uint64_t>& textureIds) const
+{
+    if (textureIds.empty()) return;
+
+    const auto descriptorSet = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(descriptorSetId));
+
+    if (!descriptorSet) throw std::runtime_error("Invalid descriptor set");
+
+    std::vector<VkImageView> imageViews;
+    imageViews.reserve(textureIds.size());
+
+    for (const uint64_t textureId : textureIds)
+    {
+        const auto texture = std::dynamic_pointer_cast<Texture>(mIdToResource.at(textureId));
+
+        if (!texture) throw std::runtime_error("Invalid texture resource");
+
+        imageViews.push_back(texture->handle());
+    }
+
+    descriptorSet->updateTextures(mDevice, binding, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, imageViews);
 }
 
 void RegistryManager::resizeSwapchainDependentResources()
@@ -313,15 +369,18 @@ void RegistryManager::resizeSwapchainDependentResources()
 
                             for (const auto& resource : setEntry.mResources)
                             {
-                                if (resource.mResourceId != textureId) continue;
+                                if (const auto* texId = std::get_if<uint64_t>(&resource.mResourceIds))
+                                {
+                                    if (*texId != textureId) continue;
 
-                                auto set = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(setId));
+                                    auto set = std::dynamic_pointer_cast<DescriptorSet>(mIdToResource.at(setId));
 
-                                set->updateTexture(
-                                    mDevice,
-                                    resource.mLocation.mSlot,
-                                    static_cast<VkDescriptorType>(resource.mLocation.mType),
-                                    textureResource->handle());
+                                    set->updateTexture(
+                                        mDevice,
+                                        resource.mSlot.mSlot,
+                                        static_cast<VkDescriptorType>(resource.mSlot.mType),
+                                        textureResource->handle());
+                                }
                             }
                         }
                     }

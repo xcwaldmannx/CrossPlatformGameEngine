@@ -12,8 +12,7 @@ namespace ascen
 			VkPhysicalDevice physicalDevice,
 			VkDevice device,
 			const CommandPoolPtr& commandPool,
-			dim::Extent2D extent,
-			uint32_t layers);
+			dim::Extent2D extent);
 	};
 
 }

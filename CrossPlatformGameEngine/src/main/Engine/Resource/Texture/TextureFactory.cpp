@@ -13,30 +13,26 @@ TextureFactory::TextureFactory(
 
 TexturePtr TextureFactory::createImage(
 	const CommandPoolPtr& commandPool,
-	dim::Extent2D extent,
-	uint32_t layers) const
+	dim::Extent2D extent) const
 {
 	return std::make_shared<ImageTexture>(
 		mPhysicalDevice,
 		mDevice,
 		commandPool,
-		extent,
-		layers);
+		extent);
 }
 
 TexturePtr TextureFactory::createWritable(
 	const CommandPoolPtr& commandPool,
 	const Format format,
-	dim::Extent2D extent,
-	uint32_t layers) const
+	dim::Extent2D extent) const
 {
 	return std::make_shared<WritableTexture>(
 		mPhysicalDevice,
 		mDevice,
 		commandPool,
 		format,
-		extent,
-		layers);
+		extent);
 }
 
 TexturePtr TextureFactory::createDepth(

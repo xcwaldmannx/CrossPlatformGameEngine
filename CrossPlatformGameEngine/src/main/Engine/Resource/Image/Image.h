@@ -21,7 +21,6 @@ namespace ascen
 			VkDevice device,
 			const CommandPoolPtr& commandPool,
 			dim::Extent2D extent,
-			uint32_t layers,
 			VkFormat format,
 			VkImageTiling tiling,
 			VkImageUsageFlags usageFlags,
@@ -61,7 +60,6 @@ namespace ascen
 
 	private:
 		dim::Extent2D mExtent;
-		uint32_t mLayers;
 		VkFormat mFormat;
 		VkImageAspectFlags mAspectFlags;
 	};

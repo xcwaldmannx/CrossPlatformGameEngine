@@ -9,7 +9,6 @@ Texture::Texture(
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
 	dim::Extent2D extent,
-	uint32_t layers,
 	VkFormat format,
 	VkImageTiling tiling,
 	VkImageUsageFlags usageFlags,
@@ -17,9 +16,13 @@ Texture::Texture(
 	VkImageAspectFlags aspectFlags) :
 	mImage(
 		physicalDevice, device, commandPool,
-		extent, layers,
-		format, tiling, usageFlags, memoryFlags, aspectFlags)
+		extent, format, tiling, usageFlags, memoryFlags, aspectFlags)
 {
+
+	if (extent.mMode == dim::Extent2D::Mode::FIXED && (extent.mExtent.width == 0 || extent.mExtent.height == 0))
+	{
+		throw std::runtime_error("Attempting to create an image with zero dimensions");
+	}
 
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -30,7 +33,7 @@ Texture::Texture(
 	viewInfo.subresourceRange.baseMipLevel = 0;
 	viewInfo.subresourceRange.levelCount = 1;
 	viewInfo.subresourceRange.baseArrayLayer = 0;
-	viewInfo.subresourceRange.layerCount = layers;
+	viewInfo.subresourceRange.layerCount = 1;
 
 	if (vkCreateImageView(
 		device, &viewInfo, nullptr, &mHandle) != VK_SUCCESS) {

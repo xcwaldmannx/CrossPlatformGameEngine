@@ -40,6 +40,8 @@ namespace ascen
 
 		void uploadTexture(const std::string& name, const std::vector<unsigned char>& pixels) const;
 
+		void uploadTextureArray(const std::string& name, const uint32_t binding, const std::vector<uint64_t>& textureIds) const;
+
 		void updateTransfer(
 			const std::string& name,
 			uint32_t transferId,
