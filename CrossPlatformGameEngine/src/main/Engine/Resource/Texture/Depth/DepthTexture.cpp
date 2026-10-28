@@ -14,6 +14,7 @@ DepthTexture::DepthTexture(
 		device,
 		commandPool,
 		extent,
+		false,
 		PhysicalDevice::findDepthFormat(physicalDevice),
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,

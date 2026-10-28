@@ -52,7 +52,7 @@ void CameraSystem::update(const float delta)
             if (width * height > 0)
             {
                 glm::mat4 view = glm::inverse(cameraTransform);
-                glm::mat4 proj = glm::perspective(glm::radians(90.0f), width / height, 0.01f, 100'000.0f);
+                glm::mat4 proj = glm::perspective(glm::radians(90.0f), width / height, 1.0f, 100'000.0f);
                 proj[1][1] *= -1;
 
                 const glm::mat4 vp = proj * view;
@@ -63,4 +63,15 @@ void CameraSystem::update(const float delta)
             }
         }
     }
+}
+
+bool CameraSystem::getActiveCamera(CameraComponent& camera) const
+{
+    if (mActiveCamera != ENTITY_MAX)
+    {
+        camera = mSystem->getComponent<CameraComponent>(mActiveCamera);
+        return true;
+    }
+
+    return false;
 }

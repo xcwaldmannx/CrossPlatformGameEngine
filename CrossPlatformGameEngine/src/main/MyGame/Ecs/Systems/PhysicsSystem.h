@@ -11,13 +11,12 @@
 class PhysicsSystem : public System_I
 {
 public:
-    PhysicsSystem(ModelHandler& modelHandler, b3WorldId& worldId);
+    PhysicsSystem(b3WorldId& worldId);
     ~PhysicsSystem();
 
     void update(float delta) override;
 
 private:
-    ModelHandler& mModelHandler;
     b3WorldId& mWorldId;
     std::unordered_map<EntityId, b3BodyId> mBodies;
     float mPhysicsAccumulatedDelta = 0;

@@ -147,7 +147,7 @@ void Renderer::drawFrame()
 
 				if (framePass->mDrawMode == FRAMEPASS_DRAW_MODE_TRIANGLES)
 				{
-					mMeshCommandRecorder.record(commandBuffer, pipeline, descriptorSets, vertexBuffers, indexBuffer, indirectBuffer, 64);
+					mMeshCommandRecorder.record(commandBuffer, pipeline, descriptorSets, vertexBuffers, indexBuffer, indirectBuffer, 2'000);
 				}
 				else if (framePass->mDrawMode == FRAMEPASS_DRAW_MODE_LINES)
 				{

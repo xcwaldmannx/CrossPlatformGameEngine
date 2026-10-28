@@ -37,6 +37,15 @@ private:
 
     uint64_t mBufferMousePicking = 0;
 
+    uint64_t mVertexTerrain = 0;
+    uint64_t mBufferVertexTerrain = 0;
+    uint64_t mBufferIndexTerrain = 0;
+    uint64_t mBufferDrawCallTerrain = 0;
+    uint64_t mDescriptorPoolGraphicsTerrain = 0;
+    uint64_t mDescriptorSetLayoutGraphicsTerrain = 0;
+    uint64_t mDescriptorSetGraphicsTerrain = 0;
+    uint64_t mPipelineGraphicsTerrain = 0;
+
     uint64_t mSampler = 0;
     uint64_t mWritableTextureMousePicking = 0;
     uint64_t mDepthTextureMousePicking = 0;

@@ -13,6 +13,7 @@ namespace ascen
 			VkDevice device,
 			const CommandPoolPtr& commandPool,
 			dim::Extent2D extent,
+			bool generateMips,
 			VkFormat format,
 			VkImageTiling tiling,
 			VkImageUsageFlags usageFlags,

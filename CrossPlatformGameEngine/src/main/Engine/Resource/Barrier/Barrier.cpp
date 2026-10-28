@@ -63,6 +63,7 @@ void Barrier::buffer(
 void Barrier::image(
 	VkCommandBuffer commandBuffer,
 	VkImage image,
+	uint32_t mipLevels,
 	uint32_t layers,
 	VkImageLayout oldLayout,
 	VkImageLayout newLayout,
@@ -89,7 +90,7 @@ void Barrier::image(
 	barrier.image = image;
 	barrier.subresourceRange.aspectMask = aspectFlags;
 	barrier.subresourceRange.baseMipLevel = 0;
-	barrier.subresourceRange.levelCount = 1;
+	barrier.subresourceRange.levelCount = mipLevels;
 	barrier.subresourceRange.baseArrayLayer = 0;
 	barrier.subresourceRange.layerCount = layers;
 

@@ -27,6 +27,7 @@ namespace ascen
 		static void image(
 			VkCommandBuffer commandBuffer,
 			VkImage image,
+			uint32_t mipLevels,
 			uint32_t layers,
 			VkImageLayout oldLayout,
 			VkImageLayout newLayout,

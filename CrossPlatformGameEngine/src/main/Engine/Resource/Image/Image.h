@@ -21,6 +21,7 @@ namespace ascen
 			VkDevice device,
 			const CommandPoolPtr& commandPool,
 			dim::Extent2D extent,
+			bool generateMips,
 			VkFormat format,
 			VkImageTiling tiling,
 			VkImageUsageFlags usageFlags,
@@ -43,6 +44,8 @@ namespace ascen
 			VkMemoryPropertyFlags memoryFlags);
 
 	private:
+		void generateMipmaps(VkDevice device, VkQueue queue, const CommandPoolPtr& commandPool);
+
 		void transitionLayout(
 			VkDevice device,
 			VkQueue queue,
@@ -60,6 +63,7 @@ namespace ascen
 
 	private:
 		dim::Extent2D mExtent;
+		uint32_t mMipLevels;
 		VkFormat mFormat;
 		VkImageAspectFlags mAspectFlags;
 	};

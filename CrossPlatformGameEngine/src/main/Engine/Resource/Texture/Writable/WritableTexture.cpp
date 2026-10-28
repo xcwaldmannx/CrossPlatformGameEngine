@@ -13,6 +13,7 @@ WritableTexture::WritableTexture(
 		device,
 		commandPool,
 		extent,
+		false,
 		static_cast<VkFormat>(format),
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,

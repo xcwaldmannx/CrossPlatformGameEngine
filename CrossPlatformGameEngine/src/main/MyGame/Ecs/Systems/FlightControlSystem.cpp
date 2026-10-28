@@ -4,7 +4,7 @@
 #include "../../../WindowManager/InputManager/InputManager.h"
 #include "../Components/FlightControlComponent.h"
 #include "../Components/TransformComponent.h"
-#include "../Components/PhysicsBodyComponent.h"
+#include "../Components/PhysicsComponent.h"
 
 void FlightControlSystem::update(const float delta)
 {
@@ -12,7 +12,7 @@ void FlightControlSystem::update(const float delta)
     {
         auto& [type, aircraft, isControlled] = mSystem->getComponent<FlightControlComponent>(e);
         const auto& trans = mSystem->getComponent<TransformComponent>(e);
-        auto& physics = mSystem->getComponent<PhysicsBodyComponent>(e);
+        auto& physics = mSystem->getComponent<PhysicsComponent>(e);
 
         glm::vec3 forward = glm::normalize(trans.mRotation * glm::vec3(0.0f, 0.0f, -1.0f));
         glm::vec3 up      = glm::normalize(trans.mRotation * glm::vec3(0.0f, 1.0f,  0.0f));

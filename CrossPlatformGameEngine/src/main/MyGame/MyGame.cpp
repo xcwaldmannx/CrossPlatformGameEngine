@@ -7,10 +7,11 @@
 #include "Ecs/Components/ModelComponent.h"
 #include "Ecs/Components/TransformComponent.h"
 #include "Ecs/Components/CameraComponent.h"
-#include "Ecs/Components/PhysicsBodyComponent.h"
+#include "Ecs/Components/PhysicsComponent.h"
 #include "Ecs/Components/MoverComponent.h"
 #include "Ecs/Components/AnimationComponent.h"
 #include "Ecs/Components/FlightControlComponent.h"
+#include "Ecs/Components/TerrainComponent.h"
 
 #include "Ecs/Systems/FrustumCullingSystem.h"
 #include "Ecs/Systems/PhysicsSystem.h"
@@ -18,6 +19,7 @@
 #include "Ecs/Systems/AnimationSystem.h"
 #include "Ecs/Systems/FlightControlSystem.h"
 #include "Ecs/Systems/CameraSystem.h"
+#include "Ecs/Systems/TerrainSystem.h"
 
 #include <random>
 #include <cmath>
@@ -52,10 +54,11 @@ MyGame::MyGame(WindowManager& windowManager) :
 	mEngine.ecs().registerComponent<TransformComponent>();
 	mEngine.ecs().registerComponent<ModelComponent>();
 	mEngine.ecs().registerComponent<CameraComponent>();
-	mEngine.ecs().registerComponent<PhysicsBodyComponent>();
+	mEngine.ecs().registerComponent<PhysicsComponent>();
 	mEngine.ecs().registerComponent<MoverComponent>();
 	mEngine.ecs().registerComponent<AnimationComponent>();
 	mEngine.ecs().registerComponent<FlightControlComponent>();
+	mEngine.ecs().registerComponent<TerrainComponent>();
 
 	{
 		const auto readSig = mEngine.ecs().getSignature<TransformComponent, ModelComponent>();
@@ -72,10 +75,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 	}
 
 	{
-		const auto readSig = mEngine.ecs().getSignature<ModelComponent, PhysicsBodyComponent>();
+		const auto readSig = mEngine.ecs().getSignature<PhysicsComponent>();
 		const auto writeSig = mEngine.ecs().getSignature<TransformComponent>();
 
-		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig, mModelHandler, mWorldId);
+		mEngine.ecs().registerSystem<PhysicsSystem>(readSig, writeSig, mWorldId);
 	}
 
 	{
@@ -94,9 +97,16 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	{
 		const auto readSig = mEngine.ecs().getSignature<TransformComponent>();
-		const auto writeSig = mEngine.ecs().getSignature<FlightControlComponent, PhysicsBodyComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<FlightControlComponent, PhysicsComponent>();
 
 		mEngine.ecs().registerSystem<FlightControlSystem>(readSig, writeSig);
+	}
+
+	{
+		const auto readSig = mEngine.ecs().getSignature<TerrainComponent>();
+		const auto writeSig = mEngine.ecs().getSignature<>();
+
+		mEngine.ecs().registerSystem<TerrainSystem>(readSig, writeSig, mEngine);
 	}
 
 	constexpr double radius = 4096.0;
@@ -115,6 +125,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		const double distance = radius * std::sqrt(radiusDist(rng));
 
 		const double x = distance * std::cos(angle);
+		const double y = 100.0f;
 		const double z = distance * std::sin(angle);
 
 		const float rotation = static_cast<float>(angleDist(rng) * 180 / M_PI);
@@ -124,15 +135,21 @@ MyGame::MyGame(WindowManager& windowManager) :
 			auto id = mEngine.ecs().addEntity();
 
 			TransformComponent transform{};
-			transform.mPosition = { x, 0, z };
-			transform.mRotation = { 180.0f, 0, rotation, 1 };
+			transform.mPosition = { x, y, z };
+			transform.mRotation = { 1, 0, rotation, 0 };
 			transform.mScale = { 1, 1, 1 };
 
 			ModelComponent model{};
 			model.mName = "mud_hut_1";
 
+			PhysicsComponent physics{};
+			physics.mBodyType = DYNAMIC;
+			physics.mDensity = 1.0f;
+			physics.mCollider = Sphere(8);
+
 			mEngine.ecs().addComponent<TransformComponent>(id, std::move(transform));
 			mEngine.ecs().addComponent<ModelComponent>(id, std::move(model));
+			mEngine.ecs().addComponent<PhysicsComponent>(id, std::move(physics));
 		}
 		else
 		{
@@ -146,8 +163,14 @@ MyGame::MyGame(WindowManager& windowManager) :
 			ModelComponent model{};
 			model.mName = "mud_hut_2";
 
+			PhysicsComponent physics{};
+			physics.mBodyType = DYNAMIC;
+			physics.mDensity = 1.0f;
+			physics.mCollider = Sphere(8);
+
 			mEngine.ecs().addComponent<TransformComponent>(id, std::move(transform));
 			mEngine.ecs().addComponent<ModelComponent>(id, std::move(model));
+			mEngine.ecs().addComponent<PhysicsComponent>(id, std::move(physics));
 		}
 	}
 
@@ -158,8 +181,8 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mHelicopter = mEngine.ecs().addEntity();
 
 		TransformComponent transform{};
-		transform.mPosition = { 0.0f, 10.0f, 0 };
-		transform.mRotation = { 0, 0, 0, 1 };
+		transform.mPosition = { 0.0f, 20.0f, 0 };
+		transform.mRotation = { 1, 0, 0, 0 };
 		transform.mScale = { 1, 1, 1 };
 
 		ModelComponent model{};
@@ -173,9 +196,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 		camera.mOffsetRotation = glm::vec3 { glm::radians(-15.0f), 0, 0 };
 		camera.mIsActive = false;
 
-		PhysicsBodyComponent physicsBody{};
+		PhysicsComponent physicsBody{};
 		physicsBody.mBodyType = DYNAMIC;
 		physicsBody.mDensity = 1.0f;
+		physicsBody.mCollider = Sphere(8);
 
 		FlightControlComponent fcc;
 		fcc.mType = AircraftType::HUEY;
@@ -185,7 +209,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mEngine.ecs().addComponent<ModelComponent>(mHelicopter, std::move(model));
 		mEngine.ecs().addComponent<AnimationComponent>(mHelicopter, std::move(anim));
 		mEngine.ecs().addComponent<CameraComponent>(mHelicopter, std::move(camera));
-		mEngine.ecs().addComponent<PhysicsBodyComponent>(mHelicopter, std::move(physicsBody));
+		mEngine.ecs().addComponent<PhysicsComponent>(mHelicopter, std::move(physicsBody));
 		mEngine.ecs().addComponent<FlightControlComponent>(mHelicopter, std::move(fcc));
 	}
 
@@ -201,12 +225,25 @@ MyGame::MyGame(WindowManager& windowManager) :
 		camera.mIsActive = true;
 
 		MoverComponent m{};
-		m.mWalkSpeed = 100.0f;
+		m.mWalkSpeed = 10000.0f;
 		m.mIsActive = true;
 
 		mEngine.ecs().addComponent<TransformComponent>(mCharacter, std::move(t));
 		mEngine.ecs().addComponent<CameraComponent>(mCharacter, std::move(camera));
 		mEngine.ecs().addComponent<MoverComponent>(mCharacter, std::move(m));
+	}
+
+	{ // Terrain
+		auto e = mEngine.ecs().addEntity();
+
+		TerrainComponent terrain{};
+		terrain.mSeed = 123454321;
+		terrain.mChunkSize = 16000;
+		terrain.mChunkHeight = 16000;
+		terrain.mChunkResolution = 64;
+		terrain.mIsActive = true;
+
+		mEngine.ecs().addComponent<TerrainComponent>(e, std::move(terrain));
 	}
 }
 
@@ -244,7 +281,7 @@ void MyGame::run(const float delta)
 		}
 		else if (InputManager::isButtonJustPressed(GLFW_MOUSE_BUTTON_LEFT))
 		{
-			auto& selectedPhysicsBody = mEngine.ecs().getComponent<PhysicsBodyComponent>(selectedEntity);
+			auto& selectedPhysicsBody = mEngine.ecs().getComponent<PhysicsComponent>(selectedEntity);
 			selectedPhysicsBody.mAppliedForce += glm::vec3{ 0, 1000, 0 };
 		}
 	}
@@ -271,6 +308,7 @@ void MyGame::run(const float delta)
 
 	mEngine.ecs().updateSystem<CameraSystem>(delta);
 	mEngine.ecs().updateSystem<MoverSystem>(delta);
+	mEngine.ecs().updateSystem<TerrainSystem>(delta);
 
 	mAccumulatedPhysicsDelta += delta;
 
@@ -351,6 +389,38 @@ void MyGame::loadTextures()
 	const auto& materials = mModelHandler.getMaterials();
 	mEngine.resizeBuffer("BUFFER_MATERIAL", materials.size());
 	mEngine.uploadBuffer("BUFFER_MATERIAL", materials.data(), materials.size(), sizeof(mal::model::Material), 0);
+
+	const std::vector<std::string> standAloneTextures =
+	{
+		"assets/textures/sand.jpg",
+		"assets/textures/flesh.jpg",
+		"assets/textures/metal_wall.jpg",
+	};
+
+	std::vector<uint64_t> standAloneTextureIds;
+	standAloneTextureIds.reserve(standAloneTextures.size());
+
+	for (size_t i = 0; i < standAloneTextures.size(); i++)
+	{
+		RawImage img;
+		ImageLoader::loadImage(standAloneTextures[i].c_str(), &img);
+
+		ascen::registry::TextureEntry textureEntry{};
+		textureEntry.mName = "stand_alone_texture_" + std::to_string(i);
+		textureEntry.mType = ascen::TextureType::IMAGE;
+		textureEntry.mFormat = ascen::FORMAT_RGBA8_SRGB;
+		textureEntry.mExtent = ascen::dim::Extent2D::fixedSize(img.mWidth, img.mHeight);
+		auto textureId = mEngine.registerResource<ascen::registry::TextureEntry>(textureEntry);
+
+		standAloneTextureIds.push_back(textureId);
+
+		mEngine.reload();
+
+		mEngine.uploadTexture("stand_alone_texture_" + std::to_string(i), img.mPixels);
+	}
+
+
+	mEngine.uploadTextureArray("DESCRIPTOR_SET_GRAPHICS_TERRAIN", 2, standAloneTextureIds);
 }
 
 void MyGame::createModel(const std::string& model, const glm::vec3 pos, const glm::quat rot, const glm::vec3 scale)
@@ -368,7 +438,7 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 	m.mTextureId = 0;
 	m.mIsHidden = false;
 
-	PhysicsBodyComponent p{};
+	PhysicsComponent p{};
 	p.mBodyType = DYNAMIC;
 	p.mDensity = 3.0f;
 
@@ -414,7 +484,7 @@ void MyGame::createModel(const std::string& model, const glm::vec3 pos, const gl
 
 	mEngine.ecs().addComponent<TransformComponent>(e, std::move(t));
 	mEngine.ecs().addComponent<ModelComponent>(e, std::move(m));
-	mEngine.ecs().addComponent<PhysicsBodyComponent>(e, std::move(p));
+	mEngine.ecs().addComponent<PhysicsComponent>(e, std::move(p));
 
 	if (model != "model_test" && model != "tentacle") mEngine.ecs().addComponent<AnimationComponent>(e, std::move(anim));
 }
