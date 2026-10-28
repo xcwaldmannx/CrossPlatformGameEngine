@@ -199,7 +199,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		PhysicsComponent physicsBody{};
 		physicsBody.mBodyType = DYNAMIC;
 		physicsBody.mDensity = 1.0f;
-		physicsBody.mCollider = Sphere(8);
+		physicsBody.mCollider = Box(30, 30, 30);
 
 		FlightControlComponent fcc;
 		fcc.mType = AircraftType::HUEY;
@@ -225,7 +225,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		camera.mIsActive = true;
 
 		MoverComponent m{};
-		m.mWalkSpeed = 10000.0f;
+		m.mWalkSpeed = 2500.0f;
 		m.mIsActive = true;
 
 		mEngine.ecs().addComponent<TransformComponent>(mCharacter, std::move(t));
@@ -306,23 +306,21 @@ void MyGame::run(const float delta)
 		bladeSpin = 0;
 	}
 
-	mEngine.ecs().updateSystem<CameraSystem>(delta);
-	mEngine.ecs().updateSystem<MoverSystem>(delta);
-	mEngine.ecs().updateSystem<TerrainSystem>(delta);
 
-	mAccumulatedPhysicsDelta += delta;
+	mAccumulatedDelta += delta;
 
-	while (mAccumulatedPhysicsDelta >= mPhysicsDelta)
+	while (mAccumulatedDelta >= mUpdateRate)
 	{
-		mEngine.ecs().updateSystem<FlightControlSystem>(mPhysicsDelta);
-		mEngine.ecs().updateSystem<PhysicsSystem>(mPhysicsDelta);
 
-		mAccumulatedPhysicsDelta -= mPhysicsDelta;
+		mEngine.ecs().updateSystem<CameraSystem>(mUpdateRate);
+		mEngine.ecs().updateSystem<MoverSystem>(mUpdateRate);
+		mEngine.ecs().updateSystem<TerrainSystem>(mUpdateRate);
+		mEngine.ecs().updateSystem<FlightControlSystem>(mUpdateRate);
+		mEngine.ecs().updateSystem<PhysicsSystem>(mUpdateRate);
+		mEngine.ecs().updateSystem<AnimationSystem>(mUpdateRate);
+		mEngine.ecs().updateSystem<FrustumCullingSystem>(mUpdateRate);
+		mAccumulatedDelta -= mUpdateRate;
 	}
-
-
-	mEngine.ecs().updateSystem<AnimationSystem>(delta);
-	mEngine.ecs().updateSystem<FrustumCullingSystem>(delta);
 
 	mEngine.drawFrame();
 

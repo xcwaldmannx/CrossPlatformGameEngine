@@ -31,11 +31,14 @@ void TerrainSystem::update(const float delta)
         if (!terrain.mIsActive) continue;
 
         const auto chunkSize = static_cast<int32_t>(terrain.mChunkSize);
-        const auto cameraChunkX = static_cast<int32_t>(std::floor(static_cast<double>(camera.mPosition.x) / chunkSize));
-        const auto cameraChunkZ = static_cast<int32_t>(std::floor(static_cast<double>(camera.mPosition.z) / chunkSize));
+        const double halfChunkSize = chunkSize * 0.5;
+        const auto cameraChunkX = static_cast<int32_t>(std::floor((static_cast<double>(camera.mPosition.x) + halfChunkSize) / chunkSize));
+        const auto cameraChunkZ = static_cast<int32_t>(std::floor((static_cast<double>(camera.mPosition.z) + halfChunkSize) / chunkSize));
 
         if (mLastChunk == glm::ivec2(cameraChunkX, cameraChunkZ)) continue;
         mLastChunk = glm::ivec2(cameraChunkX, cameraChunkZ);
+
+        printf("cx=%f, cz=%f", camera.mPosition.x, camera.mPosition.z);
 
         const int32_t dist = 4;
         const int32_t diameter = dist * 2;
