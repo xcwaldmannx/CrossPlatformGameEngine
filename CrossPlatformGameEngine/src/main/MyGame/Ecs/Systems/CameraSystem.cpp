@@ -52,8 +52,19 @@ void CameraSystem::update(const float delta)
             if (width * height > 0)
             {
                 glm::mat4 view = glm::inverse(cameraTransform);
-                glm::mat4 proj = glm::perspective(glm::radians(90.0f), width / height, 0.01f, 100'000.0f);
-                proj[1][1] *= -1;
+
+                const float fov = glm::radians(90.0f);
+                const float aspect = width / height;
+                const float nearPlane = 1.0f;
+
+                const float f = 1.0f / std::tan(fov * 0.5f);
+
+                glm::mat4 proj(0.0f);
+
+                proj[0][0] = f / aspect;
+                proj[1][1] = -f;
+                proj[2][3] = -1.0f;
+                proj[3][2] = nearPlane;
 
                 const glm::mat4 vp = proj * view;
                 mEngine.updatePushConstant<glm::mat4>("PIPELINE_FRUSTUM_CULL",  0, vp);
@@ -63,4 +74,15 @@ void CameraSystem::update(const float delta)
             }
         }
     }
+}
+
+bool CameraSystem::getActiveCamera(CameraComponent& camera) const
+{
+    if (mActiveCamera != ENTITY_MAX)
+    {
+        camera = mSystem->getComponent<CameraComponent>(mActiveCamera);
+        return true;
+    }
+
+    return false;
 }

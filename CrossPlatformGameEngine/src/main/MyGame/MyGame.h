@@ -79,6 +79,6 @@ private:
 	EntityId mCharacter;
 	EntityId mHelicopter;
 
-	const float mPhysicsDelta = 1.0f / 60.0f;
-	float mAccumulatedPhysicsDelta = 0.0f;
+	const float mUpdateRate = 1.0f / 60.0f;
+	float mAccumulatedDelta = 0.0f;
 };

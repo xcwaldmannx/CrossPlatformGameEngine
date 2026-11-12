@@ -103,7 +103,7 @@ void CommandPool::beginRenderPass(
     clearValues[0].color.uint32[1] = 0;
     clearValues[0].color.uint32[2] = 0;
     clearValues[0].color.uint32[3] = 0;
-    clearValues[1].depthStencil = { 1.0f, 0 };
+    clearValues[1].depthStencil = { 0.0f, 0 };
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
     renderPassInfo.pClearValues = clearValues.data();

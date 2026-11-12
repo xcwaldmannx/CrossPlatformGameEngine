@@ -17,7 +17,7 @@ Sampler::Sampler(VkPhysicalDevice physicalDevice, VkDevice device)
 
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
-	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+	samplerInfo.maxAnisotropy = std::min(16.0f, properties.limits.maxSamplerAnisotropy);
 
 	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
@@ -26,7 +26,7 @@ Sampler::Sampler(VkPhysicalDevice physicalDevice, VkDevice device)
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 0.0f;
+	samplerInfo.maxLod = VK_LOD_CLAMP_NONE;
 
 	if (vkCreateSampler(device, &samplerInfo, nullptr, &mHandle) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");

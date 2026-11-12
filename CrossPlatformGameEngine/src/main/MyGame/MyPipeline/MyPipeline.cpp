@@ -27,6 +27,7 @@ void MyPipeline::initResources()
     };
 
     mVertexTriangles = mEngine.registerResource<ascen::registry::VertexEntry>({ "VERTEX_TRIANGLES", vertexBindingTri, vertexAttribTri });
+    mVertexTerrain = mVertexTriangles;
 
     // Point
     const ascen::VertexBinding vertexBindingPoint{ 0, sizeof(float) * 4, VK_VERTEX_INPUT_RATE_VERTEX };
@@ -84,6 +85,16 @@ void MyPipeline::initResources()
 
     mBufferMousePicking = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_MOUSE_PICKING", 1, sizeof(uint32_t),
         ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_HOST });
+
+    // Terrain buffers
+    mBufferVertexTerrain = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_VERTEX_TERRAIN", 1, sizeof(float) * 8,
+        ascen::BUFFER_USAGE_VERTEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
+
+    mBufferIndexTerrain = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_INDEX_TERRAIN", 1, sizeof(uint32_t),
+        ascen::BUFFER_USAGE_INDEX | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
+
+    mBufferDrawCallTerrain = mEngine.registerResource<ascen::registry::BufferEntry>({ "BUFFER_DRAWCALL_TERRAIN", mBufferIndirectSize, sizeof(ascen::IndexedIndirectDraw),
+        ascen::BUFFER_USAGE_INDIRECT | ascen::BUFFER_USAGE_STORAGE | ascen::BUFFER_USAGE_TRANSFER_DST, ascen::BUFFER_MEMORY_LOCAL });
 
     // Samplers
     mSampler = mEngine.registerResource<ascen::registry::SamplerEntry>({ "SAMPLER" });
@@ -376,6 +387,58 @@ void MyPipeline::initStages()
         mPipelineGraphicsTriangles = mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryTriangles);
     }
 
+    { // Render terrain stage
+        ascen::registry::DescriptorPoolEntry descriptorPoolEntry{};
+        descriptorPoolEntry.mName = "DESCRIPTOR_POOL_GRAPHICS_TERRAIN";
+        descriptorPoolEntry.mDescriptorTypeCounts =
+        {
+            { ascen::DESCRIPTOR_TYPE_SAMPLER, 1 },
+            { ascen::DESCRIPTOR_TYPE_IMAGE,   1 },
+        };
+
+        mDescriptorPoolGraphicsTerrain = mEngine.registerResource<ascen::registry::DescriptorPoolEntry>(descriptorPoolEntry);
+
+        ascen::registry::DescriptorSlot s1 { 1, ascen::DESCRIPTOR_TYPE_SAMPLER };
+        ascen::registry::DescriptorSlot s2 { 2, ascen::DESCRIPTOR_TYPE_IMAGE };
+
+        ascen::registry::DescriptorBinding b1 { s1, ascen::SHADER_STAGE_PIXEL };
+        ascen::registry::DescriptorBinding b2 { s2, ascen::SHADER_STAGE_PIXEL };
+
+        ascen::registry::DescriptorSetLayoutEntry descriptorSetLayoutEntry{};
+        descriptorSetLayoutEntry.mName = "DESCRIPTOR_SET_LAYOUT_GRAPHICS_TERRAIN";
+        descriptorSetLayoutEntry.mBindings = { b1, b2 };
+
+        mDescriptorSetLayoutGraphicsTerrain = mEngine.registerResource<ascen::registry::DescriptorSetLayoutEntry>(descriptorSetLayoutEntry);
+
+        ascen::registry::DescriptorSetEntry descriptorSetEntry{};
+        descriptorSetEntry.mName = "DESCRIPTOR_SET_GRAPHICS_TERRAIN";
+        descriptorSetEntry.mPoolId = mDescriptorPoolGraphicsTerrain;
+        descriptorSetEntry.mLayoutId = mDescriptorSetLayoutGraphicsTerrain;
+        descriptorSetEntry.mResources =
+        {
+            { mSampler, s1, 0 },
+            { 0u,       s2, 0 },
+        };
+
+        mDescriptorSetGraphicsTerrain = mEngine.registerResource<ascen::registry::DescriptorSetEntry>(descriptorSetEntry);
+
+        ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryTerrain{};
+        graphicsPipelineEntryTerrain.mName = "PIPELINE_RENDER_TERRAIN";
+        graphicsPipelineEntryTerrain.mVertexShaderPath = "src/shaders/Simple/TerrainVertexShader.spv";
+        graphicsPipelineEntryTerrain.mPixelShaderPath = "src/shaders/Simple/TerrainPixelShader.spv";
+        graphicsPipelineEntryTerrain.mVertexId = mVertexTerrain;
+        graphicsPipelineEntryTerrain.mRenderPassId = mRenderPass;
+        graphicsPipelineEntryTerrain.mDescriptorSetLayoutIds = { mDescriptorSetLayoutGraphicsTerrain };
+        graphicsPipelineEntryTerrain.mParams.mTopologyMode = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+        graphicsPipelineEntryTerrain.mParams.mPolygonMode = VK_POLYGON_MODE_FILL;
+        graphicsPipelineEntryTerrain.mParams.mCullMode = VK_CULL_MODE_BACK_BIT;
+        graphicsPipelineEntryTerrain.mParams.mPushConstants =
+        {
+            { 0, { 0, sizeof(glm::mat4), ascen::SHADER_STAGE_VERTEX, nullptr } }
+        };
+        mPipelineGraphicsTerrain = mEngine.registerResource<ascen::registry::GraphicsPipelineEntry>(graphicsPipelineEntryTerrain);
+    }
+
     // Render bounding boxes stage
     {
         ascen::registry::GraphicsPipelineEntry graphicsPipelineEntryBounds{};
@@ -458,6 +521,22 @@ void MyPipeline::initFramePasses()
     framePassGraphicsTrianglesEntry.mGraphicsParams.mIndirectBufferId = mBufferIndirect;
 
     mEngine.registerResource<ascen::registry::FramePassEntry>(framePassGraphicsTrianglesEntry);
+
+    ascen::registry::FramePassEntry framePassGraphicsTerrainEntry;
+    framePassGraphicsTerrainEntry.mName = "FRAMEPASS_GRAPHICS_TERRAIN";
+    framePassGraphicsTerrainEntry.mType = ascen::FRAMEPASS_TYPE_GRAPHICS;
+    framePassGraphicsTerrainEntry.mDescriptorSetIds = { mDescriptorSetGraphicsTerrain };
+    framePassGraphicsTerrainEntry.mPipelineId = mPipelineGraphicsTerrain;
+    framePassGraphicsTerrainEntry.mGraphicsParams.mDrawMode = ascen::FRAMEPASS_DRAW_MODE_TRIANGLES;
+    framePassGraphicsTerrainEntry.mGraphicsParams.mRenderPassId = mRenderPass;
+    framePassGraphicsTerrainEntry.mGraphicsParams.mRenderTargetId = mRenderTarget;
+    framePassGraphicsTerrainEntry.mGraphicsParams.mFrameBufferId = 0;
+    framePassGraphicsTerrainEntry.mGraphicsParams.mExtent = { 0, 0 };
+    framePassGraphicsTerrainEntry.mGraphicsParams.mVertexBufferIds = { mBufferVertexTerrain };
+    framePassGraphicsTerrainEntry.mGraphicsParams.mIndexBufferId = mBufferIndexTerrain;
+    framePassGraphicsTerrainEntry.mGraphicsParams.mIndirectBufferId = mBufferDrawCallTerrain;
+
+    mEngine.registerResource<ascen::registry::FramePassEntry>(framePassGraphicsTerrainEntry);
 
     ascen::registry::FramePassEntry framePassGraphicsBoundingBoxesEntry;
     framePassGraphicsBoundingBoxesEntry.mName = "FRAMEPASS_GRAPHICS_BOUNDING_BOXES";

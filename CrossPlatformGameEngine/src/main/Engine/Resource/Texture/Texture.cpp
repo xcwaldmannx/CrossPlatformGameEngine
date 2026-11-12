@@ -1,6 +1,7 @@
 #include "Texture.h"
 
 #include <stdexcept>
+#include <cmath>
 
 using namespace ascen;
 
@@ -9,6 +10,7 @@ Texture::Texture(
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
 	dim::Extent2D extent,
+	bool generateMips,
 	VkFormat format,
 	VkImageTiling tiling,
 	VkImageUsageFlags usageFlags,
@@ -16,7 +18,7 @@ Texture::Texture(
 	VkImageAspectFlags aspectFlags) :
 	mImage(
 		physicalDevice, device, commandPool,
-		extent, format, tiling, usageFlags, memoryFlags, aspectFlags)
+		extent, generateMips, format, tiling, usageFlags, memoryFlags, aspectFlags)
 {
 
 	if (extent.mMode == dim::Extent2D::Mode::FIXED && (extent.mExtent.width == 0 || extent.mExtent.height == 0))
@@ -31,7 +33,14 @@ Texture::Texture(
 	viewInfo.format = format;
 	viewInfo.subresourceRange.aspectMask = aspectFlags;
 	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = 1;
+	if (generateMips)
+	{
+		viewInfo.subresourceRange.levelCount = static_cast<uint32_t>(std::floor(std::log2(std::max(extent.mExtent.width, extent.mExtent.height))) + 1);
+	}
+	else
+	{
+		viewInfo.subresourceRange.levelCount = 1;
+	}
 	viewInfo.subresourceRange.baseArrayLayer = 0;
 	viewInfo.subresourceRange.layerCount = 1;
 

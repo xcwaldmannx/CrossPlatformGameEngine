@@ -4,20 +4,18 @@
 
 struct Helicopter
 {
-    float mAccelYaw = 0;
-    float mAccelPitch = 0;
-    float mAccelRoll = 0;
-    float mLift = 0;
+    float mLift = 0.0f;
+    float mPitchRate = 0.0f;
+    float mRollRate = 0.0f;
 };
 
 struct Huey : Helicopter
 {
     Huey()
     {
-        mAccelYaw = 0;
-        mAccelPitch = 0;
-        mAccelRoll = 0;
-        mLift = 0;
+        mLift = 0.0f;
+        mPitchRate = 0.0f;
+        mRollRate = 0.0f;
     }
 };
 
@@ -25,10 +23,9 @@ struct Chinook : Helicopter
 {
     Chinook()
     {
-        mAccelYaw = 0;
-        mAccelPitch = 0;
-        mAccelRoll = 0;
-        mLift = 0;
+        mLift = 9.81f;
+        mPitchRate = 0.0f;
+        mRollRate = 0.0f;
     }
 };
 

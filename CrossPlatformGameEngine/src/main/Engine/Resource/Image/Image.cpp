@@ -4,6 +4,7 @@
 
 #include <stdexcept>
 #include <string.h>
+#include <cmath>
 
 using namespace ascen;
 
@@ -12,6 +13,7 @@ Image::Image(
 	VkDevice device,
 	const CommandPoolPtr& commandPool,
 	dim::Extent2D extent,
+	bool generateMips,
 	VkFormat format,
 	VkImageTiling tiling,
 	VkImageUsageFlags usageFlags,
@@ -27,7 +29,16 @@ Image::Image(
 	imageInfo.extent.width = extent.mExtent.width;
 	imageInfo.extent.height = extent.mExtent.height;
 	imageInfo.extent.depth = 1;
-	imageInfo.mipLevels = 1;
+	if (generateMips)
+	{
+		mMipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(extent.mExtent.width, extent.mExtent.height))) + 1);
+		imageInfo.mipLevels = mMipLevels;
+	}
+	else
+	{
+		mMipLevels = 1;
+		imageInfo.mipLevels = mMipLevels;
+	}
 	imageInfo.arrayLayers = 1;
 	imageInfo.format = mFormat;
 	imageInfo.tiling = tiling;
@@ -86,12 +97,24 @@ void Image::update(
 	uint32_t layerCount = imageSizeBytes / (mExtent.mExtent.width * mExtent.mExtent.height * 4);
 	copy(device, queue, commandPool, stagingBuffer, *this, layerCount);
 
-	transitionLayout(
-		device,
-		queue,
-		commandPool,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	if (mMipLevels > 1)
+	{
+		generateMipmaps(
+			device,
+			queue,
+			commandPool
+		);
+	}
+	else
+	{
+		transitionLayout(
+			device,
+			queue,
+			commandPool,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
+		);
+	}
 
 	stagingBuffer.destroy(device);
 }
@@ -100,6 +123,132 @@ void Image::destroy(VkDevice device)
 {
 	vkDestroyImage(device, mHandle, nullptr);
 	vkFreeMemory(device, mMemory, nullptr);
+}
+
+void Image::generateMipmaps(
+    VkDevice device,
+    VkQueue queue,
+    const CommandPoolPtr& commandPool)
+{
+    VkCommandBuffer cmd = commandPool->beginSingle(device);
+
+    int32_t mipWidth = static_cast<int32_t>(mExtent.mExtent.width);
+    int32_t mipHeight = static_cast<int32_t>(mExtent.mExtent.height);
+
+    for (uint32_t i = 1; i < mMipLevels; i++)
+    {
+        // Transition previous mip level into a transfer source.
+        VkImageMemoryBarrier2 barrier{};
+        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+
+        barrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+
+        barrier.dstStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        barrier.dstAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT;
+
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+        barrier.image = mHandle;
+
+        barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        barrier.subresourceRange.baseMipLevel = i - 1;
+        barrier.subresourceRange.levelCount = 1;
+        barrier.subresourceRange.baseArrayLayer = 0;
+        barrier.subresourceRange.layerCount = 1;
+
+        VkDependencyInfo dependency{};
+        dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+        dependency.imageMemoryBarrierCount = 1;
+        dependency.pImageMemoryBarriers = &barrier;
+
+        vkCmdPipelineBarrier2(cmd, &dependency);
+
+        // Calculate dimensions of next mip level.
+        int32_t nextWidth = std::max(1, mipWidth / 2);
+        int32_t nextHeight = std::max(1, mipHeight / 2);
+
+        VkImageBlit2 blit{};
+        blit.sType = VK_STRUCTURE_TYPE_IMAGE_BLIT_2;
+
+        blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.srcSubresource.mipLevel = i - 1;
+        blit.srcSubresource.baseArrayLayer = 0;
+        blit.srcSubresource.layerCount = 1;
+
+        blit.srcOffsets[0] = {0, 0, 0};
+        blit.srcOffsets[1] = {mipWidth, mipHeight, 1};
+
+        blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        blit.dstSubresource.mipLevel = i;
+        blit.dstSubresource.baseArrayLayer = 0;
+        blit.dstSubresource.layerCount = 1;
+
+        blit.dstOffsets[0] = {0, 0, 0};
+        blit.dstOffsets[1] = {nextWidth, nextHeight, 1};
+
+        VkBlitImageInfo2 blitInfo{};
+        blitInfo.sType = VK_STRUCTURE_TYPE_BLIT_IMAGE_INFO_2;
+
+        blitInfo.srcImage = mHandle;
+        blitInfo.srcImageLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+        blitInfo.dstImage = mHandle;
+        blitInfo.dstImageLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+        blitInfo.regionCount = 1;
+        blitInfo.pRegions = &blit;
+        blitInfo.filter = VK_FILTER_LINEAR;
+
+        vkCmdBlitImage2(cmd, &blitInfo);
+
+        // Transition previous mip level to shader-readable.
+        barrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+        barrier.srcAccessMask = VK_ACCESS_2_TRANSFER_READ_BIT;
+
+        barrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+        barrier.dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+
+        barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+        barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+        vkCmdPipelineBarrier2(cmd, &dependency);
+
+        mipWidth = nextWidth;
+        mipHeight = nextHeight;
+    }
+
+    // Transition final mip level to shader-readable.
+    VkImageMemoryBarrier2 finalBarrier{};
+    finalBarrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+
+    finalBarrier.srcStageMask = VK_PIPELINE_STAGE_2_TRANSFER_BIT;
+    finalBarrier.srcAccessMask = VK_ACCESS_2_TRANSFER_WRITE_BIT;
+
+    finalBarrier.dstStageMask = VK_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT;
+    finalBarrier.dstAccessMask = VK_ACCESS_2_SHADER_SAMPLED_READ_BIT;
+
+    finalBarrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    finalBarrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    finalBarrier.image = mHandle;
+
+    finalBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    finalBarrier.subresourceRange.baseMipLevel = mMipLevels - 1;
+    finalBarrier.subresourceRange.levelCount = 1;
+    finalBarrier.subresourceRange.baseArrayLayer = 0;
+    finalBarrier.subresourceRange.layerCount = 1;
+
+    VkDependencyInfo dependency{};
+    dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &finalBarrier;
+
+    vkCmdPipelineBarrier2(cmd, &dependency);
+
+    commandPool->endSingle(device, queue, cmd);
 }
 
 void Image::transitionLayout(
@@ -143,7 +292,7 @@ void Image::transitionLayout(
 	}
 
 	Barrier::image(
-		commandBuffer, mHandle, 1,
+		commandBuffer, mHandle, mMipLevels, 1,
 		oldLayout, newLayout,
 		srcAccess, srcStage,
 		dstAccess, dstStage,
