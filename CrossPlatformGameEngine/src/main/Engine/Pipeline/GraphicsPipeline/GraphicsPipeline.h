@@ -257,7 +257,7 @@ namespace ascen
             mDepthStencilStateInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
             mDepthStencilStateInfo.depthTestEnable = VK_TRUE;
             mDepthStencilStateInfo.depthWriteEnable = VK_TRUE;
-            mDepthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_LESS;
+            mDepthStencilStateInfo.depthCompareOp = VK_COMPARE_OP_GREATER;
             mDepthStencilStateInfo.depthBoundsTestEnable = VK_FALSE;
             mDepthStencilStateInfo.minDepthBounds = 0.0f; // Optional
             mDepthStencilStateInfo.maxDepthBounds = 1.0f; // Optional

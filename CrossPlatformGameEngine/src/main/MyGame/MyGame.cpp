@@ -47,7 +47,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 	// init physics world
 	b3WorldDef worldDef = b3DefaultWorldDef();
-	worldDef.gravity = { 0.0f, -10.0f, 0.0f };
+	worldDef.gravity = { 0.0f, -9.81f, 0.0f };
 	mWorldId  = b3CreateWorld(&worldDef);
 
 	// initialize ECS
@@ -181,7 +181,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mHelicopter = mEngine.ecs().addEntity();
 
 		TransformComponent transform{};
-		transform.mPosition = { 0.0f, 20.0f, 0 };
+		transform.mPosition = { 0.0f, 1000.0f, 0 };
 		transform.mRotation = { 1, 0, 0, 0 };
 		transform.mScale = { 1, 1, 1 };
 
@@ -192,13 +192,14 @@ MyGame::MyGame(WindowManager& windowManager) :
 		anim.mCurrentAnimation = "idle";
 
 		CameraComponent camera{};
-		camera.mOffsetPosition = { 0, 60, 120 };
-		camera.mOffsetRotation = glm::vec3 { glm::radians(-15.0f), 0, 0 };
+		camera.mOffsetPosition = { 0, 10, 15 };
+		camera.mOffsetRotation = glm::vec3 { glm::radians(-10.0f), 0, 0 };
 		camera.mIsActive = false;
 
 		PhysicsComponent physicsBody{};
 		physicsBody.mBodyType = DYNAMIC;
-		physicsBody.mDensity = 1.0f;
+		physicsBody.mDensity = 3.0f;
+		physicsBody.mMass = 8500.0f;
 		physicsBody.mCollider = Box(30, 30, 30);
 
 		FlightControlComponent fcc;
@@ -217,7 +218,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		mCharacter = mEngine.ecs().addEntity();
 
 		TransformComponent t{};
-		t.mPosition = { 0, 2.5f, -50.0f };
+		t.mPosition = { 0, 1000.0f, 0 };
 		t.mRotation = { 0, 0, 0, 0 };
 		t.mScale = { 1, 1, 1 };
 
@@ -225,7 +226,7 @@ MyGame::MyGame(WindowManager& windowManager) :
 		camera.mIsActive = true;
 
 		MoverComponent m{};
-		m.mWalkSpeed = 2500.0f;
+		m.mWalkSpeed = 3'000.0f;
 		m.mIsActive = true;
 
 		mEngine.ecs().addComponent<TransformComponent>(mCharacter, std::move(t));
@@ -238,9 +239,10 @@ MyGame::MyGame(WindowManager& windowManager) :
 
 		TerrainComponent terrain{};
 		terrain.mSeed = 123454321;
-		terrain.mChunkSize = 16000;
-		terrain.mChunkHeight = 16000;
-		terrain.mChunkResolution = 64;
+		terrain.mChunkSize = 1'000;
+		terrain.mChunkHeight = 1'000;
+		terrain.mChunkResolution = 32;
+		terrain.mMaxLod = 7;
 		terrain.mIsActive = true;
 
 		mEngine.ecs().addComponent<TerrainComponent>(e, std::move(terrain));
@@ -290,7 +292,7 @@ void MyGame::run(const float delta)
 	auto& heloAnimation = mEngine.ecs().getComponent<AnimationComponent>(mHelicopter);
 	if (heloFcc.mIsControlled)
 	{
-		bladeSpin += 500.0f * delta;
+		bladeSpin += 2000.0f * delta;
 		auto& heloPlayer = mModelHandler.getPlayer("uh-1y");
 		glm::mat4 main = glm::mat4(1);
 		main = glm::rotate(main, glm::radians(bladeSpin), glm::vec3(0.0f, 1.0f, 0.0f));

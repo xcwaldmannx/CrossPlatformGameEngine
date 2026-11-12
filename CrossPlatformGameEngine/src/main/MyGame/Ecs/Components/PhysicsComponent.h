@@ -1,5 +1,7 @@
 #pragma once
 
+#include <variant>
+
 #include <box3d/box3d.h>
 #include <glm/glm.hpp>
 
@@ -37,6 +39,7 @@ struct PhysicsComponent
     b3BodyId mId;
     PhysicsBodyType mBodyType = STATIC;
     float mDensity = 1.0f;
+    float mMass = 0.0f;
     std::variant<Box, Sphere, Mesh> mCollider = Box();
     glm::vec3 mAppliedForce = glm::vec3(0);
     glm::vec3 mAppliedTorque = glm::vec3(0);

@@ -56,6 +56,14 @@ void PhysicsSystem::update(const float delta)
             auto normRot = glm::normalize(rot);
             bodyDef.rotation = b3Quat{ normRot.x, normRot.y, normRot.z, normRot.w };
             b3BodyId bodyId = b3CreateBody(mWorldId, &bodyDef);
+
+            if (physicsBody.mMass > 0)
+            {
+                b3MassData massData = b3Body_GetMassData(bodyId);
+                massData.mass = physicsBody.mMass;
+                b3Body_SetMassData(bodyId, massData);
+            }
+
             physicsBody.mId = bodyId;
             mBodies.emplace(e, bodyId);
 

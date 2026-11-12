@@ -38,11 +38,11 @@ void TerrainSystem::update(const float delta)
         if (mLastChunk == glm::ivec2(cameraChunkX, cameraChunkZ)) continue;
         mLastChunk = glm::ivec2(cameraChunkX, cameraChunkZ);
 
-        printf("cx=%f, cz=%f", camera.mPosition.x, camera.mPosition.z);
-
-        const int32_t dist = 4;
+        const int32_t dist = 8;
         const int32_t diameter = dist * 2;
         const size_t chunkCount = diameter * diameter;
+        const int32_t radius = dist;
+        const int32_t radiusSquared = radius * radius;
 
         std::vector<TerrainData> chunks(chunkCount);
 
@@ -50,6 +50,20 @@ void TerrainSystem::update(const float delta)
             std::max(1u, std::thread::hardware_concurrency()),
             static_cast<unsigned int>(chunkCount)
         );
+
+        const auto calculateLod = [&](int32_t x, int32_t z)
+        {
+            const int32_t d2 = x * x + z * z;
+            uint32_t lod = 0;
+
+            if (d2 >= 4)
+            {
+                const float distance = std::sqrt(static_cast<float>(d2));
+                lod = static_cast<uint32_t>(std::floor(std::log2(distance)));
+            }
+
+            return std::min(lod, terrain.mMaxLod);
+        };
 
         std::vector<std::thread> threads;
         threads.reserve(threadCount);
@@ -63,17 +77,41 @@ void TerrainSystem::update(const float delta)
                     const int32_t x = static_cast<int32_t>(i / diameter) - dist;
                     const int32_t z = static_cast<int32_t>(i % diameter) - dist;
 
+                    const int32_t distanceSquared = x * x + z * z;
+                    if (distanceSquared > radiusSquared) continue;
+
                     const int32_t locX = cameraChunkX + x;
                     const int32_t locZ = cameraChunkZ + z;
+
+                    const auto lod = calculateLod(x, z);
+
+                    const auto neighborLod = [&](int32_t nx, int32_t nz)
+                    {
+                        if (nx * nx + nz * nz > radiusSquared)
+                            return lod;
+
+                        return calculateLod(nx, nz);
+                    };
+
+                    const TerrainNeighborLods neighbors
+                    {
+                        .mLeft  = neighborLod(x - 1, z),
+                        .mRight = neighborLod(x + 1, z),
+                        .mDown  = neighborLod(x, z - 1),
+                        .mUp    = neighborLod(x, z + 1)
+                    };
 
                     TerrainGenerator::generate(
                         { locX, locZ },
                         terrain.mChunkSize,
                         terrain.mChunkHeight,
                         terrain.mChunkResolution,
-                        0.00005f,
-                        0.005f,
-                        chunks[i]);
+                        lod,
+                        0.0025f,
+                        0.1f,
+                        neighbors,
+                        chunks[i]
+                    );
                 }
             });
         }
@@ -85,6 +123,8 @@ void TerrainSystem::update(const float delta)
 
         for (const TerrainData& data : chunks)
         {
+            if (data.mVertices.empty() || data.mIndices.empty()) continue;
+
             const auto vertexOffset = static_cast<uint32_t>(terrainVertices.size());
             const auto indexOffset = static_cast<uint32_t>(terrainIndices.size());
 
